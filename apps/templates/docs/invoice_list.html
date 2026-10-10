@@ -1,4 +1,5 @@
 {% extends 'management/base.html' %}
+{% load custom_filters %}
 {% block title %}Invoices{% endblock %}
 {% block extra_css %}
 <style>
@@ -17,6 +18,22 @@
   .b-cancelled{background:rgba(255,255,255,.03);color:var(--text-3);border:1px solid var(--border)}.b-cancelled::before{background:var(--text-3)}
   .num{font-family:var(--mono);font-weight:700;color:var(--text)}
   .ttl{font-size:11px;color:var(--text-3);margin-top:2px}
+  .stat-card .sx{font-family:var(--mono);font-size:11px;color:var(--text-3);margin-top:4px}
+  .tools{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap}
+  .tabs a{font-family:var(--mono);font-size:12px;padding:7px 12px;border-radius:99px;border:1px solid var(--border);
+    color:var(--text-2);text-decoration:none;background:var(--card)}
+  .tabs a b{color:var(--text-3);font-weight:400;margin-left:4px}
+  .tabs a.on{border-color:var(--cyan);color:var(--cyan);background:var(--cyan-d)}
+  .tabs a.on b{color:var(--cyan)}
+  .search{display:flex;gap:8px}
+  .search input{min-width:240px}
+  .mini-bar{height:4px;border-radius:99px;background:var(--card-s);overflow:hidden;margin-top:6px;width:90px}
+  .mini-bar i{display:block;height:100%;background:var(--green)}
+  .late{font-size:10.5px;color:var(--red);font-family:var(--mono);margin-top:2px}
+  .soon{font-size:10.5px;color:var(--yellow);font-family:var(--mono);margin-top:2px}
+  tr.row-link{cursor:pointer}
+  @media(max-width:640px){.search input{min-width:0;width:100%}.search{width:100%}}
 </style>
 {% endblock %}
 {% block content %}
@@ -25,15 +42,22 @@
     <h1 style="font-family:var(--head);font-size:22px;font-weight:800;color:var(--text);margin-bottom:3px">
       <i class="fas fa-file-invoice-dollar" style="color:var(--cyan)"></i> Invoices
     </h1>
-    <div style="font-family:var(--mono);font-size:12px;color:var(--text-3)">{{ invoices|length }} invoice(s)</div>
+    <div style="font-family:var(--mono);font-size:12px;color:var(--text-3)">{{ invoices|length }} shown</div>
   </div>
   <a href="{% url 'invoice_new' %}" class="jt-btn btn-cyan"><i class="fas fa-plus"></i> New Invoice</a>
 </div>
 <div class="stat-row">
-  <div class="stat-card c-cyan"><div class="sv">{{ invoices|length }}</div><div class="sl">Total</div></div>
-  <div class="stat-card c-yellow"><div class="sv">{{ unpaid }}</div><div class="sl">Unpaid</div></div>
-  <div class="stat-card c-green"><div class="sv">{{ paid_count }}</div><div class="sl">Paid</div></div>
-  <div class="stat-card c-red"><div class="sv">{{ outstanding|floatformat:0 }}</div><div class="sl">TZS Outstanding</div></div>
+  <div class="stat-card c-cyan"><div class="sv">{{ counts.all }}</div><div class="sl">Invoices</div><div class="sx">{{ counts.draft }} draft{{ counts.draft|pluralize }}</div></div>
+  <div class="stat-card c-yellow"><div class="sv">{{ unpaid }}</div><div class="sl">Unpaid</div><div class="sx">{{ counts.partial }} part-paid</div></div>
+  <div class="stat-card c-red"><div class="sv">{{ overdue_count }}</div><div class="sl">Overdue</div>
+    <div class="sx">{% for t in totals %}{% if t.overdue %}{{ t.currency }} {{ t.overdue|thousands }} {% endif %}{% empty %}—{% endfor %}</div></div>
+  <div class="stat-card c-yellow"><div class="sv" style="font-size:20px">{% for t in totals %}<div>{{ t.currency }} {{ t.outstanding|thousands }}</div>{% empty %}0{% endfor %}</div><div class="sl">Outstanding</div></div>
+  <div class="stat-card c-green"><div class="sv" style="font-size:20px">{% for t in totals %}<div>{{ t.currency }} {{ t.collected|thousands }}</div>{% empty %}0{% endfor %}</div><div class="sl">Collected</div></div>
+</div>
+<div class="tools">
+  <div class="tabs">{% for key, label, n in filters %}<a href="?show={{ key }}{% if q %}&q={{ q|urlencode }}{% endif %}" class="{% if show == key %}on{% endif %}">{{ label }}<b>{{ n }}</b></a>{% endfor %}</div>
+  <form class="search" method="get"><input type="hidden" name="show" value="{{ show }}">
+    <input type="search" name="q" value="{{ q }}" class="f-input" placeholder="Search number, client, project…"></form>
 </div>
 <div class="jt-card" style="padding:0">
   <div style="overflow-x:auto">
@@ -41,17 +65,24 @@
       <thead><tr><th>Invoice</th><th>Client</th><th>Total</th><th>Balance</th><th>Status</th><th>Due</th><th></th></tr></thead>
       <tbody>
         {% for i in invoices %}
-        <tr>
-          <td><div class="num">{{ i.invoice_number|default:'—' }}</div><div class="ttl">{{ i.get_invoice_type_display }}</div></td>
+        {% with st=i.display_status %}
+        <tr class="row-link" onclick="if(!event.target.closest('a'))location.href='{% url 'invoice_edit' i.pk %}'">
+          <td><div class="num">{{ i.invoice_number|default:'—' }}</div><div class="ttl">{{ i.title|truncatechars:40 }}</div></td>
           <td><div style="font-size:13px;color:var(--text-2)">{{ i.display_client }}</div>{% if i.display_company %}<div style="font-family:var(--mono);font-size:10px;color:var(--purple)">{{ i.display_company }}</div>{% endif %}</td>
-          <td style="font-family:var(--mono);font-size:12px;color:var(--text-2)">{{ i.currency }} {{ i.grand_total|floatformat:0 }}</td>
-          <td style="font-family:var(--mono);font-size:12px;color:{% if i.is_paid %}var(--green){% else %}var(--yellow){% endif %}">{% if i.is_paid %}—{% else %}{{ i.balance_due|floatformat:0 }}{% endif %}</td>
-          <td><span class="jt-badge b-{% if i.is_overdue %}overdue{% else %}{{ i.status }}{% endif %}">{% if i.is_overdue %}Overdue{% else %}{{ i.get_status_display }}{% endif %}</span></td>
-          <td style="font-family:var(--mono);font-size:12px;color:var(--text-3)">{% if i.due_date %}{{ i.due_date|date:'M j, Y' }}{% else %}—{% endif %}</td>
-          <td><a href="{% url 'invoice_edit' i.pk %}" class="jt-btn btn-ghost" style="font-size:11px;padding:6px 12px"><i class="fas fa-arrow-right"></i> Open</a></td>
+          <td style="font-family:var(--mono);font-size:12px;color:var(--text-2);white-space:nowrap">{{ i.currency }} {{ i.grand_total|thousands }}</td>
+          <td style="font-family:var(--mono);font-size:12px;white-space:nowrap;color:{% if i.is_paid %}var(--green){% else %}var(--yellow){% endif %}">
+            {% if i.is_paid %}—{% else %}{{ i.balance_due|thousands }}{% endif %}
+            {% if i.paid_total and not i.is_paid %}<div class="mini-bar"><i style="width:{{ i.paid_percent }}%"></i></div>{% endif %}</td>
+          <td><span class="jt-badge b-{{ st }}">{% if st == 'partial' %}Part-paid {{ i.paid_percent }}%{% else %}{{ st|title }}{% endif %}</span></td>
+          <td style="font-family:var(--mono);font-size:12px;color:var(--text-3);white-space:nowrap">{% if i.due_date %}{{ i.due_date|date:'M j, Y' }}
+            {% if i.is_overdue %}<div class="late">{{ i.days_overdue }}d late</div>{% elif i.is_open and i.days_to_due <= 3 %}<div class="soon">{% if i.days_to_due == 0 %}due today{% else %}in {{ i.days_to_due }}d{% endif %}</div>{% endif %}
+            {% else %}—{% endif %}</td>
+          <td style="white-space:nowrap"><a href="{{ i.public_url }}" target="_blank" class="jt-btn btn-ghost" style="font-size:11px;padding:6px 10px" title="Client view"><i class="fas fa-eye"></i></a>
+            <a href="{% url 'invoice_edit' i.pk %}" class="jt-btn btn-ghost" style="font-size:11px;padding:6px 12px"><i class="fas fa-arrow-right"></i> Open</a></td>
         </tr>
+        {% endwith %}
         {% empty %}
-        <tr><td colspan="7"><div class="jt-empty"><div class="ei">🧾</div><p>No invoices yet — create your first one</p></div></td></tr>
+        <tr><td colspan="7"><div class="jt-empty"><div class="ei">🧾</div><p>{% if q or show != 'all' %}No invoices match this filter{% else %}No invoices yet — create your first one{% endif %}</p></div></td></tr>
         {% endfor %}
       </tbody>
     </table>

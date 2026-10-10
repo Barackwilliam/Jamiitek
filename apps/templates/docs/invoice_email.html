@@ -1,0 +1,52 @@
+{% load custom_filters %}<!DOCTYPE html>
+<html lang="{{ lang }}"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#e8edf5;font-family:Arial,Helvetica,sans-serif;color:#1a1a1a">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#e8edf5;padding:24px 10px">
+<tr><td align="center">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff">
+  <tr><td style="background:#1a3c6e;padding:18px 26px">
+    <div style="color:#fff;font-size:16px;font-weight:bold;letter-spacing:1.4px">{{ invoice.provider_name|upper }}</div>
+    <div style="color:#c9d8ee;font-size:11px;font-style:italic">{% if lang == 'sw' %}Tunajenga Mustakabali wa Kidijitali wa Tanzania{% else %}Building Tanzania's Digital Future{% endif %}</div>
+  </td></tr>
+  <tr><td style="padding:28px 26px 8px">
+    <div style="font-size:11px;letter-spacing:3px;color:#8a6a00;font-weight:bold">{% if lang == 'sw' %}ANKARA{% else %}INVOICE{% endif %} · {{ invoice.invoice_number }}</div>
+    <div style="font-size:22px;font-weight:bold;color:#1a3c6e;margin-top:6px">{{ invoice.title|bilingual:lang }}</div>
+    <p style="font-size:14px;line-height:1.6;margin:16px 0 0">{% if lang == 'sw' %}Habari {{ invoice.display_client }}, ankara yako iko tayari. Unaweza kuiona, kuipakua kama PDF na kulipa kupitia kitufe kilicho hapa chini.{% else %}Hello {{ invoice.display_client }}, your invoice is ready. You can view it, download it as a PDF and pay using the button below.{% endif %}</p>
+  </td></tr>
+  <tr><td style="padding:16px 26px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fdf6e3;border-left:4px solid #c49a28">
+      <tr><td style="padding:16px 18px">
+        <div style="font-size:11px;letter-spacing:1.5px;color:#8a6a00;text-transform:uppercase">{% if lang == 'sw' %}Kiasi cha kulipa{% else %}Amount due{% endif %}</div>
+        <div style="font-size:26px;font-weight:bold;color:#1a3c6e">{{ invoice.currency }} {{ invoice.balance_due|thousands }}</div>
+        {% if invoice.due_date %}<div style="font-size:13px;color:#8a6a00;margin-top:2px">{% if lang == 'sw' %}Lipa kabla ya{% else %}Due by{% endif %} <b>{{ invoice.due_date|localdate:lang }}</b></div>{% endif %}
+      </td></tr>
+    </table>
+  </td></tr>
+  <tr><td style="padding:0 26px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:13.5px">
+      {% for it in items %}<tr><td style="padding:10px 0;border-bottom:1px solid #e4e9f2">{{ it.desc|bilingual:lang }}{% if it.qty != 1 %} <span style="color:#666">× {{ it.qty }}</span>{% endif %}</td>
+        <td align="right" style="padding:10px 0;border-bottom:1px solid #e4e9f2;white-space:nowrap">{{ invoice.currency }} {{ it.amount|thousands }}</td></tr>{% endfor %}
+      <tr><td style="padding:12px 0;font-weight:bold;color:#1a3c6e">{% if lang == 'sw' %}Jumla{% else %}Total{% endif %}</td>
+        <td align="right" style="padding:12px 0;font-weight:bold;color:#1a3c6e">{{ invoice.currency }} {{ invoice.grand_total|thousands }}</td></tr>
+      {% if invoice.paid_total %}<tr><td style="padding:4px 0;color:#1e7b45">{% if lang == 'sw' %}Imelipwa{% else %}Paid{% endif %}</td>
+        <td align="right" style="padding:4px 0;color:#1e7b45">− {{ invoice.currency }} {{ invoice.paid_total|thousands }}</td></tr>{% endif %}
+    </table>
+  </td></tr>
+  <tr><td align="center" style="padding:24px 26px 6px">
+    <a href="{{ link }}" style="display:inline-block;background:#1a3c6e;color:#ffffff;text-decoration:none;font-weight:bold;font-size:15px;padding:14px 30px;letter-spacing:.4px">{% if invoice.shows_pesapal %}{% if lang == 'sw' %}Ona ankara na ulipe{% else %}View &amp; pay invoice{% endif %}{% else %}{% if lang == 'sw' %}Ona ankara{% else %}View invoice{% endif %}{% endif %}</a>
+    <div style="margin-top:10px;font-size:12px"><a href="{{ pdf }}" style="color:#1a3c6e">{% if lang == 'sw' %}Pakua PDF{% else %}Download PDF{% endif %}</a></div>
+  </td></tr>
+  {% if invoice.shows_manual and invoice.payment_methods %}
+  <tr><td style="padding:18px 26px 0">
+    <div style="font-size:12px;font-weight:bold;letter-spacing:1.4px;color:#1a3c6e;margin-bottom:8px">{% if lang == 'sw' %}NJIA ZA KULIPA{% else %}HOW TO PAY{% endif %}</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:13.5px">
+      {% for m in invoice.payment_methods %}{% if m.details %}<tr><td style="padding:9px 12px;background:#eaf0fa;color:#1a3c6e;font-weight:bold;border:1px solid #cccccc;width:35%">{{ m.method|bilingual:lang }}</td><td style="padding:9px 12px;border:1px solid #cccccc">{{ m.details }}</td></tr>{% endif %}{% endfor %}
+    </table>
+    <div style="font-size:12px;color:#666;margin-top:8px">{% if lang == 'sw' %}Tumia <b>{{ invoice.invoice_number }}</b> kama kumbukumbu ya malipo.{% else %}Use <b>{{ invoice.invoice_number }}</b> as the payment reference.{% endif %}</div>
+  </td></tr>
+  {% endif %}
+  <tr><td style="padding:24px 26px;font-size:13.5px;line-height:1.6">{% if lang == 'sw' %}Asante kwa kufanya kazi na sisi,{% else %}Thank you for working with us,{% endif %}<br><b>{{ invoice.provider_rep }}</b><br>{{ invoice.provider_name }}</td></tr>
+  <tr><td style="background:#1a3c6e;color:#c9d8ee;text-align:center;font-size:11.5px;padding:14px">{{ invoice.provider_name|upper }} · <a href="https://www.jamiitek.com" style="color:#c9d8ee">www.jamiitek.com</a> · info@jamiitek.com</td></tr>
+</table>
+</td></tr></table>
+</body></html>

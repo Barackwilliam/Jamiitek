@@ -171,13 +171,10 @@ def _fulfill_invoice(tx):
 
     # Kiasi HALISI kilicholipwa, si "imelipwa yote". Invoice ikibadilishwa
     # baada ya mteja kuanzisha malipo (bidhaa imeongezwa), kiasi cha zamani
-    # kiliiweka "Paid" kamili — na salio jipya likapotea.
-    from decimal import Decimal
-    total = Decimal(str(inv.grand_total))
-    paid = min(total, Decimal(str(inv.amount_paid or 0)) + Decimal(str(tx.amount)))
-    inv.amount_paid = paid
-    inv.status = 'paid' if paid >= total else 'partial'
-    inv.paid_at = timezone.now()
-    inv.paid_reference = tx.confirmation_code or tx.merchant_reference
-    inv.save(update_fields=['amount_paid', 'status', 'paid_at', 'paid_reference'])
+    # kiliiweka "Paid" kamili — na salio jipya likapotea. Malipo yanaingia
+    # kwenye historia ya ankara; hali (partial/paid) inafuata kiasi.
+    inv.record_payment(tx.amount, method='Pesapal',
+                       reference=tx.confirmation_code or tx.merchant_reference,
+                       by=tx.email or tx.phone or '', source='pesapal')
+    inv.save(update_fields=['amount_paid', 'payments', 'status', 'paid_at', 'paid_reference', 'sent_at'])
     logger.info('Pesapal: invoice %s imelipwa', inv.invoice_number or inv.pk)

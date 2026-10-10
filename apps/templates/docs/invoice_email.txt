@@ -1,0 +1,39 @@
+{% load custom_filters %}{% if lang == 'sw' %}Habari {{ invoice.display_client }},
+
+Ankara {{ invoice.invoice_number }}{% if invoice.project_name %} ({{ invoice.project_name }}){% endif %} kutoka {{ invoice.provider_name }} iko tayari.
+
+Kiasi cha kulipa: {{ invoice.currency }} {{ invoice.balance_due|thousands }}{% if invoice.due_date %}
+Tarehe ya mwisho: {{ invoice.due_date|localdate:lang }}{% endif %}
+
+{% for it in items %}- {{ it.desc|bilingual:lang }}: {{ invoice.currency }} {{ it.amount|thousands }}
+{% endfor %}
+Ione, ipakue (PDF) na ulipe hapa:
+{{ link }}
+{% if invoice.shows_manual and invoice.payment_methods %}
+Njia za kulipa:
+{% for m in invoice.payment_methods %}{% if m.details %}- {{ m.method }}: {{ m.details }}
+{% endif %}{% endfor %}Tafadhali tumia {{ invoice.invoice_number }} kama kumbukumbu ya malipo.
+{% endif %}
+Asante kwa kufanya kazi na sisi,
+{{ invoice.provider_rep }}
+{{ invoice.provider_name }} · www.jamiitek.com
+{% else %}Hello {{ invoice.display_client }},
+
+Invoice {{ invoice.invoice_number }}{% if invoice.project_name %} ({{ invoice.project_name }}){% endif %} from {{ invoice.provider_name }} is ready.
+
+Amount due: {{ invoice.currency }} {{ invoice.balance_due|thousands }}{% if invoice.due_date %}
+Due date: {{ invoice.due_date|localdate:lang }}{% endif %}
+
+{% for it in items %}- {{ it.desc|bilingual:lang }}: {{ invoice.currency }} {{ it.amount|thousands }}
+{% endfor %}
+View, download (PDF) and pay here:
+{{ link }}
+{% if invoice.shows_manual and invoice.payment_methods %}
+How to pay:
+{% for m in invoice.payment_methods %}{% if m.details %}- {{ m.method }}: {{ m.details }}
+{% endif %}{% endfor %}Please use {{ invoice.invoice_number }} as the payment reference.
+{% endif %}
+Thank you for working with us,
+{{ invoice.provider_rep }}
+{{ invoice.provider_name }} · www.jamiitek.com
+{% endif %}

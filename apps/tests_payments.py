@@ -178,14 +178,15 @@ class InvoiceAndSafetyTest(TestCase):
         from apps.models import Invoice
         tx = PesapalTransaction.objects.create(purpose='invoice', target_id='TOK1', amount=Decimal('100000'),
                                                order_tracking_id='TRK-INV', status='pending')
-        inv = mock.Mock(grand_total=150000, amount_paid=0, token='TOK1', invoice_number='INV-1', pk=1)
-        qs = mock.Mock()
-        qs.filter.return_value.first.return_value = inv
-        with mock.patch.object(Invoice.objects, 'select_for_update', return_value=qs):
-            from apps.pesapal_fulfill import _fulfill_invoice
-            _fulfill_invoice(tx)
+        inv = Invoice.objects.create(token='TOK1', currency='TZS', status='sent',
+                                     line_items=[{'desc': 'Website', 'qty': 1, 'unit_price': 150000, 'amount': 150000}])
+        from apps.pesapal_fulfill import _fulfill_invoice
+        _fulfill_invoice(tx)
+        inv.refresh_from_db()
         # Awali: amount_paid = grand_total na status 'paid' — salio la 50,000 likapotea
         self.assertEqual(float(inv.amount_paid), 100000.0)
+        self.assertEqual(inv.balance_due, 50000)
+        self.assertEqual(inv.payments[0]['source'], 'pesapal')
         self.assertEqual(inv.status, 'partial')
 
     def test_paid_but_target_missing_alerts_owner(self):

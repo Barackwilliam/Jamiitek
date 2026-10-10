@@ -114,7 +114,7 @@
     <th class="r" width="18%">{% if lang == 'sw' %}Bei{% else %}Unit Price{% endif %}</th>
     <th class="r" width="22%">{% if lang == 'sw' %}Kiasi{% else %}Amount{% endif %}</th>
   </tr></thead>
-  {% for it in invoice.line_items %}
+  {% for it in items %}
   <tr{% if forloop.counter|divisibleby:2 %} class="alt"{% endif %}>
     <td class="desc">{% with parts=it.desc|bilingual:lang|split_first_sentence %}<div class="d-main">{{ parts.0 }}</div>{% if parts.1 %}<div class="d-detail">{{ parts.1 }}</div>{% endif %}{% endwith %}</td><td class="c">{{ it.qty }}</td>
     <td class="r">{{ it.unit_price|thousands }}</td><td class="r">{{ it.amount|thousands }}</td>
@@ -126,18 +126,29 @@
   {% if invoice.discount_amount %}<tr class="sub"><td class="r" colspan="3">{% if lang == 'sw' %}Punguzo{% else %}Discount{% endif %}</td><td class="r">− {{ invoice.currency }} {{ invoice.discount_amount|thousands }}</td></tr>{% endif %}
   {% if invoice.tax_percent %}<tr class="sub"><td class="r" colspan="3">{% if lang == 'sw' %}Kodi{% else %}VAT{% endif %} ({{ invoice.tax_percent|floatformat:"-2" }}%)</td><td class="r">{{ invoice.currency }} {{ invoice.tax_amount|thousands }}</td></tr>{% endif %}
   <tr class="grand"><td class="r" colspan="3">{% if lang == 'sw' %}JUMLA KUU{% else %}TOTAL{% endif %}</td><td class="r">{{ invoice.currency }} {{ invoice.grand_total|thousands }}</td></tr>
-  {% if invoice.amount_paid %}
-  <tr class="sub"><td class="r" colspan="3">{% if lang == 'sw' %}Imelipwa{% else %}Amount Paid{% endif %}</td><td class="r">− {{ invoice.currency }} {{ invoice.amount_paid|thousands }}</td></tr>
+  {% if invoice.paid_total %}
+  <tr class="sub"><td class="r" colspan="3">{% if lang == 'sw' %}Imelipwa{% else %}Amount Paid{% endif %}</td><td class="r">− {{ invoice.currency }} {{ invoice.paid_total|thousands }}</td></tr>
   {% if not invoice.is_paid %}<tr class="bal"><td class="r" colspan="3">{% if lang == 'sw' %}SALIO{% else %}BALANCE DUE{% endif %}</td><td class="r">{{ invoice.currency }} {{ invoice.balance_due|thousands }}</td></tr>{% endif %}
   {% endif %}
 </table>
 
-{% if invoice.payment_methods %}
+{% if not invoice.is_paid and invoice.payment_methods %}{% if invoice.shows_manual or not PESAPAL_ENABLED %}
 <table class="secbar"><tr><td>{% if lang == 'sw' %}03.&nbsp;&nbsp;NAMNA YA KULIPA{% else %}03.&nbsp;&nbsp;HOW TO PAY{% endif %}</td></tr></table>
 <table class="pay">
   {% for m in invoice.payment_methods %}{% if m.details %}
   <tr><td class="k">{{ m.method|bilingual:lang }}</td><td>{{ m.details }}</td></tr>
   {% endif %}{% endfor %}
+</table>
+<div class="terms">{% if lang == 'sw' %}Tumia <b>{{ invoice.invoice_number }}</b> kama kumbukumbu ya malipo.{% else %}Use <b>{{ invoice.invoice_number }}</b> as the payment reference.{% endif %}</div>
+{% endif %}{% endif %}
+
+{% if history or invoice.unlogged_paid %}
+<table class="secbar"><tr><td>{% if lang == 'sw' %}04.&nbsp;&nbsp;MALIPO YALIYOPOKELEWA{% else %}04.&nbsp;&nbsp;PAYMENTS RECEIVED{% endif %}</td></tr></table>
+<table class="pay">
+  {% if invoice.unlogged_paid %}<tr><td class="k">{% if lang == 'sw' %}Malipo ya awali{% else %}Earlier payment{% endif %}</td><td style="text-align:right">{{ invoice.currency }} {{ invoice.unlogged_paid|thousands }}</td></tr>{% endif %}
+  {% for p in history %}
+  <tr><td class="k">{% if p.at %}{{ p.at|localdate:lang }}{% endif %} · {{ p.method|default:"—" }}</td><td>{% if p.reference %}{% if lang == 'sw' %}Kumbukumbu{% else %}Ref{% endif %}: {{ p.reference }} &nbsp; {% endif %}<b>{{ invoice.currency }} {{ p.amount|thousands }}</b></td></tr>
+  {% endfor %}
 </table>
 {% endif %}
 
@@ -154,6 +165,13 @@
   <div class="t">{% if lang == 'sw' %}IMELIPWA{% else %}PAID IN FULL{% endif %}</div>
   <div class="d">{% if invoice.paid_at %}{{ invoice.paid_at|localdate:lang }}{% endif %}{% if invoice.paid_reference %} · {% if lang == 'sw' %}Kumbukumbu{% else %}Ref{% endif %}: {{ invoice.paid_reference }}{% endif %}</div>
 </td></tr></table>
+{% endif %}
+
+{% if qr %}
+<table style="margin-top:14px;width:100%"><tr>
+  <td width="70"><img src="{{ qr }}" width="62" height="62"></td>
+  <td style="font-size:8.5pt;color:#666666;vertical-align:middle">{% if lang == 'sw' %}<b style="color:#1a3c6e">Ankara hii mtandaoni</b><br>Scan QR kuona salio la sasa na kulipa.{% else %}<b style="color:#1a3c6e">This invoice online</b><br>Scan to see the live balance and pay.{% endif %}</td>
+</tr></table>
 {% endif %}
 
 <div id="footerContent">

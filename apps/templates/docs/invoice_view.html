@@ -20,7 +20,7 @@
   .lang-switch a{padding:6px 15px;border-radius:2px;text-decoration:none;font-size:12px;font-weight:bold;
     color:rgba(255,255,255,.75);letter-spacing:.5px}
   .lang-switch a.on{background:#fff;color:var(--navy)}
-  .wrap{max-width:820px;margin:0 auto;padding:22px 20px 110px}
+  .wrap{max-width:820px;margin:0 auto;padding:22px 20px 40px}
   .ribbon{display:flex;align-items:center;gap:12px;padding:13px 18px;margin-bottom:20px;
     font-size:13.5px;border-left:4px solid}
   .ribbon svg{width:20px;height:20px;flex-shrink:0}
@@ -67,7 +67,7 @@
   .items tbody tr:nth-child(even) td{background:var(--tint-l)}
   .items tfoot td{padding:10px 15px;font-size:13.5px;background:var(--tint-l);border-top:1px solid var(--line-l)}
   .items tfoot td.lbl{text-align:right;color:var(--muted)}
-  .items tfoot td.val{text-align:right;font-weight:bold;font-variant-numeric:tabular-nums}
+  .items tfoot td.val{text-align:right;font-weight:bold;font-variant-numeric:tabular-nums;white-space:nowrap}
   .items tfoot tr.grand td{background:var(--tint);border-top:2px solid var(--navy);color:var(--navy);
     font-weight:bold;padding:13px 15px}
   .items tfoot tr.grand td.lbl{font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:var(--navy)}
@@ -90,16 +90,74 @@
   .doc-foot{background:var(--navy);color:#fff;text-align:center;padding:16px;margin-top:30px;font-size:12px}
   .doc-foot a{color:#c9d8ee;text-decoration:none}
   .doc-foot .tagline{color:#c9d8ee;font-style:italic;font-size:11px;margin-top:3px}
-  .actionbar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid var(--navy);
-    padding:14px 20px;z-index:60;box-shadow:0 -4px 20px rgba(26,60,110,.12)}
-  .actionbar-in{max-width:820px;margin:0 auto;display:flex;gap:11px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
   .btn{display:inline-flex;align-items:center;gap:8px;padding:13px 26px;font-weight:bold;font-size:14px;
     cursor:pointer;border:none;font-family:inherit;text-decoration:none;letter-spacing:.4px;transition:.2s}
   .btn svg{width:17px;height:17px}
   .btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--navy-d)}
   .btn-primary svg{fill:#fff}
+  .flash{padding:12px 16px;margin-bottom:14px;font-size:13.5px;border-left:4px solid var(--navy);background:#fff}
+  .flash.error{border-color:var(--red);color:#8c1f2a;background:#fdecee}
+  .flash.success{border-color:var(--green);color:#155e33;background:#eaf7ee}
+  .preview{background:#1a1a1a;color:#fff;text-align:center;font-size:12.5px;padding:8px;letter-spacing:.5px}
+  .summary{background:#fff;box-shadow:0 1px 3px rgba(26,60,110,.1),0 10px 40px rgba(26,60,110,.08);margin-bottom:20px;
+    display:grid;grid-template-columns:1.3fr 1fr;border-top:4px solid var(--navy)}
+  .summary.paid{border-top-color:var(--green)}.summary.overdue{border-top-color:var(--red)}
+  .sum-l{padding:24px 28px}
+  .sum-r{padding:24px 28px;background:var(--tint-l);border-left:1px solid var(--line-l);display:flex;flex-direction:column;justify-content:center;gap:10px}
+  .sum-lbl{font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);font-weight:bold}
+  .sum-amt{font-size:34px;font-weight:bold;color:var(--navy);font-variant-numeric:tabular-nums;line-height:1.15;margin-top:4px}
+  .sum-amt small{font-size:15px;color:var(--muted);font-weight:normal;margin-right:4px}
+  .sum-due{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:13px;font-weight:bold;padding:5px 11px}
+  .sum-due.ok{background:var(--cream);color:var(--gold-t)}.sum-due.late{background:#fdecee;color:var(--red)}
+  .sum-due.done{background:#eaf7ee;color:var(--green)}
+  .prog{margin-top:16px}
+  .prog-bar{height:8px;background:var(--line-l);border-radius:99px;overflow:hidden}
+  .prog-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--green));border-radius:99px}
+  .prog-txt{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:6px;font-variant-numeric:tabular-nums}
+  .steps{display:flex;margin-top:18px;gap:0}
+  .step{flex:1;text-align:center;position:relative;font-size:10.5px;color:var(--muted);letter-spacing:.3px}
+  .step::before{content:"";position:absolute;top:9px;left:-50%;width:100%;height:2px;background:var(--line-l);z-index:0}
+  .step:first-child::before{display:none}
+  .step .dot{width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid var(--line);margin:0 auto 5px;position:relative;z-index:1;
+    display:flex;align-items:center;justify-content:center}
+  .step.done{color:var(--navy);font-weight:bold}
+  .step.done .dot{background:var(--navy);border-color:var(--navy)}
+  .step.done .dot::after{content:"";width:6px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+  .step.done::before{background:var(--navy)}
+  .step.now .dot{border-color:var(--gold);box-shadow:0 0 0 4px rgba(196,154,40,.18)}
+  .btn-pay{background:var(--green);color:#fff;justify-content:center;width:100%;font-size:15px;padding:15px}
+  .btn-pay:hover{background:#17663a}.btn-pay svg{fill:#fff}
+  .btn-out{background:#fff;color:var(--navy);border:1.5px solid var(--navy);justify-content:center;width:100%}
+  .btn-out:hover{background:var(--tint)}.btn-out svg{fill:var(--navy)}
+  .secure{font-size:11px;color:var(--muted);text-align:center}
+  .pay .v .row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .copy{background:var(--tint);border:1px solid var(--line);color:var(--navy);font-size:11px;font-weight:bold;padding:5px 10px;cursor:pointer;
+    font-family:inherit;letter-spacing:.4px;white-space:nowrap}
+  .copy:hover{background:var(--navy);color:#fff}
+  .copy.ok{background:var(--green);border-color:var(--green);color:#fff}
+  .payref{margin:10px 46px 0;font-size:12.5px;color:var(--muted)}
+  .payref b{color:var(--navy)}
+  .hist-wrap{margin:0 46px}
+  .hist{width:100%;border-collapse:collapse;font-size:13px}
+  .hist td{padding:10px 14px;border-bottom:1px solid var(--line-l)}
+  .hist td.r{text-align:right;font-weight:bold;color:var(--green);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .hist .m{color:var(--muted);font-size:12px}
+  .qr-row{display:flex;align-items:center;gap:16px;margin:24px 46px 0;padding:14px 16px;border:1px dashed var(--line)}
+  .qr-row img{width:84px;height:84px}
+  .qr-row .t{font-size:12.5px;color:var(--muted);line-height:1.5}
+  .qr-row .t b{color:var(--navy)}
+  .help{margin:16px 0 0;text-align:center;font-size:13px;color:var(--muted)}
+  .help a{color:var(--navy);font-weight:bold}
+  .btn-ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}.btn-ghost svg{fill:var(--navy)}
+  .btn-ghost:hover{border-color:var(--navy)}
   @media(max-width:680px){
-    .wrap{padding:16px 12px 100px}
+    .summary{grid-template-columns:1fr}
+    .sum-r{border-left:none;border-top:1px solid var(--line-l)}
+    .sum-l,.sum-r{padding:20px 18px}
+    .sum-amt{font-size:28px}
+    .step{font-size:9.5px}
+    .payref,.hist-wrap,.qr-row{margin-left:14px;margin-right:14px}
+    .wrap{padding:16px 12px 32px}
     .invhead{padding:24px 18px 4px}
     .invhead .right{text-align:left;width:100%}
     .invhead .right .amt-lbl{margin-top:14px}
@@ -130,7 +188,7 @@
       font-size:11px;letter-spacing:.8px;text-transform:uppercase}
     .items tfoot tr{display:flex;justify-content:space-between;align-items:baseline;
       padding:9px 14px;border-top:1px solid var(--line-l);background:var(--tint-l)}
-    .items tfoot td{padding:0!important;border:none}
+    .items tfoot td,.items tfoot tr.grand td,.items tfoot tr.bal td{padding:0!important;border:none!important;background:transparent!important}
     .items tfoot td.lbl{text-align:left}
     .items tfoot tr.grand{background:var(--tint);border-top:2px solid var(--navy)}
     .items tfoot tr.bal{background:var(--cream);border-top:1px solid var(--gold)}
@@ -147,10 +205,11 @@
   @media(max-width:400px){
     .invhead h1{font-size:18px}.invhead .right .amt{font-size:22px}
   }
-  @media print{.topbar,.actionbar,.ribbon{display:none!important}body{background:#fff}.paper{box-shadow:none}.wrap{padding:0}}
+  @media print{.topbar,.ribbon,.summary,.flash,.help,.copy,.preview{display:none!important}body{background:#fff}.paper{box-shadow:none}.wrap{padding:0}}
 </style>
 </head>
 <body>
+{% if preview %}<div class="preview">{% if invoice.status == 'draft' %}DRAFT PREVIEW — the client cannot open this link until you mark it as sent{% else %}CANCELLED — the client cannot open this invoice{% endif %}</div>{% endif %}
 <div class="topbar">
   <div class="topbar-in">
     <div>
@@ -165,22 +224,63 @@
 </div>
 
 <div class="wrap">
-  {% if invoice.is_paid %}
-  <div class="ribbon paid">
-    <svg viewBox="0 0 24 24"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
-    <div>{% if lang == 'sw' %}<b>Ankara hii imelipwa kikamilifu.</b> Asante!{% else %}<b>This invoice has been paid in full.</b> Thank you!{% endif %}</div>
+  {% for m in flash %}<div class="flash {{ m.tags }}">{{ m }}</div>{% endfor %}
+
+  {% with st=invoice.display_status %}
+  <div class="summary {{ st }}">
+    <div class="sum-l">
+      <div class="sum-lbl">{% if invoice.is_paid %}{% if lang == 'sw' %}Imelipwa kikamilifu{% else %}Paid in full{% endif %}{% elif invoice.paid_total %}{% if lang == 'sw' %}Salio la kulipa{% else %}Balance due{% endif %}{% else %}{% if lang == 'sw' %}Kiasi cha kulipa{% else %}Amount due{% endif %}{% endif %}</div>
+      <div class="sum-amt"><small>{{ invoice.currency }}</small>{% if invoice.is_paid %}{{ invoice.grand_total|thousands }}{% else %}{{ invoice.balance_due|thousands }}{% endif %}</div>
+      {% if invoice.is_paid %}
+        <div class="sum-due done">✓ {% if lang == 'sw' %}Asante! Malipo yamepokelewa{% else %}Thank you! Payment received{% endif %}{% if invoice.paid_at %} · {{ invoice.paid_at|localdate:lang }}{% endif %}</div>
+      {% elif invoice.due_date %}
+        {% if invoice.is_overdue %}
+        <div class="sum-due late">⚠ {% if lang == 'sw' %}Imechelewa siku {{ invoice.days_overdue }} · ilitakiwa {{ invoice.due_date|localdate:lang }}{% else %}Overdue by {{ invoice.days_overdue }} day{{ invoice.days_overdue|pluralize }} · was due {{ invoice.due_date|localdate:lang }}{% endif %}</div>
+        {% elif invoice.days_to_due == 0 %}
+        <div class="sum-due ok">⏱ {% if lang == 'sw' %}Mwisho ni leo{% else %}Due today{% endif %}</div>
+        {% else %}
+        <div class="sum-due ok">⏱ {% if lang == 'sw' %}Siku {{ invoice.days_to_due }} zimebaki · lipa kabla ya {{ invoice.due_date|localdate:lang }}{% else %}Due in {{ invoice.days_to_due }} day{{ invoice.days_to_due|pluralize }} · {{ invoice.due_date|localdate:lang }}{% endif %}</div>
+        {% endif %}
+      {% endif %}
+      {% if invoice.paid_total and not invoice.is_paid %}
+      <div class="prog">
+        <div class="prog-bar"><i style="width:{{ invoice.paid_percent }}%"></i></div>
+        <div class="prog-txt"><span>{% if lang == 'sw' %}Umelipa{% else %}Paid{% endif %} {{ invoice.currency }} {{ invoice.paid_total|thousands }} ({{ invoice.paid_percent }}%)</span><span>{% if lang == 'sw' %}Jumla{% else %}Total{% endif %} {{ invoice.grand_total|thousands }}</span></div>
+      </div>
+      {% endif %}
+      <div class="steps">
+        <div class="step done"><div class="dot"></div>{% if lang == 'sw' %}Imetolewa{% else %}Issued{% endif %}</div>
+        <div class="step {% if invoice.viewed_at or invoice.paid_total or invoice.is_paid %}done{% else %}now{% endif %}"><div class="dot"></div>{% if lang == 'sw' %}Imefunguliwa{% else %}Opened{% endif %}</div>
+        <div class="step {% if invoice.paid_total or invoice.is_paid %}done{% elif invoice.viewed_at %}now{% endif %}"><div class="dot"></div>{% if lang == 'sw' %}Malipo yameanza{% else %}Payment started{% endif %}</div>
+        <div class="step {% if invoice.is_paid %}done{% elif invoice.paid_total %}now{% endif %}"><div class="dot"></div>{% if lang == 'sw' %}Imelipwa{% else %}Paid{% endif %}</div>
+      </div>
+    </div>
+    <div class="sum-r">
+      {% if not invoice.is_paid and not preview %}
+        {% if invoice.shows_pesapal and PESAPAL_ENABLED %}
+        <form method="post" action="{% url 'pesapal_pay_invoice' invoice.token %}">{% csrf_token %}
+          <button type="submit" class="btn btn-pay">
+            <svg viewBox="0 0 24 24"><path d="M12 1 3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5zm-2 16-4-4 1.4-1.4L10 14.2l6.6-6.6L18 9z"/></svg>
+            {% if lang == 'sw' %}Lipa sasa{% else %}Pay now{% endif %} · {{ invoice.currency }} {{ invoice.balance_due|thousands }}
+          </button>
+        </form>
+        <div class="secure">🔒 {% if lang == 'sw' %}Malipo salama kupitia Pesapal — kadi au simu{% else %}Secure payment via Pesapal — card or mobile money{% endif %}</div>
+        {% endif %}
+        {% if invoice.shows_manual or not PESAPAL_ENABLED %}
+        <a class="btn btn-out" href="#how-to-pay">
+          <svg viewBox="0 0 24 24"><path d="M4 10h3v7H4zm6.5 0h3v7h-3zM2 19h20v3H2zm15-9h3v7h-3zM12 1 2 6v2h20V6z"/></svg>
+          {% if lang == 'sw' %}Lipa kwa M-Pesa / Benki{% else %}Pay by M-Pesa / Bank{% endif %}</a>
+        {% endif %}
+      {% endif %}
+      <a class="btn btn-ghost" style="justify-content:center" href="{% url 'invoice_pdf' invoice.token %}?lang={{ lang }}">
+        <svg viewBox="0 0 24 24"><path d="M12 16 6 10l1.4-1.4 3.6 3.6V4h2v8.2l3.6-3.6L18 10zM4 18h16v2H4z"/></svg>
+        {% if lang == 'sw' %}Pakua PDF{% else %}Download PDF{% endif %}</a>
+      <button type="button" class="btn btn-ghost" style="justify-content:center" onclick="window.print()">
+        <svg viewBox="0 0 24 24"><path d="M19 8H5a3 3 0 0 0-3 3v6h4v4h12v-4h4v-6a3 3 0 0 0-3-3zm-3 11H8v-5h8zm3-7a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm-1-9H6v4h12z"/></svg>
+        {% if lang == 'sw' %}Chapisha{% else %}Print{% endif %}</button>
+    </div>
   </div>
-  {% elif invoice.is_overdue %}
-  <div class="ribbon overdue">
-    <svg viewBox="0 0 24 24"><path d="M12 2 1 21h22zm0 15h-2v2h2zm0-8h-2v6h2z"/></svg>
-    <div>{% if lang == 'sw' %}<b>Ankara hii imepitwa na muda.</b> Tarehe ya mwisho ilikuwa {{ invoice.due_date|localdate:lang }}.{% else %}<b>This invoice is overdue.</b> It was due on {{ invoice.due_date|localdate:lang }}.{% endif %}</div>
-  </div>
-  {% else %}
-  <div class="ribbon due">
-    <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1 10V6h-2v8h6v-2z"/></svg>
-    <div>{% if lang == 'sw' %}Asante kwa biashara yako.{% if invoice.due_date %} Tafadhali lipa kabla ya <b>{{ invoice.due_date|localdate:lang }}</b>.{% endif %}{% else %}Thank you for your business.{% if invoice.due_date %} Please pay by <b>{{ invoice.due_date|localdate:lang }}</b>.{% endif %}{% endif %}</div>
-  </div>
-  {% endif %}
+  {% endwith %}
 
   <div class="paper">
     <div class="invhead">
@@ -203,7 +303,7 @@
       <table class="info">
         <tr>
           <td class="k">{% if lang == 'sw' %}Kwa{% else %}Bill To{% endif %}</td>
-          <td class="v">{{ invoice.display_client }}{% if invoice.display_company %}<br>{{ invoice.display_company }}{% endif %}{% if invoice.client_address %}<br>{{ invoice.client_address }}{% endif %}</td>
+          <td class="v">{{ invoice.display_client }}{% if invoice.display_company %}<br>{{ invoice.display_company }}{% endif %}{% if invoice.client_address %}<br>{{ invoice.client_address }}{% endif %}{% if invoice.client_phone %}<br>{{ invoice.client_phone }}{% endif %}</td>
           <td class="k">{% if lang == 'sw' %}Kutoka{% else %}From{% endif %}</td>
           <td class="v">{{ invoice.provider_name }}<br>{{ invoice.provider_rep }}</td>
         </tr>
@@ -211,7 +311,7 @@
           <td class="k">{% if lang == 'sw' %}Tarehe{% else %}Issue Date{% endif %}</td>
           <td class="v">{{ invoice.issue_date|default:invoice.created_at|localdate:lang }}</td>
           <td class="k">{% if lang == 'sw' %}Mwisho{% else %}Due Date{% endif %}</td>
-          <td class="v">{{ invoice.due_date|localdate:lang }}</td>
+          <td class="v">{% if invoice.due_date %}{{ invoice.due_date|localdate:lang }}{% else %}{% if lang == 'sw' %}Baada ya kupokea{% else %}On receipt{% endif %}{% endif %}</td>
         </tr>
       </table>
     </div>
@@ -227,7 +327,7 @@
           <th class="r">{% if lang == 'sw' %}Kiasi{% else %}Amount{% endif %}</th>
         </tr></thead>
         <tbody>
-          {% for it in invoice.line_items %}
+          {% for it in items %}
           <tr>
             <td class="desc">{% with parts=it.desc|bilingual:lang|split_first_sentence %}<div class="d-main">{{ parts.0 }}</div>{% if parts.1 %}<div class="d-detail">{{ parts.1 }}</div>{% endif %}{% endwith %}</td>
             <td class="c num" data-label="{% if lang == 'sw' %}Idadi{% else %}Qty{% endif %}">{{ it.qty }}</td>
@@ -243,21 +343,37 @@
           {% if invoice.discount_amount %}<tr><td class="lbl" colspan="3">{% if lang == 'sw' %}Punguzo{% else %}Discount{% endif %}</td><td class="val">− {{ invoice.currency }} {{ invoice.discount_amount|thousands }}</td></tr>{% endif %}
           {% if invoice.tax_percent %}<tr><td class="lbl" colspan="3">{% if lang == 'sw' %}Kodi{% else %}VAT{% endif %} ({{ invoice.tax_percent|floatformat:"-2" }}%)</td><td class="val">{{ invoice.currency }} {{ invoice.tax_amount|thousands }}</td></tr>{% endif %}
           <tr class="grand"><td class="lbl" colspan="3">{% if lang == 'sw' %}Jumla Kuu{% else %}Total{% endif %}</td><td class="val">{{ invoice.currency }} {{ invoice.grand_total|thousands }}</td></tr>
-          {% if invoice.amount_paid %}
-          <tr><td class="lbl" colspan="3">{% if lang == 'sw' %}Imelipwa{% else %}Amount Paid{% endif %}</td><td class="val">− {{ invoice.currency }} {{ invoice.amount_paid|thousands }}</td></tr>
+          {% if invoice.paid_total %}
+          <tr><td class="lbl" colspan="3">{% if lang == 'sw' %}Imelipwa{% else %}Amount Paid{% endif %}</td><td class="val">− {{ invoice.currency }} {{ invoice.paid_total|thousands }}</td></tr>
           {% if not invoice.is_paid %}<tr class="bal"><td class="lbl" colspan="3">{% if lang == 'sw' %}Salio{% else %}Balance Due{% endif %}</td><td class="val">{{ invoice.currency }} {{ invoice.balance_due|thousands }}</td></tr>{% endif %}
           {% endif %}
         </tfoot>
       </table>
     </div>
 
-    {% if invoice.payment_methods %}
-    <div class="secbar">{% if lang == 'sw' %}03.&nbsp;&nbsp;NAMNA YA KULIPA{% else %}03.&nbsp;&nbsp;HOW TO PAY{% endif %}</div>
+    {% if not invoice.is_paid and invoice.payment_methods %}{% if invoice.shows_manual or not PESAPAL_ENABLED %}
+    <div class="secbar" id="how-to-pay">{% if lang == 'sw' %}03.&nbsp;&nbsp;NAMNA YA KULIPA{% else %}03.&nbsp;&nbsp;HOW TO PAY{% endif %}</div>
     <div class="pay-wrap">
       <table class="pay">
         {% for m in invoice.payment_methods %}{% if m.details %}
-        <tr><td class="k">{{ m.method|bilingual:lang }}</td><td class="v">{{ m.details }}</td></tr>
+        <tr><td class="k">{{ m.method|bilingual:lang }}</td>
+          <td class="v"><div class="row"><span>{{ m.details }}</span>
+            <button type="button" class="copy" data-copy="{{ m.details }}">{% if lang == 'sw' %}NAKILI{% else %}COPY{% endif %}</button></div></td></tr>
         {% endif %}{% endfor %}
+      </table>
+    </div>
+    <div class="payref">{% if lang == 'sw' %}Tumia <b>{{ invoice.invoice_number }}</b> kama kumbukumbu ya malipo, kisha tutumie ujumbe wa uthibitisho.{% else %}Use <b>{{ invoice.invoice_number }}</b> as the payment reference, then send us the confirmation message.{% endif %}</div>
+    {% endif %}{% endif %}
+
+    {% if history or invoice.unlogged_paid %}
+    <div class="secbar">{% if lang == 'sw' %}04.&nbsp;&nbsp;MALIPO YALIYOPOKELEWA{% else %}04.&nbsp;&nbsp;PAYMENTS RECEIVED{% endif %}</div>
+    <div class="hist-wrap">
+      <table class="hist">
+        {% if invoice.unlogged_paid %}<tr><td>{% if lang == 'sw' %}Malipo ya awali{% else %}Earlier payment{% endif %}</td><td class="r">{{ invoice.currency }} {{ invoice.unlogged_paid|thousands }}</td></tr>{% endif %}
+        {% for p in history %}
+        <tr><td>{% if p.at %}{{ p.at|localdate:lang }}{% endif %} · {{ p.method|default:"—" }}{% if p.reference %}<div class="m">{% if lang == 'sw' %}Kumbukumbu{% else %}Ref{% endif %}: {{ p.reference }}</div>{% endif %}</td>
+          <td class="r">{{ invoice.currency }} {{ p.amount|thousands }}</td></tr>
+        {% endfor %}
       </table>
     </div>
     {% endif %}
@@ -278,29 +394,30 @@
     </div>
     {% endif %}
 
+    {% if qr %}
+    <div class="qr-row">
+      <img src="{{ qr }}" alt="QR">
+      <div class="t"><b>{% if lang == 'sw' %}Ankara hii mtandaoni{% else %}This invoice online{% endif %}</b><br>
+        {% if lang == 'sw' %}Scan QR kufungua ankara, kuona salio la sasa na kulipa.{% else %}Scan to open this invoice, see the live balance and pay.{% endif %}</div>
+    </div>
+    {% endif %}
+
     <div class="doc-foot">
-      {{ invoice.provider_name|upper }} &nbsp;·&nbsp; <a href="https://jamiitek.com">www.jamiitek.com</a> &nbsp;·&nbsp; info@jamiitek.com
+      {{ invoice.provider_name|upper }} &nbsp;·&nbsp; <a href="https://www.jamiitek.com">www.jamiitek.com</a> &nbsp;·&nbsp; info@jamiitek.com &nbsp;·&nbsp; {{ contact.phone_display }}
       <div class="tagline">{% if lang == 'sw' %}Mshirika Wako wa Kidijitali Tanzania{% else %}Your Trusted Digital Partner in Tanzania{% endif %}</div>
     </div>
   </div>
+
+  <div class="help">{% if lang == 'sw' %}Una swali kuhusu ankara hii?{% else %}Questions about this invoice?{% endif %}
+    <a href="https://wa.me/{{ contact.wa }}?text={% if lang == 'sw' %}Habari%2C%20nina%20swali%20kuhusu%20ankara%20{% else %}Hello%2C%20I%20have%20a%20question%20about%20invoice%20{% endif %}{{ invoice.invoice_number|urlencode }}" target="_blank" rel="noopener">WhatsApp {{ contact.phone_display }}</a></div>
 </div>
 
-<div class="actionbar">
-  <div class="actionbar-in">
-    {% if PESAPAL_ENABLED and not invoice.is_paid %}
-    <form method="post" action="{% url 'pesapal_pay_invoice' invoice.token %}" style="display:inline">
-      {% csrf_token %}
-      <button type="submit" class="btn" style="background:#16a34a;color:#fff;border:none;cursor:pointer">
-        <svg viewBox="0 0 24 24" style="fill:#fff"><path d="M12 1 3 5v6c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V5zm-2 16-4-4 1.4-1.4L10 14.2l6.6-6.6L18 9z"/></svg>
-        {% if lang == 'sw' %}Lipa na Pesapal{% else %}Pay with Pesapal{% endif %}
-      </button>
-    </form>
-    {% endif %}
-    <a class="btn btn-primary" href="{% url 'invoice_pdf' invoice.token %}?lang={{ lang }}">
-      <svg viewBox="0 0 24 24"><path d="M12 16 6 10l1.4-1.4 3.6 3.6V4h2v8.2l3.6-3.6L18 10zM4 18h16v2H4z"/></svg>
-      {% if lang == 'sw' %}Pakua PDF{% else %}Download PDF{% endif %}
-    </a>
-  </div>
-</div>
+<script>
+document.querySelectorAll('.copy').forEach(b=>b.addEventListener('click',()=>{
+  const t=b.dataset.copy.split(/\s+[-—]\s+/)[0].trim();
+  const done=()=>{const o=b.textContent;b.textContent='✓';b.classList.add('ok');setTimeout(()=>{b.textContent=o;b.classList.remove('ok')},1500)};
+  if(navigator.clipboard)navigator.clipboard.writeText(t).then(done);else{const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove();done();}
+}));
+</script>
 </body>
 </html>

@@ -63,6 +63,51 @@
   .toast.err{border-color:rgba(255,59,92,.4);color:var(--red)}
   .toast.ok{border-color:rgba(0,255,136,.4);color:var(--green)}
   body{padding-bottom:100px}
+  .st-pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.8px;padding:4px 10px;border-radius:999px;border:1px solid;margin-left:10px;vertical-align:middle}
+  .st-draft,.st-cancelled{color:var(--text-3);border-color:var(--border)}
+  .st-sent,.st-viewed{color:var(--cyan);border-color:rgba(0,212,255,.3);background:var(--cyan-d)}
+  .st-partial{color:var(--yellow);border-color:rgba(255,184,0,.3);background:var(--yellow-d)}
+  .st-paid{color:var(--green);border-color:rgba(0,255,136,.3);background:var(--green-d)}
+  .st-overdue{color:var(--red);border-color:rgba(255,59,92,.3);background:var(--red-d)}
+  .share-grid{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center}
+  .share-btns{display:flex;gap:8px;flex-wrap:wrap}
+  .share-btns .jt-btn{font-size:12px;padding:8px 13px}
+  .share-meta{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;color:var(--text-3);font-size:11px}
+  .pbar{height:8px;border-radius:99px;background:var(--card-s);overflow:hidden;margin:10px 0 2px}
+  .pbar i{display:block;height:100%;background:linear-gradient(90deg,var(--yellow),var(--green));border-radius:99px;transition:width .4s}
+  .trow.paid{color:var(--green)}
+  .mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+  .mode{position:relative;border:1px solid var(--border);border-radius:var(--r-lg);padding:13px 14px;cursor:pointer;
+    background:var(--card-s);transition:.2s}
+  .mode:hover{border-color:var(--border-s)}
+  .mode input{position:absolute;opacity:0}
+  .mode b{display:block;font-size:13px;color:var(--text);margin-bottom:3px}
+  .mode span{font-size:11.5px;color:var(--text-3);line-height:1.45;display:block}
+  .mode.on{border-color:var(--cyan);background:var(--cyan-d);box-shadow:0 0 0 1px var(--cyan) inset}
+  .mode .warn{color:var(--yellow);margin-top:5px}
+  .hist{width:100%;border-collapse:collapse;font-size:13px}
+  .hist th{text-align:left;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;
+    color:var(--text-3);padding:8px;border-bottom:1px solid var(--border)}
+  .hist td{padding:10px 8px;border-bottom:1px solid var(--border);color:var(--text-2)}
+  .hist td.amt{font-family:var(--mono);font-weight:700;color:var(--green);white-space:nowrap}
+  .hist .src{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:99px;border:1px solid var(--border);color:var(--text-3)}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);z-index:150;display:none;
+    align-items:center;justify-content:center;padding:16px}
+  .modal-bg.open{display:flex}
+  .modal{background:var(--bg2);border:1px solid var(--border-s);border-radius:16px;padding:22px;width:100%;max-width:440px;
+    box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  .modal h3{font-family:var(--head);font-size:17px;margin:0 0 4px;color:var(--text)}
+  .modal .sub{font-size:12px;color:var(--text-3);margin-bottom:16px;font-family:var(--mono)}
+  .modal .chips{display:flex;gap:6px;flex-wrap:wrap;margin:-6px 0 12px}
+  .modal .chips button{font-family:var(--mono);font-size:11px;padding:5px 10px;border-radius:99px;border:1px solid var(--border);
+    background:var(--card-s);color:var(--text-2);cursor:pointer}
+  .modal .chips button:hover{border-color:var(--cyan);color:var(--cyan)}
+  .modal .acts{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
+  .errs{background:var(--red-d);border:1px solid rgba(255,59,92,.3);color:var(--red);border-radius:var(--r-lg);
+    padding:12px 16px;margin-bottom:18px;font-size:13px;display:none}
+  .errs.show{display:block}
+  @media(max-width:760px){.share-grid{grid-template-columns:1fr}.mode-grid{grid-template-columns:1fr}}
   @media(max-width:640px){.grid2,.grid3,.grid4,.lang-pair{grid-template-columns:1fr}}
 </style>
 {% endblock %}
@@ -70,21 +115,40 @@
 <div class="cb-topline">
   <div>
     <a class="cb-back" href="{% url 'invoice_list' %}"><i class="fas fa-arrow-left"></i> All Invoices</a>
-    <div class="cb-title">{{ invoice.invoice_number|default:"New Invoice" }}</div>
+    <div class="cb-title">{{ invoice.invoice_number|default:"New Invoice" }}
+      <span class="st-pill st-{{ invoice.display_status }}" id="stPill">{% if invoice.is_overdue %}Overdue · {{ invoice.days_overdue }}d{% else %}{{ invoice.display_status|title }}{% endif %}</span></div>
   </div>
   <div class="cb-actions">
-    <select class="status-sel" id="statusSel">
-      {% for val, label in invoice.STATUS %}<option value="{{ val }}" {% if invoice.status == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    <select class="status-sel" id="statusSel" title="Status">
+      {% for val, label in statuses %}<option value="{{ val }}" {% if invoice.status == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
     </select>
-    <button type="button" class="jt-btn btn-ghost" onclick="markPaid()"><i class="fas fa-check"></i> Mark Paid</button>
+    <button type="button" class="jt-btn btn-ghost" onclick="duplicateInvoice()" title="Copy as a new draft"><i class="fas fa-clone"></i> Duplicate</button>
+    <button type="button" class="jt-btn btn-ghost" onclick="openModal('payModal')"{% if invoice.status == 'cancelled' %} disabled{% endif %}><i class="fas fa-hand-holding-dollar"></i> Record payment</button>
     <button type="button" class="jt-btn btn-cyan" onclick="saveInvoice()"><i class="fas fa-floppy-disk"></i> Save</button>
   </div>
 </div>
 
+<div class="errs" id="errs"></div>
+
 {% if invoice.pk %}
 <div class="share-box">
-  <i class="fas fa-link"></i> Client link: <a href="{{ invoice.public_url }}" target="_blank">https://jamiitek.com{{ invoice.public_url }}</a>
-  <div class="sub">Send this to your client — they'll view the invoice and download a PDF.</div>
+  <div class="share-grid">
+    <div>
+      <i class="fas fa-link"></i> Client link: <a href="{{ invoice.public_url }}" target="_blank" id="pubLink">{{ public_link }}</a>
+      <div class="share-meta">
+        <span><i class="fas fa-paper-plane"></i> Sent: {{ invoice.sent_at|date:"d M Y H:i"|default:"not yet" }}</span>
+        <span><i class="fas fa-eye"></i> Client opened: {{ invoice.viewed_at|date:"d M Y H:i"|default:"not yet" }}</span>
+        {% if invoice.due_date %}<span><i class="fas fa-calendar"></i> {% if invoice.is_paid %}Paid{% elif invoice.days_to_due < 0 %}Overdue by {{ invoice.days_overdue }} day{{ invoice.days_overdue|pluralize }}{% elif invoice.days_to_due == 0 %}Due today{% else %}Due in {{ invoice.days_to_due }} day{{ invoice.days_to_due|pluralize }}{% endif %}</span>{% endif %}
+      </div>
+    </div>
+    <div class="share-btns">
+      <button type="button" class="jt-btn btn-ghost" onclick="copyLink()"><i class="fas fa-copy"></i> Copy</button>
+      <a class="jt-btn btn-ghost" href="{{ wa_link }}" target="_blank" rel="noopener" onclick="markSent()"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+      <button type="button" class="jt-btn btn-ghost" onclick="openModal('sendModal')"><i class="fas fa-envelope"></i> Email</button>
+      <a class="jt-btn btn-ghost" href="{{ invoice.public_url }}" target="_blank"><i class="fas fa-eye"></i> Preview</a>
+      <a class="jt-btn btn-ghost" href="{{ invoice.public_url }}pdf/?lang=sw"><i class="fas fa-file-pdf"></i> PDF</a>
+    </div>
+  </div>
 </div>
 {% endif %}
 
@@ -93,7 +157,9 @@
   <div class="trow"><span>Discount</span><span id="tDisc">0</span></div>
   <div class="trow"><span>VAT</span><span id="tTax">0</span></div>
   <div class="trow grand"><span>TOTAL</span><span id="tGrand">0</span></div>
+  <div class="trow paid"><span>Paid{% if history %} ({{ history|length }} payment{{ history|length|pluralize }}){% endif %}</span><span id="tPaid">0</span></div>
   <div class="trow bal"><span>Balance due</span><span id="tBal">0</span></div>
+  <div class="pbar"><i id="tBar" style="width:{{ invoice.paid_percent }}%"></i></div>
 </div>
 
 <form id="invForm">
@@ -153,27 +219,67 @@
       <div class="grid3" style="margin-top:16px">
         <div class="fld"><label class="f-label">VAT %</label><input type="number" step="0.01" class="f-input" id="tax_percent" value="{{ invoice.tax_percent|default_if_none:'' }}" placeholder="18"></div>
         <div class="fld"><label class="f-label">Discount</label><input type="number" class="f-input" id="discount_amount" value="{{ invoice.discount_amount|default_if_none:'' }}" placeholder="0"></div>
-        <div class="fld"><label class="f-label">Amount paid</label><input type="number" class="f-input" id="amount_paid" value="{{ invoice.amount_paid|default_if_none:'' }}" placeholder="0"></div>
+        <div class="fld"><label class="f-label">Amount paid</label>
+          <div class="f-input" style="display:flex;justify-content:space-between;align-items:center;opacity:.85">
+            <span>{{ invoice.currency }} {{ invoice.paid_total|floatformat:"0g" }}</span>
+            <a href="#" onclick="openModal('payModal');return false" style="color:var(--cyan);font-size:12px">+ Record</a></div></div>
       </div>
     </div>
   </div>
 
   <div class="cb-section">
-    <div class="sh"><span class="n">4</span><h2>Payment</h2><span class="hint">M-Pesa, bank, cash — any method</span></div>
+    <div class="sh"><span class="n">4</span><h2>Payment</h2><span class="hint">choose what the client sees</span></div>
     <div class="jt-card" style="padding:20px">
-      <div id="pmBody"></div>
-      <button type="button" class="add-btn" onclick="addMethod()">+ Add payment method</button>
+      <div class="mode-grid" id="modeGrid">
+        {% for val, label in invoice.PAYMENT_MODES %}
+        <label class="mode{% if invoice.payment_mode == val %} on{% endif %}">
+          <input type="radio" name="payment_mode" value="{{ val }}"{% if invoice.payment_mode == val %} checked{% endif %}>
+          {% if val == 'manual' %}<b><i class="fas fa-building-columns"></i> Default methods</b><span>M-Pesa & bank details below. You confirm payment and record it.</span>
+          {% elif val == 'pesapal' %}<b><i class="fas fa-credit-card"></i> Pesapal</b><span>"Pay now" button — card / mobile money online. Recorded automatically.</span>
+          {% else %}<b><i class="fas fa-layer-group"></i> Both</b><span>Client chooses: Pesapal online or M-Pesa / bank.</span>{% endif %}
+          {% if val != 'manual' and not PESAPAL_ENABLED %}<span class="warn"><i class="fas fa-triangle-exclamation"></i> Pesapal keys not set — client will see the default methods.</span>{% endif %}
+        </label>
+        {% endfor %}
+      </div>
+      <div id="manualBox"{% if invoice.payment_mode == 'pesapal' %} style="display:none"{% endif %}>
+        <div id="pmBody"></div>
+        <div style="display:flex;gap:10px">
+          <button type="button" class="add-btn" onclick="addMethod()">+ Add payment method</button>
+          <button type="button" class="add-btn" style="width:auto;white-space:nowrap" onclick="resetMethods()">↺ Default methods</button>
+        </div>
+      </div>
       <div class="fld" style="margin-top:16px">
         <label class="f-label">Payment terms</label>
         <div class="fld-row"><input type="text" class="f-input" id="payment_terms" value="{{ invoice.payment_terms }}" placeholder="Due within 14 days">
         <button type="button" class="ai-btn" onclick="assist('terms','payment_terms')">✨ AI</button></div>
       </div>
-      <div class="fld"><label class="f-label">Payment reference (M-Pesa/bank)</label><input type="text" class="f-input" id="paid_reference" value="{{ invoice.paid_reference }}"></div>
+      <div class="fld"><label class="f-label">Last payment reference (M-Pesa/bank)</label><input type="text" class="f-input" id="paid_reference" value="{{ invoice.paid_reference }}"></div>
     </div>
   </div>
 
   <div class="cb-section">
-    <div class="sh"><span class="n">5</span><h2>Notes</h2><span class="hint">shown to the client</span>
+    <div class="sh"><span class="n">5</span><h2>Payment history</h2><span class="hint">every payment received, oldest first</span>
+      <button type="button" class="ai-btn small" style="margin-left:auto;background:var(--green-d);color:var(--green);border-color:rgba(0,255,136,.3)" onclick="openModal('payModal')">+ Record payment</button></div>
+    <div class="jt-card" style="padding:12px 20px">
+      {% if history or invoice.unlogged_paid %}
+      <table class="hist">
+        <tr><th>Date</th><th>Method</th><th>Reference</th><th>By</th><th style="text-align:right">Amount</th><th></th></tr>
+        {% if invoice.unlogged_paid %}<tr><td>—</td><td colspan="3">Earlier payment (before history)</td><td class="amt" style="text-align:right">{{ invoice.currency }} {{ invoice.unlogged_paid|floatformat:"0g" }}</td><td></td></tr>{% endif %}
+        {% for p in history %}
+        <tr><td>{{ p.at|date:"d M Y H:i"|default:"—" }}</td><td>{{ p.method|default:"—" }} <span class="src">{{ p.source }}</span></td>
+          <td style="font-family:var(--mono);font-size:12px">{{ p.reference|default:"—" }}</td><td>{{ p.by|default:"—" }}</td>
+          <td class="amt" style="text-align:right">{{ invoice.currency }} {{ p.amount|floatformat:"0g" }}</td>
+          <td style="text-align:right">{% if p.source != 'pesapal' %}<button type="button" class="icon-btn del" title="Remove (recorded by mistake)" onclick="removePayment({{ forloop.counter0 }})">✕</button>{% endif %}</td></tr>
+        {% endfor %}
+      </table>
+      {% else %}
+      <div style="color:var(--text-3);font-size:13px;padding:12px 0">No payments yet.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="cb-section">
+    <div class="sh"><span class="n">6</span><h2>Notes</h2><span class="hint">shown to the client</span>
       <button type="button" class="ai-btn small" style="margin-left:auto" onclick="assist('notes','notes_en')">✨ AI (EN)</button></div>
     <div class="jt-card" style="padding:20px"><div class="lang-pair">
       <div class="fld"><label class="f-label">English</label><textarea class="f-input" id="notes_en" rows="3">{{ invoice.notes_en }}</textarea></div>
@@ -182,7 +288,7 @@
   </div>
 
   <div class="cb-section">
-    <div class="sh"><span class="n">6</span><h2>Branding</h2></div>
+    <div class="sh"><span class="n">7</span><h2>Branding</h2></div>
     <div class="jt-card" style="padding:20px">
       <div class="grid3">
         <div class="fld"><label class="f-label">Provider name</label><input type="text" class="f-input" id="provider_name" value="{{ invoice.provider_name }}"></div>
@@ -199,11 +305,76 @@
 </div>
 <div class="toast" id="toast"></div>
 
+<div class="modal-bg" id="payModal" onclick="if(event.target===this)closeModal('payModal')">
+  <div class="modal">
+    <h3><i class="fas fa-hand-holding-dollar" style="color:var(--green)"></i> Record payment</h3>
+    <div class="sub">Balance due: {{ invoice.currency }} <span id="mBal">{{ invoice.balance_due|floatformat:"0g" }}</span></div>
+    <div class="fld"><label class="f-label">Amount received ({{ invoice.currency }})</label>
+      <input type="number" class="f-input" id="pAmount" min="0" step="any" value="{{ invoice.balance_due|floatformat:'0' }}"></div>
+    <div class="chips"><button type="button" onclick="pAmount.value={{ invoice.balance_due|floatformat:'0' }}">Full balance</button>
+      <button type="button" onclick="pAmount.value=Math.round({{ invoice.balance_due|floatformat:'0' }}/2)">50%</button></div>
+    <div class="fld"><label class="f-label">Method</label>
+      <select class="f-input" id="pMethod"><option>M-Pesa</option><option>Bank Transfer</option><option>Cash</option><option>Other</option></select></div>
+    <div class="fld"><label class="f-label">Reference (M-Pesa / bank)</label><input type="text" class="f-input" id="pRef" placeholder="e.g. QK7H2X9ABC"></div>
+    <div class="acts"><button type="button" class="jt-btn btn-ghost" onclick="closeModal('payModal')">Cancel</button>
+      <button type="button" class="jt-btn btn-cyan" onclick="recordPayment(this)"><i class="fas fa-check"></i> Save payment</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="sendModal" onclick="if(event.target===this)closeModal('sendModal')">
+  <div class="modal">
+    <h3><i class="fas fa-envelope" style="color:var(--cyan)"></i> Email invoice to client</h3>
+    <div class="sub">The client gets a summary, a link to view &amp; pay, and the PDF link.</div>
+    <div class="fld"><label class="f-label">To</label><input type="email" class="f-input" id="sTo" value="{{ invoice.display_email }}"></div>
+    <div class="fld"><label class="f-label">Language</label>
+      <select class="f-input" id="sLang"><option value="sw">Kiswahili</option><option value="en">English</option></select></div>
+    <div class="acts"><button type="button" class="jt-btn btn-ghost" onclick="closeModal('sendModal')">Cancel</button>
+      <button type="button" class="jt-btn btn-cyan" onclick="sendInvoice(this)"><i class="fas fa-paper-plane"></i> Save &amp; send</button></div>
+  </div>
+</div>
+
 <script>
 const CSRF="{{ csrf_token }}";
 const PK={{ invoice.pk|default:"null" }};
 let items={{ items_json|safe }};
 let methods={{ methods_json|safe }};
+const PAID={{ invoice.paid_total|default:0|stringformat:'s' }};
+const DEFAULT_METHODS={{ default_methods_json|safe }};
+let dirty=false;
+document.addEventListener('input',e=>{if(e.target.closest('#invForm'))dirty=true;});
+window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function showErrors(list){const b=document.getElementById('errs');
+  if(!list||!list.length){b.className='errs';b.innerHTML='';return;}
+  b.innerHTML='<b>These fields were not saved:</b><br>'+list.map(esc).join('<br>');b.className='errs show';b.scrollIntoView({behavior:'smooth',block:'center'});}
+function copyLink(){navigator.clipboard.writeText(document.getElementById('pubLink').textContent.trim()).then(()=>toast('Link copied ✓','ok'));}
+function resetMethods(){methods=DEFAULT_METHODS.map(m=>({...m}));renderMethods();dirty=true;toast('Default methods restored','ok');}
+document.querySelectorAll('#modeGrid input').forEach(r=>r.addEventListener('change',()=>{
+  document.querySelectorAll('#modeGrid .mode').forEach(m=>m.classList.toggle('on',m.querySelector('input').checked));
+  document.getElementById('manualBox').style.display=(r.value==='pesapal'&&r.checked)?'none':'';dirty=true;}));
+async function post(url,fd){const r=await fetch(url,{method:'POST',headers:{'X-CSRFToken':CSRF,'X-Requested-With':'fetch'},body:fd});
+  let d={};try{d=await r.json();}catch(e){}return {ok:r.ok&&d.ok!==false,d};}
+async function recordPayment(btn){
+  if(dirty){const ok=await saveInvoice(true);if(!ok)return;}
+  const fd=new FormData();fd.append('amount',document.getElementById('pAmount').value.trim());
+  fd.append('method',document.getElementById('pMethod').value);fd.append('reference',document.getElementById('pRef').value.trim());
+  btn.disabled=true;const {ok,d}=await post(`/manage/invoices/${PK}/mark-paid/`,fd);btn.disabled=false;
+  if(ok){toast(`✓ Payment saved — ${d.status}`,'ok');dirty=false;setTimeout(()=>location.reload(),900);}else toast(d.error||'Failed','err');}
+async function removePayment(i){
+  if(!confirm('Remove this payment? Use this only for a payment recorded by mistake.'))return;
+  const {ok,d}=await post(`/manage/invoices/${PK}/payments/${i}/remove/`,new FormData());
+  if(ok){toast('Payment removed','ok');setTimeout(()=>location.reload(),700);}else toast(d.error||'Failed','err');}
+async function sendInvoice(btn){
+  const saved=await saveInvoice(true);if(!saved)return;
+  const fd=new FormData();fd.append('to',document.getElementById('sTo').value.trim());fd.append('lang',document.getElementById('sLang').value);
+  btn.disabled=true;const {ok,d}=await post(`/manage/invoices/${PK}/send/`,fd);btn.disabled=false;
+  if(ok){closeModal('sendModal');toast(`✓ Sent to ${d.to}`,'ok');setTimeout(()=>location.reload(),1000);}else toast(d.error||'Send failed','err');}
+async function markSent(){const s=document.getElementById('statusSel');if(s.value==='draft'){s.value='sent';await saveInvoice(true);}}
+async function duplicateInvoice(){
+  if(!confirm('Create a new draft copy of this invoice (new dates, no payments)?'))return;
+  const {ok,d}=await post(`/manage/invoices/${PK}/duplicate/`,new FormData());
+  if(ok){dirty=false;location.href=d.url;}else toast(d.error||'Failed','err');}
 function toast(m,t){const e=document.getElementById('toast');e.textContent=m;e.className='toast show'+(t?' '+t:'');setTimeout(()=>e.className='toast',2500);}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function n(id){return parseFloat(document.getElementById(id).value)||0;}
@@ -229,7 +400,7 @@ function totals(){
   const taxPct=n('tax_percent');
   const tax=afterDisc*taxPct/100;
   const grand=afterDisc+tax;
-  const paid=n('amount_paid');
+  const paid=PAID;
   const bal=Math.max(0,grand-paid);
   const f=v=>`${cur} ${v.toLocaleString(undefined,{maximumFractionDigits:0})}`;
   document.getElementById('tSub').textContent=f(sub);
@@ -237,6 +408,8 @@ function totals(){
   document.getElementById('tTax').textContent=taxPct?f(tax):f(0);
   document.getElementById('tGrand').textContent=f(grand);
   document.getElementById('tBal').textContent=f(bal);
+  document.getElementById('tPaid').textContent=paid?`− ${f(paid)}`:f(0);
+  document.getElementById('tBar').style.width=(grand>0?Math.min(100,paid*100/grand):0)+'%';
 }
 function renderMethods(){const b=document.getElementById('pmBody');b.innerHTML='';
   methods.forEach((m,i)=>{const d=document.createElement('div');d.className='pm-item';d.innerHTML=
@@ -262,34 +435,29 @@ async function assistItem(i){toast('AI is writing…');
     if(d.ok){items[i].desc=d.text;renderLines();toast('Item drafted ✓','ok');}else toast(d.error||'AI failed','err');
   }catch(e){toast('Network error','err');}}
 
-async function markPaid(){
-  if(!PK){toast('Save first','err');return;}
-  const amt=prompt('Amount paid (leave blank for full payment):','');
-  if(amt===null)return;
-  const ref=prompt('Payment reference (M-Pesa/bank, optional):','')||'';
-  const fd=new FormData();fd.append('amount',amt.trim());fd.append('reference',ref);
-  try{const r=await fetch(`/manage/invoices/${PK}/mark-paid/`,{method:'POST',headers:{'X-CSRFToken':CSRF},body:fd});
-    const d=await r.json();
-    if(d.ok){toast(`✓ Marked ${d.status} — balance ${d.balance_due.toLocaleString()}`,'ok');setTimeout(()=>location.reload(),1200);}
-    else toast(d.error||'Failed','err');
-  }catch(e){toast('Network error','err');}}
-
 async function saveInvoice(silent){const fd=new FormData();
   const ids=['client_name','client_email','client_company','client_phone','client_address',
     'title','invoice_number','project_name','invoice_type','currency','issue_date','due_date',
-    'tax_percent','discount_amount','amount_paid','payment_terms','paid_reference',
+    'tax_percent','discount_amount','payment_terms','paid_reference',
     'notes_en','notes_sw','provider_name','provider_rep','logo_url'];
   ids.forEach(id=>fd.append(id,document.getElementById(id).value));
   fd.append('status',document.getElementById('statusSel').value);
+  fd.append('payment_mode',(document.querySelector('#modeGrid input:checked')||{}).value||'manual');
   fd.append('line_items',JSON.stringify(items));
   fd.append('payment_methods',JSON.stringify(methods));
-  const url=PK?`/manage/invoices/${PK}/edit/`:"{% url 'invoice_new' %}";
-  try{const r=await fetch(url,{method:'POST',headers:{'X-CSRFToken':CSRF},body:fd});
-    if(r.ok||r.redirected){if(!silent)toast('✓ Saved','ok');}else if(!silent)toast('Save failed','err');
-  }catch(e){if(!silent)toast('Network error','err');}}
+  try{const {ok,d}=await post(`/manage/invoices/${PK}/edit/`,fd);
+    showErrors(d.errors);
+    if(ok){dirty=false;
+      const pill=document.getElementById('stPill');pill.className='st-pill st-'+d.display_status;
+      pill.textContent=d.display_status.charAt(0).toUpperCase()+d.display_status.slice(1);
+      document.getElementById('statusSel').value=d.status;
+      if(!silent)toast('✓ Saved','ok');return true;}
+    toast('Some fields need fixing','err');return false;
+  }catch(e){toast('Network error','err');return false;}}
 
 renderLines();renderMethods();
-['currency','tax_percent','discount_amount','amount_paid'].forEach(id=>
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveInvoice();}});
+['currency','tax_percent','discount_amount'].forEach(id=>
   document.getElementById(id).addEventListener('input',totals));
 document.getElementById('currency').addEventListener('change',totals);
 </script>

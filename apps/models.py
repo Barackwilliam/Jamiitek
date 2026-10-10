@@ -1620,6 +1620,16 @@ class Invoice(models.Model):
         ('overdue', 'Overdue'),
         ('cancelled', 'Cancelled'),
     ]
+    PAYMENT_MODES = [
+        ('manual', 'Default methods (M-Pesa / Bank)'),
+        ('pesapal', 'Pesapal (card / mobile money online)'),
+        ('both', 'Both'),
+    ]
+    # Njia za kawaida za kulipa kwa ankara zote
+    DEFAULT_PAYMENT_METHODS = [
+        {'method': 'M-Pesa', 'details': '0750910158 - WILLIAM CHIPINDI'},
+        {'method': 'Bank Transfer', 'details': '0152566355900 - WILLIAM CHIPINDI'},
+    ]
 
     token = models.CharField(max_length=48, unique=True, editable=False, db_index=True)
     invoice_number = models.CharField(max_length=40, blank=True,
@@ -1651,6 +1661,8 @@ class Invoice(models.Model):
 
     # Maelezo ya malipo: [{"method","details"}] mfano M-Pesa / Bank
     payment_methods = models.JSONField(default=list, blank=True)
+    payment_mode = models.CharField(max_length=10, choices=PAYMENT_MODES, default='manual',
+                                    help_text='Mteja aone njia za kawaida, Pesapal, au zote')
     payment_terms = models.CharField(max_length=300, blank=True)
     notes_en = models.TextField(blank=True)
     notes_sw = models.TextField(blank=True)
@@ -1665,6 +1677,9 @@ class Invoice(models.Model):
     paid_at = models.DateTimeField(null=True, blank=True)
     paid_reference = models.CharField(max_length=120, blank=True,
                                       help_text='M-Pesa / bank reference')
+    # Historia ya malipo: [{"amount","method","reference","at","by","source"}].
+    # amount_paid ni jumla yake (malipo ya zamani kabla ya historia hayamo).
+    payments = models.JSONField(default=list, blank=True)
     viewed_at = models.DateTimeField(null=True, blank=True)
     sent_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -1710,14 +1725,39 @@ class Invoice(models.Model):
             return self.client.email
         return ''
 
+    @staticmethod
+    def _num(value):
+        try:
+            return float(str(value).replace(',', '').strip() or 0)
+        except (TypeError, ValueError):
+            return 0.0
+
+    @property
+    def items(self):
+        """Vitu vya ankara kwa mpangilio mmoja: desc, qty, unit_price, amount.
+
+        Data ya zamani/ya mifumo mingine inatumia 'description' badala ya
+        'desc', au haina 'amount' — vyote vinasomeka hapa."""
+        rows = []
+        for it in self.line_items or []:
+            if not isinstance(it, dict):
+                continue
+            desc = str(it.get('desc') or it.get('description') or '').strip()
+            qty = self._num(it.get('qty')) if it.get('qty') not in (None, '') else 1.0
+            price = self._num(it.get('unit_price'))
+            amount = it.get('amount')
+            amount = self._num(amount) if amount not in (None, '') else qty * price
+            if not price and qty:
+                price = amount / qty
+            if not desc and not amount:
+                continue
+            rows.append({'desc': desc, 'qty': int(qty) if qty == int(qty) else qty,
+                         'unit_price': price, 'amount': amount})
+        return rows
+
     @property
     def subtotal(self):
-        if self.line_items:
-            try:
-                return sum(float(it.get('amount', 0) or 0) for it in self.line_items)
-            except (ValueError, TypeError):
-                pass
-        return 0
+        return sum(it['amount'] for it in self.items)
 
     @property
     def discounted_subtotal(self):
@@ -1737,20 +1777,118 @@ class Invoice(models.Model):
         return self.discounted_subtotal + self.tax_amount
 
     @property
+    def paid_total(self):
+        return float(self.amount_paid) if self.amount_paid else 0
+
+    @property
     def balance_due(self):
-        paid = float(self.amount_paid) if self.amount_paid else 0
-        return max(0, self.grand_total - paid)
+        return max(0, round(self.grand_total - self.paid_total, 2))
+
+    @property
+    def paid_percent(self):
+        if self.grand_total <= 0:
+            return 100 if self.is_paid else 0
+        return max(0, min(100, int(self.paid_total * 100 / self.grand_total)))
 
     @property
     def is_paid(self):
         return self.status == 'paid' or (self.grand_total > 0 and self.balance_due <= 0)
 
     @property
+    def is_open(self):
+        """Imetumwa kwa mteja na bado inadaiwa."""
+        return self.status not in ('draft', 'cancelled') and not self.is_paid
+
+    @property
+    def days_to_due(self):
+        """Siku zilizobaki hadi tarehe ya mwisho (hasi = imechelewa)."""
+        if not self.due_date:
+            return None
+        return (self.due_date - timezone.localdate()).days
+
+    @property
     def is_overdue(self):
-        from django.utils import timezone as _tz
-        if self.is_paid or not self.due_date:
-            return False
-        return self.due_date < _tz.now().date()
+        return self.is_open and self.days_to_due is not None and self.days_to_due < 0
+
+    @property
+    def days_overdue(self):
+        return -self.days_to_due if self.is_overdue else 0
+
+    @property
+    def display_status(self):
+        """Hali inayoonekana: 'overdue' inahesabiwa, haihifadhiwi."""
+        if self.status in ('draft', 'cancelled'):
+            return self.status
+        if self.is_paid:
+            return 'paid'
+        if self.is_overdue:
+            return 'overdue'
+        if self.paid_total > 0:
+            return 'partial'
+        return 'viewed' if self.viewed_at else 'sent'
+
+    @property
+    def payment_history(self):
+        from django.utils.dateparse import parse_datetime
+        rows = []
+        for p in self.payments or []:
+            if isinstance(p, dict):
+                at = p.get('at')
+                rows.append({**p, 'amount': self._num(p.get('amount')),
+                             'at': parse_datetime(at) if isinstance(at, str) else None})
+        return rows
+
+    @property
+    def unlogged_paid(self):
+        """Kiasi kilicholipwa kabla historia ya malipo haijaanza kuhifadhiwa."""
+        return max(0, round(self.paid_total - sum(p['amount'] for p in self.payment_history), 2))
+
+    def sync_payment_status(self):
+        """Hali ya malipo inafuata kiasi kilicholipwa — si kinyume chake."""
+        if self.status in ('draft', 'cancelled'):
+            return
+        total = self.grand_total
+        if total > 0 and self.paid_total >= total - 0.005:
+            self.status = 'paid'
+            self.paid_at = self.paid_at or timezone.now()
+        elif self.paid_total > 0:
+            self.status = 'partial'
+            self.paid_at = None
+        elif self.status in ('paid', 'partial', 'overdue'):
+            self.status = 'viewed' if self.viewed_at else 'sent'
+            self.paid_at = None
+
+    def record_payment(self, amount, method='', reference='', by='', source='manual'):
+        """Ongeza malipo moja (hayafuti yaliyotangulia) na usasishe hali.
+
+        Haihifadhi — anayeita anaita save()."""
+        from decimal import Decimal, InvalidOperation
+        try:
+            amount = Decimal(str(amount).replace(',', '')).quantize(Decimal('0.01'))
+        except (InvalidOperation, ValueError):
+            raise ValueError('Invalid amount')
+        if amount <= 0:
+            raise ValueError('Amount must be greater than zero')
+        self.amount_paid = Decimal(str(self.amount_paid or 0)) + amount
+        self.payments = list(self.payments or []) + [{
+            'amount': float(amount), 'method': (method or '')[:60],
+            'reference': (reference or '')[:120], 'by': (by or '')[:80],
+            'source': source, 'at': timezone.now().isoformat(),
+        }]
+        if reference:
+            self.paid_reference = reference[:120]
+        if self.status == 'draft':
+            self.status = 'sent'
+            self.sent_at = self.sent_at or timezone.now()
+        self.sync_payment_status()
+
+    @property
+    def shows_manual(self):
+        return self.payment_mode in ('manual', 'both')
+
+    @property
+    def shows_pesapal(self):
+        return self.payment_mode in ('pesapal', 'both')
 
     @property
     def public_url(self):

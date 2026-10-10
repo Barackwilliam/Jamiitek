@@ -16,6 +16,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponseBadRequest
+from django.http import Http404
 from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
@@ -227,6 +228,8 @@ def pay_invoice(request, token):
     from apps.models import Invoice
 
     inv = get_object_or_404(Invoice, token=token)
+    if inv.status in ('draft', 'cancelled'):
+        raise Http404
     if inv.is_paid:
         messages.info(request, 'Invoice hii tayari imelipwa.')
         return redirect('invoice_view', token=token)
