@@ -171,3 +171,11 @@ def _notify_changed(user, request):
         )
     except Exception:
         log.exception('Password changed notice haikutumwa')
+
+
+def help_center(request):
+    """Msaada wa akaunti: kuingia, nywila, two-step verification, mawasiliano.
+    Unafunguka hata katikati ya hatua ya 2FA (angalia apps/two_factor.py)."""
+    from django.shortcuts import render
+    from apps.contact import contact
+    return render(request, 'account/help.html', {'c': contact()})

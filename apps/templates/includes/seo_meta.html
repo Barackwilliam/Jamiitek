@@ -1,0 +1,26 @@
+{% load static %}{% comment %}
+  SEO ya kurasa zinazojitegemea (hazirithi base.html wala site/base.html):
+  canonical, robots, Open Graph na Twitter card kwa pamoja.
+
+    {% include 'includes/seo_meta.html' with seo_title="..." seo_desc="..." %}
+    {% include 'includes/seo_meta.html' with seo_title="..." seo_desc="..." seo_robots="noindex, follow" %}
+
+  Canonical ni njia ya ukurasa bila query (?plan=, ?next=) — nakala zote
+  zinaelekeza kwenye URL moja.
+{% endcomment %}
+<link rel="canonical" href="https://www.jamiitek.com{{ request.path }}">
+<meta name="robots" content="{{ seo_robots|default:'index, follow, max-image-preview:large' }}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="JamiiTek">
+<meta property="og:url" content="https://www.jamiitek.com{{ request.path }}">
+<meta property="og:title" content="{{ seo_title }}">
+<meta property="og:description" content="{{ seo_desc }}">
+<meta property="og:image" content="https://www.jamiitek.com{% static 'images/og-image.jpg' %}">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="en_TZ">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@JamiiTek">
+<meta name="twitter:title" content="{{ seo_title }}">
+<meta name="twitter:description" content="{{ seo_desc }}">
+<meta name="twitter:image" content="https://www.jamiitek.com{% static 'images/og-image.jpg' %}">

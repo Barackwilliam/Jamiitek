@@ -43,7 +43,7 @@
   <meta name="twitter:site"        content="@JamiiTek">
   <meta name="twitter:title"       content="{% block tw_title %}JamiiTek — Web Development & AI WhatsApp Bot Tanzania{% endblock %}">
   <meta name="twitter:description" content="{% block tw_desc %}Tanzania's leading web developer. AI WhatsApp bots, websites, hosting. JamiiBot responds 24/7 in Swahili & English.{% endblock %}">
-  <meta name="twitter:image"       content="{% block tw_image %}https://www.jamiitek.com/static/images.jpg{% endblock %}">
+  <meta name="twitter:image"       content="{% block tw_image %}https://www.jamiitek.com/static/images/og-image.jpg{% endblock %}">
 
   <!-- ══ THEME / APP ════════════════════════════════════ -->
   <meta name="theme-color" content="#00c8ff">
@@ -65,7 +65,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 
-  {% block site_fonts %}<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800&family=Exo+2:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">{% endblock %}
+  {# Fonti hazizuii ukurasa kuonekana (display=swap + kupakiwa bila kusubiriwa) #}
+  {% block site_fonts %}<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800&family=Exo+2:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" onload="this.onload=null;this.rel='stylesheet'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;800&family=Exo+2:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"></noscript>{% endblock %}
 
   <!-- grid only: ~70 KB instead of the full ~230 KB -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap-grid.min.css" rel="stylesheet">

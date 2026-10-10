@@ -251,6 +251,8 @@ JAZZMIN_SETTINGS = {
     # BlogPost ina fieldsets 4 (Content/SEO/Publishing/Stats). Tunaionyesha
     # kama ukurasa mmoja (sio tabs) ili ifanane na fomu zingine kama Client.
     "changeform_format_overrides": {"apps.blogpost": "single"},
+    # Bila hii Jazzmin inapakia Google Fonts kwa kila ukurasa (render-blocking)
+    "use_google_fonts_cdn": False,
 }
 
 JAZZMIN_UI_TWEAKS = {
@@ -258,7 +260,8 @@ JAZZMIN_UI_TWEAKS = {
     "navbar_fixed":    True,
     "sidebar_fixed":   True,
     "footer_fixed":    False,
-    "show_ui_builder": True,
+    # UI builder inaongeza JS/CSS kwenye kila ukurasa wa admin — imezimwa kwa kasi
+    "show_ui_builder": False,
 }
 
 # ── Uploadcare & Cloudinary ────────────────────────────

@@ -105,3 +105,45 @@ def clean_html(value):
     from django.utils.safestring import mark_safe
     from apps.html_sanitize import clean_html as _clean
     return mark_safe(_clean(value))
+
+
+_IMG_RE = __import__('re').compile(r'<img\b([^>]*?)(/?)>', __import__('re').I)
+
+
+@register.filter
+def img_seo(value, title=''):
+    """
+    Picha za ndani ya makala: `alt` (kichwa cha makala) pale isipokuwepo, na
+    loading="lazy" + decoding="async" — ziko chini ya cover, kwa hiyo hazichelewi
+    LCP. Inatumika BAADA ya clean_html, kwa hiyo HTML imeshasafishwa.
+    """
+    from django.utils.html import escape
+    from django.utils.safestring import mark_safe
+
+    alt = escape(title or '')
+
+    def fix(m):
+        attrs, close = m.group(1), m.group(2)
+        low = attrs.lower()
+        if ' alt=' not in f' {low}':
+            attrs += f' alt="{alt}"'
+        if 'loading=' not in low:
+            attrs += ' loading="lazy"'
+        if 'decoding=' not in low:
+            attrs += ' decoding="async"'
+        return f'<img{attrs}{close}>'
+
+    return mark_safe(_IMG_RE.sub(fix, str(value or '')))
+
+
+@register.simple_tag
+def company_profile_live():
+    """Je, kuna company profile hai? Kiungo cha footer kisiende 404. Cache dakika 10."""
+    from django.core.cache import cache
+    key = 'seo:company_profile_live'
+    live = cache.get(key)
+    if live is None:
+        from apps.models import CompanyProfile
+        live = CompanyProfile.objects.filter(is_active=True).exists()
+        cache.set(key, live, 600)
+    return live

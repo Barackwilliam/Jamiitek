@@ -132,7 +132,7 @@ def _apply_post(receipt, request):
 # ══════════════════════════════════════════════════════════════
 @staff_member_required
 def receipt_list(request):
-    receipts = DevelopmentReceipt.objects.select_related('website', 'website__client')
+    receipts = DevelopmentReceipt.objects.select_related('website__client', 'client')
 
     q = request.GET.get('q', '').strip()
     if q:

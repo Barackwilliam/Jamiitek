@@ -1,32 +1,31 @@
 {% extends "account/_shell.html" %}
 {% block title %}Two-step verification{% endblock %}
-{% block eyebrow %}Staff · Step 2 of 2{% endblock %}
-{% block heading %}{% if mode == 'recovery' %}Use a recovery code{% else %}Enter your verification code{% endif %}{% endblock %}
-{% block lead %}<p class="lead">{% if mode == 'recovery' %}Type one of the recovery codes you saved when you set up two-step verification. Each code works <b>only once</b>.{% else %}Open your authenticator app and enter the <b>6-digit code</b> for <b>JamiiTek</b>.{% endif %}</p>{% endblock %}
+{% block eyebrow %}Two-step verification{% endblock %}
+{% block heading %}{% if mode == 'recovery' %}Use a recovery code{% else %}Enter verification code{% endif %}{% endblock %}
+{% block lead %}<p class="lead">{% if mode == 'recovery' %}Enter one of the recovery codes you saved. Each code can be used <b>once</b>.{% else %}Open your authenticator app and enter the 6-digit code for <b>JamiiTek</b>.{% endif %}</p>{% endblock %}
 {% block content %}
 {% if error %}<div class="alert err" role="alert">{{ error }}</div>{% endif %}
 <form method="post" autocomplete="off">
   {% csrf_token %}
-  <input type="hidden" name="next" value="{{ next }}">
   <input type="hidden" name="mode" value="{{ mode }}">
   <div class="field">
     {% if mode == 'recovery' %}
     <label for="code">Recovery code</label>
-    <input class="in" id="code" name="code" placeholder="abcde-12345" autocomplete="off" autocapitalize="off" spellcheck="false" required autofocus>
+    <input class="in" id="code" name="code" placeholder="xxxxx-xxxxx" autocomplete="off" autocapitalize="off" spellcheck="false" required autofocus>
     {% else %}
-    <label for="code">Authentication code</label>
+    <label for="code">Verification code</label>
     <input class="in code" id="code" name="code" inputmode="numeric" pattern="[0-9 ]*" maxlength="7" placeholder="000000" autocomplete="one-time-code" required autofocus>
     {% endif %}
   </div>
-  <button class="btn" type="submit">Verify and continue</button>
+  <button class="btn" type="submit">Continue</button>
 </form>
 <div class="links">
-  {% if mode == 'recovery' %}<a href="?next={{ next|urlencode }}">Use authenticator app instead</a>{% else %}<a href="?recovery=1&amp;next={{ next|urlencode }}">Lost your phone? Use a recovery code</a>{% endif %}
-  <a href="{% url 'management_logout' %}">Sign out</a>
+  {% if mode == 'recovery' %}<a href="{% url 'two_factor_verify' %}">Use authenticator app</a>{% else %}<a href="?recovery=1">Use a recovery code</a>{% endif %}
+  <form method="post" action="{% url 'account_sign_out' %}">{% csrf_token %}<button class="linkbtn" type="submit">Sign out</button></form>
 </div>
-{% if mode == 'recovery' and remaining < 3 %}<p class="hint" style="text-align:center;margin-top:12px">{{ remaining }} recovery code{{ remaining|pluralize }} left — generate new ones after you sign in.</p>{% endif %}
+{% if mode == 'recovery' and remaining < 3 %}<p class="hint" style="text-align:center;margin-top:14px">{{ remaining }} recovery code{{ remaining|pluralize }} left. Create new ones after you sign in.</p>{% endif %}
 {% endblock %}
-{% block scripts %}<script>
-(function(){var i=document.getElementById('code');if(!i||i.classList.contains('code')===false)return;
-i.addEventListener('input',function(){var v=i.value.replace(/\D/g,'').slice(0,6);i.value=v;if(v.length===6)i.form.requestSubmit?i.form.requestSubmit():i.form.submit();});})();
-</script>{% endblock %}
+{% block scripts %}{% if mode != 'recovery' %}<script>
+(function(){var i=document.getElementById('code'),sent=false;i.addEventListener('input',function(){var v=i.value.replace(/\D/g,'').slice(0,6);i.value=v;
+if(v.length===6&&!sent){sent=true;i.form.requestSubmit?i.form.requestSubmit():i.form.submit()}})})();
+</script>{% endif %}{% endblock %}

@@ -1,28 +1,38 @@
 {% extends "account/_shell.html" %}
 {% block title %}Set up two-step verification{% endblock %}
-{% block eyebrow %}Staff · Required{% endblock %}
-{% block heading %}{% if replacing %}Move 2FA to a new phone{% else %}Protect your staff account{% endif %}{% endblock %}
-{% block lead %}<p class="lead">Staff accounts control client payments, websites and bots, so a password alone is not enough. After this, signing in needs your password <b>and</b> a code from your phone.</p>{% endblock %}
+{% block eyebrow %}Two-step verification{% endblock %}
+{% block heading %}{% if replacing %}Connect a new device{% else %}Secure your account{% endif %}{% endblock %}
+{% block lead %}<p class="lead">Add a second step to signing in: your password <b>plus</b> a 6-digit code from an authenticator app on your phone.</p>{% endblock %}
 {% block content %}
 {% if error %}<div class="alert err" role="alert">{{ error }}</div>{% endif %}
 <ol class="steps">
-  <li><span>Install an authenticator app: <b>Google Authenticator</b>, <b>Microsoft Authenticator</b> or <b>Authy</b>.</span></li>
-  <li><span>In the app tap <b>+</b> and <b>scan this QR code</b>.</span></li>
+  <li><span class="n">1</span><span>Open an authenticator app — <b>Google Authenticator</b>, <b>Microsoft Authenticator</b> or <b>Authy</b>.</span></li>
+  <li><span class="n">2</span><span>Tap <b>+</b> and scan the QR code, or enter the setup key.</span></li>
 </ol>
-<div class="qr" role="img" aria-label="QR code for your authenticator app">{{ qr|safe }}</div>
-<p class="hint" style="text-align:center;margin:-4px 0 8px">Can't scan? Enter this key manually:</p>
-<div class="secret">{{ secret }}</div>
-<ol class="steps" start="3" style="counter-reset:s 2">
-  <li><span>Enter the <b>6-digit code</b> the app shows to finish.</span></li>
-</ol>
+<div class="qrbox">
+  <div class="qr" role="img" aria-label="QR code for your authenticator app">{{ qr|safe }}</div>
+  <div>
+    <small>Setup key</small>
+    <div class="secret" id="secret">{% for g in secret_groups %}<span>{{ g }}</span> {% endfor %}</div>
+    <button type="button" class="linkbtn copy" id="copykey">Copy key</button>
+  </div>
+</div>
+<ol class="steps"><li><span class="n">3</span><span>Enter the <b>6-digit code</b> shown in the app.</span></li></ol>
 <form method="post" autocomplete="off">
   {% csrf_token %}
-  <input type="hidden" name="next" value="{{ next }}">
   <div class="field">
-    <label for="code">Code from your app</label>
+    <label for="code">Verification code</label>
     <input class="in code" id="code" name="code" inputmode="numeric" pattern="[0-9 ]*" maxlength="7" placeholder="000000" autocomplete="one-time-code" required>
   </div>
-  <button class="btn" type="submit">Turn on two-step verification</button>
+  <button class="btn" type="submit">Verify and turn on</button>
 </form>
-<div class="links"><a href="?new=1&amp;next={{ next|urlencode }}">Generate a different QR code</a><a href="{% url 'management_logout' %}">Sign out</a></div>
+<div class="links">
+  <a href="?new=1">Show a new QR code</a>
+  <form method="post" action="{% url 'account_sign_out' %}">{% csrf_token %}<button class="linkbtn" type="submit">Sign out</button></form>
+</div>
 {% endblock %}
+{% block scripts %}<script>
+document.getElementById('copykey').addEventListener('click',function(){var b=this,k=document.getElementById('secret').textContent.replace(/\s+/g,'');
+if(navigator.clipboard){navigator.clipboard.writeText(k).then(function(){b.textContent='Copied ✓';setTimeout(function(){b.textContent='Copy key'},1600)})}});
+(function(){var i=document.getElementById('code');i.addEventListener('input',function(){i.value=i.value.replace(/\D/g,'').slice(0,6)})})();
+</script>{% endblock %}

@@ -36,6 +36,8 @@ urlpatterns = [
     path('account/2fa/', two_factor.verify, name='two_factor_verify'),
     path('account/2fa/setup/', two_factor.setup, name='two_factor_setup'),
     path('account/2fa/recovery-codes/', two_factor.recovery_codes, name='two_factor_recovery_codes'),
+    path('account/sign-out/', two_factor.sign_out, name='account_sign_out'),
+    path('account/help/', password_reset.help_center, name='account_help'),
 
     # ── PESAPAL PAYMENTS (mfumo mzima) ──────────────────────
     path('pay/subscription/', pesapal_views.pay_subscription, name='pesapal_pay_subscription'),

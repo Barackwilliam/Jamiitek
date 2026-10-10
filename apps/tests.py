@@ -292,6 +292,71 @@ class SiteSeoTest(NoPingMixin, TestCase):
         self.assertEqual(locs.count('/service/'), 1)
 
 
+class SeoAuditFixesTest(NoPingMixin, TestCase):
+    """Marekebisho ya ukaguzi wa SEO: domain rasmi, canonical, noindex, alt, viungo."""
+
+    def setUp(self):
+        super().setUp()
+        from django.core.cache import cache
+        cache.clear()
+        self.addCleanup(cache.clear)
+
+    def test_sitemaps_and_robots_use_the_canonical_domain_only(self):
+        xml = self.client.get('/sitemap.xml', HTTP_HOST='jamiitek.onrender.com').content.decode()
+        locs = re.findall(r'<loc>([^<]*)</loc>', xml)
+        self.assertTrue(locs)
+        self.assertTrue(all(u.startswith('https://www.jamiitek.com/') for u in locs), locs)
+        self.assertIn('https://www.jamiitek.com/builder/ai/', locs)
+        self.assertIn('https://www.jamiitek.com/chatbot/privacy-policy/', locs)
+        self.assertNotIn('https://www.jamiitek.com/company-profile/', locs)   # hakuna profile hai
+        # Kurasa za kudumu hazina lastmod ya "leo" ya kubuni
+        home = re.search(r'<url><loc>https://www.jamiitek.com/</loc>(.*?)</url>', xml, re.S).group(1)
+        self.assertNotIn('<lastmod>', home)
+        robots = self.client.get('/robots.txt', HTTP_HOST='jamiitek.com').content.decode()
+        self.assertIn('Sitemap: https://www.jamiitek.com/sitemap.xml', robots)
+
+    def test_company_profile_link_only_when_profile_exists(self):
+        from apps.models import CompanyProfile
+        self.assertNotContains(self.client.get('/'), '/company-profile/')
+        CompanyProfile.objects.create(is_active=True)
+        from django.core.cache import cache
+        cache.clear()
+        self.assertContains(self.client.get('/'), '/company-profile/')
+        self.assertEqual(self.client.get('/company-profile/').status_code, 200)
+
+    def test_standalone_pages_have_canonical_and_social_tags(self):
+        for url in ('/chatbot/register/?plan=pro', '/chatbot/privacy-policy/', '/builder/ai/'):
+            html = self.client.get(url).content.decode()
+            path = url.split('?')[0]
+            self.assertIn(f'<link rel="canonical" href="https://www.jamiitek.com{path}">', html, url)
+            self.assertIn('property="og:title"', html, url)
+            self.assertIn('name="twitter:card"', html, url)
+            self.assertIn('name="description"', html, url)
+        login = self.client.get('/chatbot/login/').content.decode()
+        self.assertIn('<meta name="robots" content="noindex, follow">', login)
+
+    def test_old_base_twitter_image_and_non_blocking_fonts(self):
+        html = self.client.get('/templates/').content.decode()
+        self.assertIn('name="twitter:image"       content="https://www.jamiitek.com/static/images/og-image.jpg"', html)
+        self.assertNotIn('/static/images.jpg', html)
+        self.assertNotIn('family=Orbitron:wght@700;800&family=Exo+2:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"', html)
+
+    def test_article_images_get_alt_and_lazy_loading(self):
+        from apps.templatetags.blog_extras import img_seo
+        out = img_seo('<p><img src="/a.jpg"><img src="/b.jpg" alt="Ramani" loading="eager"></p>', 'Bei ya "website"')
+        self.assertIn('<img src="/a.jpg" alt="Bei ya &quot;website&quot;" loading="lazy" decoding="async">', out)
+        self.assertIn('alt="Ramani" loading="eager" decoding="async"', out)
+
+    def test_titles_and_descriptions_stay_within_search_limits(self):
+        WebsiteType.objects.create(name='E-commerce')
+        for url in ('/service/', '/proposals/', '/templates/'):
+            html = self.client.get(url).content.decode()
+            title = re.search(r'<title>(.*?)</title>', html, re.S).group(1).strip()
+            desc = re.search(r'<meta name="description" content="([^"]*)"', html).group(1)
+            self.assertLessEqual(len(title), 65, (url, title))
+            self.assertLessEqual(len(desc), 165, (url, desc))
+
+
 class OneAccountTest(NoPingMixin, TestCase):
     """Akaunti moja: Web Builder ↔ Client Portal ↔ JamiiBot (apps/accounts_link.py)."""
 
@@ -562,16 +627,19 @@ class StaffTwoFactorTest(TestCase):
         secret, _ = self._enroll()
         self.client.logout()
         self._login()
-        r = self.client.get('/manage/')
-        self.assertTrue(r['Location'].startswith('/account/2fa/?'))
+        r = self.client.get('/manage/clients/')
+        self.assertEqual(r['Location'], '/account/2fa/')     # hakuna ?next= kwenye URL
+        page = self.client.get('/account/2fa/').content.decode()
+        for leak in ('Staff', 'staff', '/manage/', 'payments'):
+            self.assertNotIn(leak, page)
         # Code ile ile iliyotumika kwenye setup haikubaliwi tena (replay)
         used = tf.totp_at(secret, int(time.time() // 30))
         r = self.client.post('/account/2fa/', {'code': used})
         self.assertContains(r, 'not valid')
         # Code ya hatua inayofuata inakubaliwa
         nxt = tf.totp_at(secret, int(time.time() // 30) + 1)
-        r = self.client.post('/account/2fa/', {'code': nxt, 'next': '/manage/'})
-        self.assertEqual(r['Location'], '/manage/')
+        r = self.client.post('/account/2fa/', {'code': nxt})
+        self.assertEqual(r['Location'], '/manage/clients/')   # inarudi ulikokuwa
 
     def test_recovery_code_works_once(self):
         _, r = self._enroll()
@@ -593,6 +661,16 @@ class StaffTwoFactorTest(TestCase):
             r = self.client.post('/account/2fa/', {'code': '000000'})
         self.assertEqual(r['Location'], '/manage/login/')
         self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_help_and_privacy_open_during_2fa(self):
+        self._enroll()
+        self.client.logout()
+        self._login()
+        self.assertEqual(self.client.get('/manage/').status_code, 302)      # bado inahitaji code
+        for url in ('/account/help/', '/chatbot/privacy-policy/'):
+            r = self.client.get(url)
+            self.assertEqual(r.status_code, 200, url)
+        self.assertContains(self.client.get('/account/2fa/'), '/account/help/')
 
     def test_clients_are_not_asked_for_2fa(self):
         from django.contrib.auth.models import User
@@ -660,3 +738,57 @@ class PasswordResetTest(TestCase):
     def test_login_pages_link_to_reset(self):
         for url in ('/portal/login/', '/chatbot/login/', '/builder/login/', '/manage/login/'):
             self.assertContains(self.client.get(url), '/account/password-reset/', msg_prefix=url)
+
+
+class AdminPagesRenderTest(TestCase):
+    """Kurasa za admin/manage zenye data zifunguke (zilikuwa zinaanguka au nzito)."""
+
+    def test_subscription_payment_admin_list_renders(self):
+        from django.contrib.auth.models import User
+        from apps.chatbot.models import (BotConfig, BotSubscription, ChatbotClient,
+                                         SubscriptionPayment, SubscriptionPlan)
+        boss = User.objects.create_superuser('boss2', 'b2@x.com', 'Sahihi-Kabisa-2026')
+        cl = ChatbotClient.objects.create(user=boss, full_name='B', business_name='Biz', email='b2@x.com')
+        bot = BotConfig.objects.create(client=cl, bot_name='B', business_name='Biz')
+        plan = SubscriptionPlan.objects.filter(is_active=True).first()
+        sub = BotSubscription.objects.create(bot=bot, plan=plan, status='active')
+        SubscriptionPayment.objects.create(subscription=sub, plan=plan, amount=15000,
+                                           months_covered=1, transaction_ref='Z1')
+        self.client.force_login(boss)
+        r = self.client.get('/admin/chatbot/subscriptionpayment/')
+        self.assertContains(r, 'TZS 15,000')
+        for url in ('/manage/chatbot/', '/manage/chatbot/clients/', '/manage/infra/',
+                    '/manage/websites/', '/manage/clients/', '/admin/chatbot/botconfig/'):
+            self.assertEqual(self.client.get(url).status_code, 200, url)
+
+
+@mock.patch.dict('os.environ', {'STAFF_2FA_REQUIRED': 'True'})
+class StaffTwoFactorDoubleSubmitTest(TestCase):
+    """Code ikitumwa mara mbili (auto-submit + Enter) mtumiaji asitolewe nje."""
+
+    def test_same_code_twice_keeps_user_signed_in(self):
+        import time
+        from django.contrib.auth.models import User
+        from django.core.cache import cache
+        from apps import two_factor as tf
+        cache.clear()
+        User.objects.create_user('boss3', 'b3@x.com', 'Sahihi-Kabisa-2026', is_staff=True)
+        self.client.post('/manage/login/', {'username': 'boss3', 'password': 'Sahihi-Kabisa-2026'})
+        self.client.get('/account/2fa/setup/')
+        secret = self.client.session['staff_2fa_pending']
+        now = int(time.time() // 30)
+        self.client.post('/account/2fa/setup/', {'code': tf.totp_at(secret, now)})
+        self.client.logout()
+        self.client.post('/manage/login/', {'username': 'boss3', 'password': 'Sahihi-Kabisa-2026'})
+        self.client.get('/manage/')
+        code = tf.totp_at(secret, now + 1)
+        from django.conf import settings as dj
+        old_cookie = self.client.cookies[dj.SESSION_COOKIE_NAME].value
+        r1 = self.client.post('/account/2fa/', {'code': code})
+        # Ombi la pili lilitumwa KABLA jibu la kwanza halijafika: lina cookie ya zamani
+        self.client.cookies[dj.SESSION_COOKIE_NAME] = old_cookie
+        r2 = self.client.post('/account/2fa/', {'code': code})
+        self.assertEqual(r1['Location'], '/manage/')
+        self.assertEqual(r2['Location'], '/manage/')
+        self.assertIn('_auth_user_id', self.client.session)
+        self.assertEqual(self.client.get('/manage/').status_code, 200)

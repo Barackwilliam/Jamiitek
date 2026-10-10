@@ -3,7 +3,7 @@
 {% block page_title %}JamiiBot Manager{% endblock %}
 {% block breadcrumb %}Manage / JamiiBot SaaS{% endblock %}
 {% block extra_css %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
 <style>
 /* WANAOSUBIRI BINADAMU */
 .hwait{background:linear-gradient(140deg,rgba(245,158,11,.12),rgba(245,158,11,.02));
@@ -194,7 +194,7 @@
   <div style="display:flex;align-items:center;gap:14px">
     <div style="width:42px;height:42px;border-radius:11px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">⚙️</div>
     <div>
-      <div style="font-weight:800;color:#fbbf24;font-size:14px">{{ bots_needing_setup.count }} Bot{{ bots_needing_setup.count|pluralize }} Waiting for WhatsApp Setup</div>
+      <div style="font-weight:800;color:#fbbf24;font-size:14px">{{ bots_needing_setup|length }} Bot{{ bots_needing_setup|length|pluralize }} Waiting for WhatsApp Setup</div>
       <div style="font-size:12px;color:rgba(251,191,36,.55);margin-top:3px">These bots have no Phone Number ID — they cannot receive messages until connected.</div>
     </div>
   </div>
@@ -298,7 +298,7 @@
 <!-- BOT LIST -->
 <div id="botList">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px" class="f3">
-    <div style="font-size:16px;font-weight:800;color:rgba(255,255,255,.88)">All Bots <span style="font-weight:400;color:rgba(255,255,255,.3);font-size:13px">({{ all_bots.count }})</span></div>
+    <div style="font-size:16px;font-weight:800;color:rgba(255,255,255,.88)">All Bots <span style="font-weight:400;color:rgba(255,255,255,.3);font-size:13px">({{ all_bots|length }})</span></div>
     <div class="filter-bar">
       <button class="f-pill active" onclick="filterBots('all',this)">All</button>
       <button class="f-pill" onclick="filterBots('active',this)">🟢 Active</button>
@@ -334,7 +334,7 @@
             </div>
           </div>
           <div style="text-align:center;flex-shrink:0;padding-left:8px;border-left:1px solid rgba(255,255,255,.06)">
-            <div style="font-family:var(--mono);font-size:22px;font-weight:800;color:#a5b4fc">{{ bot.conversations.count }}</div>
+            <div style="font-family:var(--mono);font-size:22px;font-weight:800;color:#a5b4fc">{{ bot.conv_count }}</div>
             <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.28);text-transform:uppercase;letter-spacing:.5px">convos</div>
           </div>
         </div>
@@ -407,6 +407,8 @@
 </div>
 
 <script>
+/* chart.js ni defer — subiri ipakie (inatekelezwa kabla ya DOMContentLoaded) */
+document.addEventListener("DOMContentLoaded",function(){
 Chart.defaults.color='rgba(255,255,255,.35)';
 Chart.defaults.font.family='IBM Plex Mono';
 Chart.defaults.font.size=10;
@@ -420,6 +422,7 @@ new Chart(document.getElementById('statusChart').getContext('2d'),{
   type:'doughnut',
   data:{labels:['Active','Pending','Suspended','Draft'],datasets:[{data:[{{ active_bots }},{{ pending_bots }},{{ suspended_bots }},{{ draft_bots }}],backgroundColor:['#10b981','#f59e0b','#ef4444','#3b82f6'],borderWidth:2,borderColor:'#0f1629',hoverOffset:6}]},
   options:{responsive:true,plugins:{legend:{display:false}},cutout:'64%'}
+});
 });
 function filterBots(s,btn){document.querySelectorAll('.f-pill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('.bot-item').forEach(r=>{r.style.display=(s==='all'||r.dataset.status===s)?'':'none'})}
 function searchBots(q){const lq=q.toLowerCase();document.querySelectorAll('.bot-item').forEach(r=>{r.style.display=r.dataset.search.includes(lq)?'':'none'})}

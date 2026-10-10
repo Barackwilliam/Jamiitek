@@ -92,10 +92,15 @@ def management_dashboard(request):
             revenue=DSum('amount', filter=DQ(status='verified')),
             pending_payments=DCount('pk', filter=DQ(status='pending')),
         )
-        msg = Message.objects.aggregate(
-            total_msgs=DCount('pk'),
-            today_msgs=DCount('pk', filter=DQ(created_at__date=today)),
-        )
+        # Jedwali la jumbe ni kubwa: jumla zinahesabiwa upya kila dakika tu
+        from django.core.cache import cache
+        msg = cache.get('manage:msg_totals')
+        if msg is None:
+            msg = Message.objects.aggregate(
+                total_msgs=DCount('pk'),
+                today_msgs=DCount('pk', filter=DQ(created_at__date=today)),
+            )
+            cache.set('manage:msg_totals', msg, 60)
         bot_stats = dict(b, revenue=pay['revenue'] or 0,
                          pending_payments=pay['pending_payments'], **msg)
         bots_pending_setup = BotConfig.objects.filter(status='pending').select_related('client')[:5]
@@ -123,7 +128,9 @@ def management_dashboard(request):
 def website_list(request):
     status_filter = request.GET.get('status', '')
     search = request.GET.get('q', '')
-    websites = ManagedWebsite.objects.select_related('client').all()
+    # client__user na payments kwa JOIN/prefetch — awali maswali 2 kwa kila mstari
+    websites = (ManagedWebsite.objects.select_related('client__user')
+                .prefetch_related('payments'))
     if status_filter:
         websites = websites.filter(status=status_filter)
     if search:
@@ -455,8 +462,8 @@ def regenerate_api_key(request, pk):
 
 @staff_required
 def client_list(request):
-    clients = Client.objects.annotate(
-        website_count=Count('managed_websites')).order_by('name')
+    clients = list(Client.objects.select_related('user').annotate(
+        website_count=Count('managed_websites')).order_by('name'))
     return render(request, 'management/client_list.html', {
         'title': 'Clients', 'clients': clients,
     })
@@ -465,10 +472,11 @@ def client_list(request):
 @staff_required
 def client_detail_admin(request, pk):
     client = get_object_or_404(Client, pk=pk)
-    payments = HostingPayment.objects.filter(website__client=client).order_by('-payment_date')
+    payments = (HostingPayment.objects.filter(website__client=client)
+                .select_related('website').order_by('-payment_date'))
     return render(request, 'management/client_detail.html', {
         'title': client.name, 'client': client,
-        'websites': ManagedWebsite.objects.filter(client=client),
+        'websites': list(ManagedWebsite.objects.filter(client=client)),
         'payments': payments,
         'notifications': ClientNotification.objects.filter(client=client).order_by('-sent_at')[:20],
         'total_revenue': payments.aggregate(total=Sum('amount'))['total'] or 0,

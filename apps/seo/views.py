@@ -12,7 +12,8 @@ def robots_txt(request):
     Dynamic robots.txt — tells Google exactly what to crawl.
     Blocks admin/private portals, allows everything public.
     """
-    host = request.get_host().split(':')[0]
+    # Sitemap ziko kwenye domain rasmi (canonical) — si jamiitek.com wala onrender
+    host = 'www.jamiitek.com'
     lines = [
         "User-agent: *",
         "Allow: /",
@@ -77,7 +78,7 @@ def news_sitemap(request):
     from apps.models import BlogPost
     from apps.blog_views import cache_version
 
-    host = request.get_host().split(':')[0]
+    host = 'www.jamiitek.com'   # domain rasmi (canonical)
     key = f'blog:newsmap:{cache_version()}:{host}'
     xml = cache.get(key)
     if xml is None:

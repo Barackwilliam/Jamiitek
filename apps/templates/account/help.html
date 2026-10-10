@@ -1,0 +1,99 @@
+{% extends "account/_shell.html" %}
+{% block title %}Help Center{% endblock %}
+{% block eyebrow %}Help Center{% endblock %}
+{% block card_class %} wide{% endblock %}
+{% block heading %}Sign-in &amp; account help{% endblock %}
+{% block lead %}<p class="lead">Quick answers for signing in, passwords and two-step verification. One JamiiTek account works for <b>Client Portal</b>, <b>JamiiBot</b> and <b>Web Builder</b>.</p>{% endblock %}
+{% block content %}
+<div class="sec-title">Signing in</div>
+<div class="faq">
+  <details>
+    <summary>I forgot my password</summary>
+    <div class="a">
+      <p>Go to <a href="{% url 'password_reset' %}">Reset your password</a>, enter the email on your account and open the link we send you. The link works once and expires in 60 minutes.</p>
+      <p>Your new password works on every JamiiTek app straight away.</p>
+    </div>
+  </details>
+  <details>
+    <summary>It says my account is locked</summary>
+    <div class="a">
+      <p>After several wrong passwords we pause sign-in for 15 minutes to stop anyone guessing it. You can:</p>
+      <ul><li>wait 15 minutes and try again, or</li><li><a href="{% url 'password_reset' %}">reset your password</a> — this unlocks the account immediately.</li></ul>
+    </div>
+  </details>
+  <details>
+    <summary>I didn't receive the reset email</summary>
+    <div class="a">
+      <ul>
+        <li>Wait 2–3 minutes, then check <b>Spam</b>, <b>Promotions</b> and <b>Updates</b>.</li>
+        <li>Make sure you typed the email that is on your account.</li>
+        <li>For security you can request up to 5 emails per hour.</li>
+      </ul>
+      <p>Still nothing? Contact us below and we'll help you sign in.</p>
+    </div>
+  </details>
+  <details>
+    <summary>Can I sign in with my email instead of my username?</summary>
+    <div class="a"><p>Yes. The Client Portal, JamiiBot and Web Builder sign-in pages accept either your username or the email address on your account.</p></div>
+  </details>
+</div>
+
+<div class="sec-title">Two-step verification</div>
+<div class="faq">
+  <details>
+    <summary>Where do I find the 6-digit code?</summary>
+    <div class="a">
+      <p>Open the authenticator app you used during setup (Google Authenticator, Microsoft Authenticator or Authy) and look for <b>JamiiTek</b>. The code changes every 30 seconds — type the one currently shown, then wait a moment; the page continues by itself.</p>
+    </div>
+  </details>
+  <details>
+    <summary>My code is not accepted</summary>
+    <div class="a">
+      <ol>
+        <li>Use the <b>newest</b> code — don't reuse one you already entered.</li>
+        <li>Check that your phone's time is set <b>automatically</b> (Settings → Date &amp; time → Automatic). A clock that is off by a minute or more makes codes fail.</li>
+        <li>Make sure you are reading the <b>JamiiTek</b> entry in the app.</li>
+      </ol>
+      <p>After 5 wrong codes you are signed out for safety — just sign in again.</p>
+    </div>
+  </details>
+  <details>
+    <summary>I lost my phone or changed phones</summary>
+    <div class="a">
+      <p>On the verification page choose <b>Use a recovery code</b> and enter one of the recovery codes you saved during setup. Each code works once.</p>
+      <p>Once you're in, connect your new phone and create fresh recovery codes so the old ones stop working.</p>
+    </div>
+  </details>
+  <details>
+    <summary>I have no phone and no recovery codes</summary>
+    <div class="a">
+      <p>Contact us using the details below. To protect your account we'll confirm your identity before resetting two-step verification — we will <b>never</b> ask for your password or codes.</p>
+    </div>
+  </details>
+</div>
+
+<div class="sec-title">Staying safe</div>
+<div class="faq">
+  <details>
+    <summary>I think someone else used my account</summary>
+    <div class="a">
+      <ol>
+        <li><a href="{% url 'password_reset' %}">Reset your password</a> now — this signs out every other device.</li>
+        <li>Contact us so we can review recent activity with you.</li>
+      </ol>
+    </div>
+  </details>
+  <details>
+    <summary>Someone asked me for my password or code</summary>
+    <div class="a"><p>Don't share it. JamiiTek staff will never ask for your password, verification codes or recovery codes — by phone, SMS, email or WhatsApp. Report the message to us.</p></div>
+  </details>
+</div>
+
+<div class="sec-title">Still need help?</div>
+<div class="contact">
+  <a href="https://wa.me/{{ c.wa }}?text={{ 'Hello JamiiTek, I need help signing in to my account.'|urlencode }}" target="_blank" rel="noopener"><b>WhatsApp</b><small>{{ c.phone_display }}</small></a>
+  <a href="tel:{{ c.phone }}"><b>Call us</b><small>{{ c.phone_display }}</small></a>
+  <a href="mailto:info@jamiitek.com?subject={{ 'Account sign-in help'|urlencode }}"><b>Email</b><small>info@jamiitek.com</small></a>
+</div>
+<div class="links"><a href="{% url 'password_reset' %}">Reset password</a><a href="{% url 'privacy_policy' %}">Privacy policy</a><a href="/">JamiiTek home</a></div>
+{% endblock %}

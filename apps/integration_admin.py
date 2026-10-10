@@ -120,6 +120,11 @@ class IntegrationAdmin(admin.ModelAdmin):
 @admin.register(IntegrationSnapshot)
 class IntegrationSnapshotAdmin(admin.ModelAdmin):
     list_display = ('integration', 'checked_at')
+    list_select_related = ('integration',)
+
+    def get_queryset(self, request):
+        # metrics ni JSON kubwa; orodha haiitumii
+        return super().get_queryset(request).defer('metrics')
     list_filter = ('integration__provider',)
     date_hierarchy = 'checked_at'
 
@@ -133,6 +138,7 @@ class IntegrationSnapshotAdmin(admin.ModelAdmin):
 @admin.register(IntegrationAuditLog)
 class IntegrationAuditLogAdmin(admin.ModelAdmin):
     list_display = ('created_at', 'user', 'action', 'website', 'ip_address')
+    list_select_related = ('user', 'website')
     list_filter = ('action',)
     search_fields = ('user__username', 'website__name')
     date_hierarchy = 'created_at'

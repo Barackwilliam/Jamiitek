@@ -2,9 +2,21 @@
 JamiiTek SEO — Sitemap definitions
 Covers: public pages, service pages, chatbot landing, bot registration
 """
-from django.contrib.sitemaps import Sitemap
+from django.contrib.sitemaps import Sitemap as _Sitemap
 from django.urls import reverse
-from datetime import date
+
+CANONICAL_DOMAIN = 'www.jamiitek.com'
+
+
+class Sitemap(_Sitemap):
+    """
+    Kila URL ya sitemap iko kwenye domain rasmi, hata sitemap ikisomwa kupitia
+    jamiitek.com au jamiitek.onrender.com — canonical za kurasa zote ni www.
+    """
+    protocol = 'https'
+
+    def get_domain(self, site=None):
+        return CANONICAL_DOMAIN
 
 
 class StaticPageSitemap(Sitemap):
@@ -23,10 +35,17 @@ class StaticPageSitemap(Sitemap):
         ('templates_marketplace', 0.9, 'daily'),
         ('jamiibot_landing',0.95, 'daily'),     # Bot landing page
         ('chatbot_register',0.9,  'weekly'),    # Bot signup
+        ('builder:ai_generator', 0.7, 'monthly'),  # "Describe your business" — AI website
+        ('privacy_policy',  0.3,  'yearly'),
     ]
 
     def items(self):
-        return self.pages
+        from apps.models import CompanyProfile
+        pages = list(self.pages)
+        # Company profile ipo tu kama imewekwa hai — vinginevyo ni 404
+        if CompanyProfile.objects.filter(is_active=True).exists():
+            pages.append(('company_profile_view', 0.6, 'monthly'))
+        return pages
 
     def location(self, item):
         return reverse(item[0])
@@ -37,8 +56,8 @@ class StaticPageSitemap(Sitemap):
     def changefreq(self, item):
         return item[2]
 
-    def lastmod(self, item):
-        return date.today()
+    # Hakuna lastmod: tarehe ya leo kila siku si ya kweli, na Google huacha
+    # kuiamini lastmod ya tovuti nzima ikigundua hivyo (hata ya makala).
 
 
 class ServiceSitemap(Sitemap):
@@ -58,9 +77,6 @@ class ServiceSitemap(Sitemap):
 
     def location(self, item):
         return reverse('service')
-
-    def lastmod(self, item):
-        return date.today()
 
 
 class BlogSitemap(Sitemap):
@@ -113,7 +129,7 @@ class BlogIndexSitemap(Sitemap):
     def lastmod(self, item):
         from apps.models import BlogPost
         latest = BlogPost.objects.filter(status='published').order_by('-published_at').first()
-        return latest.published_at if latest else date.today()
+        return latest.published_at if latest else None
 
 
 class TemplateSitemap(Sitemap):

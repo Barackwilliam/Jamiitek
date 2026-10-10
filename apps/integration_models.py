@@ -241,11 +241,19 @@ class ResolverMixin:
         'domain_auto_renew': ('domain', 'auto_renew'),
     }
 
+    def active_integrations(self):
+        """Integrations hai. Inatumia prefetch_related('integrations') ikiwepo —
+        orodha ya /manage/infra/ ilikuwa ikiuliza database kwa kila tovuti."""
+        pre = getattr(self, '_prefetched_objects_cache', {}).get('integrations')
+        if pre is not None:
+            return [i for i in pre if i.is_active]
+        return list(self.integrations.filter(is_active=True))
+
     def resolve(self, field):
         from .integration_models import STALE_AFTER  # self-import kwa uwazi
 
         # 1 & 2 — live au snapshot
-        for integ in self.integrations.filter(is_active=True):
+        for integ in self.active_integrations():
             if integ.cached_summary and not integ.sync_error:
                 val = integ.cached_summary.get(field)
                 if val is not None and val != '':
@@ -292,7 +300,7 @@ class ResolverMixin:
     @property
     def integration_health(self):
         """ok | stale | error | none — kwa nukta ya rangi kwenye orodha."""
-        rows = list(self.integrations.filter(is_active=True))
+        rows = self.active_integrations()
         if not rows:
             return 'none'
         states = {r.health for r in rows}

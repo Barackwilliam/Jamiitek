@@ -64,6 +64,11 @@ class ChatbotClient(models.Model):
 
     @property
     def active_bot(self):
+        # Ikiwa bots zimeshaletwa kwa prefetch_related (orodha za /manage/),
+        # zitumie — vinginevyo kila mteja angegharimu swali jipya.
+        prefetched = getattr(self, '_prefetched_objects_cache', {}).get('bots')
+        if prefetched is not None:
+            return next((b for b in prefetched if b.is_active), None)
         return self.bots.filter(is_active=True).first()
 
     @property

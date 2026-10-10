@@ -3,6 +3,7 @@ JamiiTek ChatBot SaaS — Django Admin
 Full admin panel registration with all models.
 """
 from django.contrib import admin
+from django.db.models import Count
 from django.utils.html import format_html
 from django.utils import timezone
 from .models import (
@@ -60,6 +61,12 @@ class BotConfigAdmin(admin.ModelAdmin):
     readonly_fields = ['id', 'webhook_verify_token', 'deployed_at', 'created_at', 'updated_at', 'webhook_url_display']
     inlines        = [BotServiceInline, BotFAQInline]
     list_editable  = []
+    # Kasi: client kwa JOIN, idadi ya mazungumzo kwa annotate (si swali kwa kila mstari)
+    list_select_related = ('client',)
+    autocomplete_fields = ('client',)
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(_conv=Count('conversations'))
 
     fieldsets = [
         ('Identity',      {'fields': ['id', 'client', 'bot_name', 'business_name', 'description']}),
@@ -83,7 +90,7 @@ class BotConfigAdmin(admin.ModelAdmin):
     status_badge.short_description = 'Status'
 
     def conversations_count(self, obj):
-        return obj.conversations.count()
+        return obj._conv if hasattr(obj, '_conv') else obj.conversations.count()
     conversations_count.short_description = 'Convs'
 
     def webhook_url_display(self, obj):
@@ -99,6 +106,7 @@ class BotSubscriptionAdmin(admin.ModelAdmin):
     list_filter   = ['status', 'plan', 'auto_renew']
     search_fields = ['bot__bot_name', 'bot__client__business_name']
     list_editable = ['status', 'end_date']
+    list_select_related = ('bot', 'plan')
 
     def bot_name(self, obj): return str(obj.bot)
     bot_name.short_description = 'Bot'
@@ -124,12 +132,16 @@ class SubscriptionPaymentAdmin(admin.ModelAdmin):
     search_fields = ['subscription__bot__bot_name', 'transaction_ref', 'subscription__bot__client__business_name']
     list_editable = []
     readonly_fields = ['payment_date', 'verified_at']
+    list_select_related = ('subscription__bot', 'verified_by')
+    raw_id_fields = ('subscription', 'verified_by')
 
     def subscription_bot(self, obj): return obj.subscription.bot.bot_name
     subscription_bot.short_description = 'Bot'
 
     def amount_display(self, obj):
-        return format_html('<strong style="color:#00dc82">TZS {:,}</strong>', obj.amount)
+        # format_html inaescape hoja kuwa maandishi kwanza, kwa hiyo '{:,}' ilivunja
+        # ukurasa wote (500). Tunapanga namba kwanza.
+        return format_html('<strong style="color:#00dc82">TZS {}</strong>', f'{int(obj.amount or 0):,}')
     amount_display.short_description = 'Amount'
 
     def status_badge(self, obj):
@@ -161,6 +173,8 @@ class ConversationAdmin(admin.ModelAdmin):
     list_filter   = ['is_human_handoff', 'is_active', 'bot']
     search_fields = ['customer_phone', 'customer_name', 'bot__bot_name']
     readonly_fields = ['id', 'started_at', 'last_message_at']
+    list_select_related = ('bot',)
+    raw_id_fields = ('bot',)
 
     def bot_name(self, obj): return obj.bot.bot_name
     bot_name.short_description = 'Bot'
@@ -172,6 +186,11 @@ class MessageAdmin(admin.ModelAdmin):
     list_filter   = ['role', 'created_at']
     search_fields = ['content', 'conversation__customer_phone']
     readonly_fields = ['id', 'created_at']
+    # Jedwali kubwa: JOIN ya mazungumzo, hakuna dropdown ya mazungumzo yote,
+    # na hakuna COUNT(*) ya jedwali zima kila ukurasa
+    list_select_related = ('conversation',)
+    raw_id_fields = ('conversation',)
+    show_full_result_count = False
 
     def short_content(self, obj): return obj.content[:60] + '...' if len(obj.content) > 60 else obj.content
     short_content.short_description = 'Content'

@@ -12,6 +12,7 @@ Fields za kubuni (`197.250.10.1`, `ftp.jamiitek.com`, n.k.) hazionyeshwi
 kwa mteja isipokuwa umezibadilisha mwenyewe kuwa za kweli. Kuonyesha
 FTP host isiyokuwepo kunamchanganya mteja na kunaharibu uaminifu.
 """
+from functools import cached_property
 import logging
 from datetime import date, datetime
 
@@ -167,7 +168,7 @@ class LiveConfig:
         return name in FABRICATED and value == FABRICATED[name]
 
     # ── hali halisi ya hosting (si ya bili) ──
-    @property
+    @cached_property
     def live_status(self):
         """
         online | building | failed | suspended | unknown
@@ -193,14 +194,12 @@ class LiveConfig:
     @property
     def is_monitored(self):
         """Je kuna integration inayofanya kazi? Kwa kuonyesha 'live' badge."""
-        return self._website.integrations.filter(
-            is_active=True, sync_error='').exists()
+        return any(not i.sync_error for i in self._website.active_integrations())
 
     @property
     def last_synced_label(self):
-        last = (self._website.integrations
-                .filter(is_active=True, last_synced_at__isnull=False)
-                .order_by('-last_synced_at').first())
+        synced = [i for i in self._website.active_integrations() if i.last_synced_at]
+        last = max(synced, key=lambda i: i.last_synced_at, default=None)
         if not last:
             return ''
         secs = (timezone.now() - last.last_synced_at).total_seconds()

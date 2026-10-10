@@ -65,16 +65,16 @@ def _request(method, path, **kwargs):
 #  UDHIBITI WA SESSIONS
 # ══════════════════════════════════════════════════════════════
 
-def health():
-    return _request('GET', '/health', timeout=8)
+def health(timeout=8):
+    return _request('GET', '/health', timeout=timeout)
 
 
-def list_sessions():
-    return _request('GET', '/sessions')
+def list_sessions(timeout=TIMEOUT):
+    return _request('GET', '/sessions', timeout=timeout)
 
 
-def session_status(name):
-    return _request('GET', f'/sessions/{name}')
+def session_status(name, timeout=TIMEOUT):
+    return _request('GET', f'/sessions/{name}', timeout=timeout)
 
 
 def session_qr(name):

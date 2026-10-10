@@ -57,15 +57,30 @@ def manage_chatbot_overview(request):
     from datetime import date, timedelta
     from django.db.models import Count
 
-    all_bots    = BotConfig.objects.select_related('client').prefetch_related('conversations', 'subscription__plan').order_by('-created_at')
-    all_clients = ChatbotClient.objects.count()
-    active_bots    = all_bots.filter(status='active').count()
-    pending_bots   = all_bots.filter(status='pending').count()
-    suspended_bots = all_bots.filter(status='suspended').count()
-    draft_bots     = all_bots.filter(status='draft').count()
+    from django.core.cache import cache
+    from django.db.models import Q
 
-    total_msgs  = Message.objects.count()
-    total_convs = Conversation.objects.count()
+    # Kasi: awali kila Conversation (pamoja na memory/metadata) ilipakiwa ili
+    # kuhesabu tu. Sasa idadi inatoka kwa annotate, na hali 4 kwa swali moja.
+    all_bots = list(BotConfig.objects.select_related('client', 'subscription__plan')
+                    .annotate(conv_count=Count('conversations'))
+                    .order_by('-created_at'))
+    all_clients = ChatbotClient.objects.count()
+    by_status = BotConfig.objects.aggregate(
+        active=Count('pk', filter=Q(status='active')),
+        pending=Count('pk', filter=Q(status='pending')),
+        suspended=Count('pk', filter=Q(status='suspended')),
+        draft=Count('pk', filter=Q(status='draft')),
+    )
+    active_bots, pending_bots = by_status['active'], by_status['pending']
+    suspended_bots, draft_bots = by_status['suspended'], by_status['draft']
+
+    # Jumla za majedwali makubwa — zinahesabiwa upya kila dakika moja tu
+    totals = cache.get('manage:bot_totals')
+    if totals is None:
+        totals = (Message.objects.count(), Conversation.objects.count())
+        cache.set('manage:bot_totals', totals, 60)
+    total_msgs, total_convs = totals
     today_msgs  = Message.objects.filter(created_at__date=date.today()).count()
 
     total_revenue = SubscriptionPayment.objects.filter(
@@ -84,21 +99,9 @@ def manage_chatbot_overview(request):
     waiting_list = list(waiting_qs[:6])
     waiting_worst = waiting_list[0].handoff_waiting_minutes if waiting_list else 0
 
-    # Wanaosubiri binadamu. Hii ndiyo namba pekee hapa inayogusa mteja
-    # anayesubiri SASA HIVI — inapaswa kuonekana kabla ya nyingine zote.
-    waiting_qs = (Conversation.objects
-                  .filter(is_human_handoff=True, handoff_at__isnull=False)
-                  .select_related('bot')
-                  .order_by('handoff_at'))
-    waiting_handoffs = waiting_qs.count()
-    waiting_list = list(waiting_qs[:6])
-    waiting_worst = waiting_list[0].handoff_waiting_minutes if waiting_list else 0
-
     recent_clients = ChatbotClient.objects.select_related('user').order_by('-created_at')[:8]
 
-    bots_needing_setup = all_bots.filter(
-        status='pending'
-    ).select_related('client')
+    bots_needing_setup = [b for b in all_bots if b.status == 'pending']
 
     # Chart data — last 30 days
     from .stats import daily_counts
@@ -298,7 +301,7 @@ def manage_bot_payments(request):
 
     verified = SubscriptionPayment.objects.filter(
         status='verified'
-    ).select_related('subscription__bot__client').order_by('-verified_at')[:30]
+    ).select_related('subscription__bot__client', 'verified_by').order_by('-verified_at')[:30]
 
     rejected = SubscriptionPayment.objects.filter(
         status='rejected'
@@ -474,7 +477,7 @@ def manage_bot_whatsapp(request, bot_id):
 
     live = None
     if bridge.is_configured():
-        data = bridge.session_status(bot.session_name)
+        data = bridge.session_status(bot.session_name, timeout=5)
         if data.get('success'):
             live = data
 
@@ -511,12 +514,18 @@ def manage_sessions(request):
 
     bots = list(BotConfig.objects.select_related('client').order_by('bot_name'))
 
-    live = {}
-    health = bridge.health()
-    if health.get('success'):
-        data = bridge.list_sessions()
-        for s in data.get('sessions', []):
-            live[s['session']] = s
+    # Bridge ya free tier inaweza kulala: awali ukurasa ulisubiri hadi
+    # sekunde 23 (health 8s + sessions 15s). Sasa muda mfupi, na jibu
+    # linahifadhiwa sekunde 20 (sekunde 60 kama bridge haipatikani).
+    from django.core.cache import cache
+    snap = cache.get('manage:bridge_sessions')
+    if snap is None or request.GET.get('refresh'):
+        health = bridge.health(timeout=4)
+        sessions = bridge.list_sessions(timeout=6).get('sessions', []) if health.get('success') else []
+        snap = {'health': health, 'sessions': sessions}
+        cache.set('manage:bridge_sessions', snap, 20 if health.get('success') else 60)
+    health = snap['health']
+    live = {s['session']: s for s in snap['sessions'] if s.get('session')}
 
     for b in bots:
         b.live = live.get(b.session_name)
@@ -559,6 +568,8 @@ def manage_session_action(request, bot_id):
 
     bot = get_object_or_404(BotConfig, id=bot_id)
     action = request.POST.get('action', '')
+    from django.core.cache import cache
+    cache.delete('manage:bridge_sessions')   # orodha ionyeshe hali mpya mara moja
     from apps.chatbot import bridge
 
     if action == 'start':

@@ -27,7 +27,7 @@
   </div>
   <div class="col-lg-8">
     <div class="jt-card mb-3" style="padding:0">
-      <div class="jt-card-head"><span class="jt-card-title"><i class="fas fa-globe" style="color:var(--cyan)"></i> Websites ({{ websites.count }})</span></div>
+      <div class="jt-card-head"><span class="jt-card-title"><i class="fas fa-globe" style="color:var(--cyan)"></i> Websites ({{ websites|length }})</span></div>
       {% for w in websites %}
       <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px">
         <div>
@@ -44,14 +44,14 @@
       {% endfor %}
 
 
-      {% if websites.count > 1 %}
+      {% if websites|length > 1 %}
       <div style="padding:14px 18px;background:rgba(255,255,255,.02);border-top:1px solid var(--border)">
         <div style="font-family:var(--mono);font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--text-3);margin-bottom:10px">
-          All {{ websites.count }} websites at once
+          All {{ websites|length }} websites at once
         </div>
 
         <form method="post" action="{% url 'suspend_client_websites' client.pk %}"
-              onsubmit="return confirm('Suspend ALL {{ websites.count }} websites for {{ client.name|escapejs }}?\n\nEvery one goes offline until you activate it again.')"
+              onsubmit="return confirm('Suspend ALL {{ websites|length }} websites for {{ client.name|escapejs }}?\n\nEvery one goes offline until you activate it again.')"
               style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
           {% csrf_token %}
           <input type="text" name="reason" placeholder="Reason for suspension" required

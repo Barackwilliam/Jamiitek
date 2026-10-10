@@ -1,22 +1,24 @@
 {% extends "account/_shell.html" %}
 {% block title %}Recovery codes{% endblock %}
-{% block eyebrow %}Staff · Recovery codes{% endblock %}
-{% block heading %}{% if fresh_setup %}Two-step verification is on ✓{% elif codes %}New recovery codes{% else %}Recovery codes{% endif %}{% endblock %}
-{% block lead %}{% if codes %}<p class="lead">If you lose your phone, each code below lets you sign in <b>once</b>. Save them somewhere safe — a password manager or printed paper. <b>They will not be shown again.</b></p>{% else %}<p class="lead">You have <b>{{ remaining }}</b> unused recovery code{{ remaining|pluralize }}. Generating new codes cancels all the old ones.</p>{% endif %}{% endblock %}
+{% block eyebrow %}Recovery codes{% endblock %}
+{% block heading %}{% if fresh_setup %}Two-step verification is on{% elif codes %}Your new recovery codes{% else %}Recovery codes{% endif %}{% endblock %}
+{% block lead %}{% if codes %}<p class="lead">If you can't use your phone, each code lets you sign in <b>once</b>. Store them somewhere safe, like a password manager. <b>They won't be shown again.</b></p>{% else %}<p class="lead">You have <b>{{ remaining }}</b> unused recovery code{{ remaining|pluralize }}. Creating new codes cancels all previous ones.</p>{% endif %}{% endblock %}
 {% block content %}
+{% if fresh_setup %}<div class="alert ok" role="status">Your account now asks for a code each time you sign in.</div>{% endif %}
 {% if codes %}
 <div class="codes" id="codes">{% for c in codes %}<code>{{ c }}</code>{% endfor %}</div>
-<div class="row" style="margin-bottom:12px">
+<div class="row">
   <button class="btn ghost" type="button" id="copy">Copy</button>
-  <button class="btn ghost" type="button" onclick="window.print()">Print</button>
+  <button class="btn ghost" type="button" id="dl">Download</button>
 </div>
-<a class="btn" href="{{ next|default:'/manage/' }}">I've saved my codes — continue</a>
+<a class="btn" href="{{ next|default:'/manage/' }}">Done — I've saved them</a>
 {% else %}
-<form method="post">{% csrf_token %}<button class="btn" type="submit">Generate new recovery codes</button></form>
-<div class="links"><a href="{% url 'two_factor_setup' %}">Move 2FA to a new phone</a><a href="/manage/">Back to dashboard</a></div>
+<form method="post">{% csrf_token %}<button class="btn" type="submit">Create new recovery codes</button></form>
+<div class="links"><a href="{% url 'two_factor_setup' %}">Connect a new device</a><a href="/manage/">Back</a></div>
 {% endif %}
 {% endblock %}
 {% block scripts %}{% if codes %}<script>
-document.getElementById('copy').addEventListener('click',function(){var t=[].map.call(document.querySelectorAll('#codes code'),function(c){return c.textContent}).join('\n');
-navigator.clipboard&&navigator.clipboard.writeText('JamiiTek recovery codes\n'+t).then(function(){var b=document.getElementById('copy');b.textContent='Copied ✓';setTimeout(function(){b.textContent='Copy'},1800)});});
+(function(){function txt(){return 'JamiiTek recovery codes\n'+[].map.call(document.querySelectorAll('#codes code'),function(c){return c.textContent}).join('\n')+'\n'}
+document.getElementById('copy').addEventListener('click',function(){var b=this;navigator.clipboard&&navigator.clipboard.writeText(txt()).then(function(){b.textContent='Copied ✓';setTimeout(function(){b.textContent='Copy'},1600)})});
+document.getElementById('dl').addEventListener('click',function(){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt()],{type:'text/plain'}));a.download='jamiitek-recovery-codes.txt';a.click();setTimeout(function(){URL.revokeObjectURL(a.href)},500)});})();
 </script>{% endif %}{% endblock %}

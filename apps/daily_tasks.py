@@ -43,6 +43,7 @@ mara moja kwa kila worker.
 """
 import logging
 import threading
+import time
 from datetime import date, datetime
 
 from django.core.cache import cache
@@ -81,6 +82,12 @@ PERIODIC = ('sync_integrations', 'process_scheduled_actions', 'check_alerts',
 _thread_lock = threading.Lock()
 _running = False           # kazi za kila siku
 _running_periodic = False  # kazi za mara kwa mara
+
+# Ukaguzi wa ratiba unafanyika mara moja kwa dakika kwa kila process, si
+# kila ombi. Bila Redis cache ni ya database (Supabase), kwa hiyo kila
+# ukurasa ulikuwa ukilipa maswali 8 ya ziada kwa ukaguzi huu tu.
+CHECK_EVERY_SECONDS = 60
+_last_check = 0.0
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -218,7 +225,12 @@ class DailyTasksMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        global _last_check
         response = self.get_response(request)
+        now = time.monotonic()
+        if now - _last_check < CHECK_EVERY_SECONDS:
+            return response
+        _last_check = now
         try:
             self._maybe_run_daily()
             self._maybe_run_periodic()
@@ -263,9 +275,11 @@ class DailyTasksMiddleware:
     def _maybe_run_periodic(self):
         global _running_periodic
 
-        # Ruka kabisa kama hakuna kazi iliyofika muda
+        # Ruka kabisa kama hakuna kazi iliyofika muda — swali MOJA kwa zote
         try:
-            pending = any(cache.get(SCHEDULE[n][0]) is None for n in PERIODIC)
+            keys = [SCHEDULE[n][0] for n in PERIODIC]
+            found = cache.get_many(keys)
+            pending = any(k not in found for k in keys)
         except Exception:
             return
 
@@ -283,6 +297,8 @@ class DailyTasksMiddleware:
 
 def force_run_now():
     """Lazimisha kazi zote zifanyike sasa (kwa ajili ya kitufe cha 'Run now')."""
+    global _last_check
+    _last_check = 0.0   # ombi linalofuata likague mara moja
     for k in [CACHE_KEY] + [key for key, _ in SCHEDULE.values()]:
         try:
             cache.delete(k)

@@ -2,7 +2,12 @@
 {% load static %}
 {% load custom_filters %}
 
-{% block title %}{{ website_type.name }} Brief — {{ block.super }}{% endblock %}
+{% block title %}{{ website_type.name }} Website Brief — JamiiTek{% endblock %}
+{% block meta_desc %}Tell JamiiTek about your {{ website_type.name|lower }} website project and receive a costed quotation.{% endblock %}
+{% block og_title %}{{ website_type.name }} Website Brief — JamiiTek{% endblock %}
+{% block og_desc %}Tell JamiiTek about your {{ website_type.name|lower }} website project and receive a costed quotation.{% endblock %}
+{% block tw_title %}{{ website_type.name }} Website Brief — JamiiTek{% endblock %}
+{% block tw_desc %}Tell JamiiTek about your {{ website_type.name|lower }} website project and receive a costed quotation.{% endblock %}
 
 {% block extra_css %}
 {% include "proposal/_theme.html" %}

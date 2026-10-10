@@ -489,6 +489,12 @@ from .models import BlogPost, BlogCategory, BlogAuthor, EDITOR_MARKER
 class BlogAuthorAdmin(admin.ModelAdmin):
     list_display = ('name', 'role', 'user', 'post_count', 'is_active')
     list_editable = ('is_active',)
+    list_select_related = ('user',)
+
+    def get_queryset(self, request):
+        from django.db.models import Count, Q
+        return super().get_queryset(request).annotate(
+            _published=Count('posts', filter=Q(posts__status='published')))
     prepopulated_fields = {'slug': ('name',)}
     search_fields = ('name', 'role', 'bio')
     fieldsets = (
@@ -504,6 +510,8 @@ class BlogAuthorAdmin(admin.ModelAdmin):
 
     @admin.display(description='Posts')
     def post_count(self, obj):
+        if hasattr(obj, '_published'):
+            return obj._published
         return obj.posts.filter(status='published').count()
 
     def formfield_for_dbfield(self, db_field, **kwargs):
@@ -524,6 +532,7 @@ class BlogCategoryAdmin(admin.ModelAdmin):
 class BlogPostAdmin(admin.ModelAdmin):
     save_on_top = True
     list_display = ('title', 'status', 'insight', 'category', 'author', 'is_featured', 'views', 'published_at')
+    list_select_related = ('category', 'author')
     list_filter = ('status', 'is_featured', 'category', 'author', 'is_news')
     search_fields = ('title', 'excerpt', 'body', 'focus_keyword')
     prepopulated_fields = {'slug': ('title',)}
@@ -728,6 +737,7 @@ from .models import Contract
 @admin.register(Contract)
 class ContractAdmin(admin.ModelAdmin):
     save_on_top = True
+    list_select_related = ('client',)
     list_display = ('title', 'client_col', 'status', 'amount_col', 'currency',
                     'signed_name', 'created_at', 'builder_link')
     list_filter = ('status', 'currency', 'created_at')
@@ -862,6 +872,7 @@ from django.utils.safestring import mark_safe
 @admin.register(Proposal)
 class ProposalAdmin(admin.ModelAdmin):
     save_on_top = True
+    list_select_related = ('client',)
     list_display = ('title', 'client_col', 'status', 'value_col', 'currency',
                     'reference_number', 'created_at', 'builder_link')
     list_filter = ('status', 'currency', 'created_at')
@@ -951,6 +962,7 @@ class CompanyProfileAdmin(admin.ModelAdmin):
 @admin.register(Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
     save_on_top = True
+    list_select_related = ('client',)
     list_display = ('invoice_number', 'client_col', 'invoice_type', 'total_col',
                     'balance_col', 'status', 'due_date', 'builder_link')
     list_filter = ('status', 'invoice_type', 'currency', 'created_at')

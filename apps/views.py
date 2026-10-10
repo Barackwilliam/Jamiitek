@@ -146,7 +146,7 @@ def service(request):
         'services': services,
         'questions': questions,
         'schema_markup': schema_html,
-        'page_title': 'Our Services — Web Development, AI Bots & Hosting | JamiiTek Tanzania',
+        'page_title': 'Services — Web Development, AI Bots & Hosting | JamiiTek',
         'page_desc': 'JamiiTek services: website development, AI WhatsApp bots, web hosting, domain registration, mobile apps, UI/UX design. Best web developer in Tanzania.',
         'canonical': 'https://www.jamiitek.com/service/',
         'page_keywords': 'web development services Tanzania, AI WhatsApp bot, website design Tanzania, web hosting Tanzania, domain registration Tanzania, mobile app Tanzania',

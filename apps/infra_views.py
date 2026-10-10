@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 def infra_overview(request):
     """Projects zote na afya ya providers wao kwa mtazamo mmoja."""
     websites = (ManagedWebsite.objects
-                .select_related('client')
+                .select_related('client', 'hosting_config')
                 .prefetch_related('integrations')
                 .order_by('name'))
 
@@ -47,7 +47,6 @@ def infra_overview(request):
             'website': w,
             'cfg': live_config(w),
             'integrations': integs,
-            'health': w.integration_health,
             'cost': cost,
         })
 

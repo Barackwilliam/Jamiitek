@@ -43,5 +43,6 @@ admin.site.register(AiUsageLog)
 @admin.register(SiteInquiry)
 class SiteInquiryAdmin(admin.ModelAdmin):
     list_display = ('name', 'phone', 'website', 'item', 'status', 'created_at')
+    list_select_related = ('website', 'item')
     list_filter = ('status', 'created_at')
     search_fields = ('name', 'phone', 'email', 'website__subdomain')

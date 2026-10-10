@@ -138,12 +138,34 @@ def _record(user):
     return StaffTwoFactor.objects.filter(user=user).first()
 
 
+NEXT_KEY = 'staff_2fa_next'
+
+
 def _safe_next(request, default='/manage/'):
-    nxt = request.POST.get('next') or request.GET.get('next') or ''
+    """Ukurasa wa kurudi baada ya 2FA. Unakaa kwenye session, si kwenye URL,
+    ili anwani ya ukurasa isionyeshe akaunti inaelekea wapi."""
+    nxt = request.session.get(NEXT_KEY) or ''
     if nxt.startswith('/') and url_has_allowed_host_and_scheme(
             nxt, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
         return nxt
     return default
+
+
+def _already_verified_elsewhere(request):
+    """Je ombi jingine (la wakati huo huo) limeshaweka alama ya 2FA kwenye session hii?"""
+    from importlib import import_module
+    from django.conf import settings as dj
+    key = request.session.session_key
+    if not key:
+        return False
+    fresh = import_module(dj.SESSION_ENGINE).SessionStore(session_key=key)
+    return fresh.get(SESSION_FLAG) == request.user.pk
+
+
+def _go_next(request):
+    nxt = _safe_next(request)
+    request.session.pop(NEXT_KEY, None)
+    return redirect(nxt)
 
 
 def _fail_key(user):
@@ -174,7 +196,10 @@ def _pass(request, rec):
     rec.last_used_at = timezone.now()
     rec.save(update_fields=['last_step', 'recovery_hashes', 'last_used_at'])
     cache.delete(_fail_key(request.user))
-    request.session.cycle_key()          # session mpya baada ya hatua ya pili
+    # HAKUNA cycle_key hapa: login() ilishabadilisha session kwenye hatua ya
+    # nywila. Kubadilisha tena kulifuta session ya zamani — code ikitumwa mara
+    # mbili (auto-submit + Enter), ombi la pili lilikuta session imefutwa,
+    # likamtoa mtumiaji nje, na akarudishwa login → 2FA → login bila mwisho.
     request.session[SESSION_FLAG] = request.user.pk
 
 
@@ -186,7 +211,8 @@ def _reset_flag_on_login(sender, request=None, user=None, **kwargs):
 
 # ── Middleware ───────────────────────────────────────────────────
 _EXEMPT_PREFIXES = (
-    '/account/2fa/', '/account/password-reset/', '/static/', '/media/', '/favicon',
+    '/account/2fa/', '/account/password-reset/', '/account/sign-out/', '/account/help/',
+    '/chatbot/privacy-policy/', '/static/', '/media/', '/favicon',
     '/manage/logout/', '/portal/logout/', '/chatbot/logout/', '/builder/logout/',
     '/admin/logout/', '/robots.txt', '/manifest.json', '/sw.js',
 )
@@ -207,8 +233,8 @@ class StaffTwoFactorMiddleware:
                 return JsonResponse({'error': 'Two-factor verification required.'}, status=401)
             rec = _record(user)
             target = '/account/2fa/' if (rec and rec.confirmed) else '/account/2fa/setup/'
-            nxt = request.get_full_path() if request.method == 'GET' else '/manage/'
-            return redirect(f'{target}?next={quote(nxt)}')
+            request.session[NEXT_KEY] = request.get_full_path() if request.method == 'GET' else '/manage/'
+            return redirect(target)
         return self.get_response(request)
 
 
@@ -229,9 +255,9 @@ def verify(request):
     rec = _record(request.user)
     secret = decrypt(rec.secret_encrypted) if rec and rec.confirmed else None
     if not secret:
-        return redirect(f'/account/2fa/setup/?next={quote(_safe_next(request))}')
+        return redirect('/account/2fa/setup/')
     if request.session.get(SESSION_FLAG) == request.user.pk:
-        return redirect(_safe_next(request))
+        return _go_next(request)
 
     error = None
     mode = 'recovery' if request.GET.get('recovery') or request.POST.get('mode') == 'recovery' else 'code'
@@ -249,17 +275,20 @@ def verify(request):
             if step is not None and step > rec.last_step:
                 rec.last_step = step
                 ok = True
+            elif step is not None and _already_verified_elsewhere(request):
+                # Ombi la pili la code ile ile (double submit) — la kwanza
+                # limeshafaulu kwenye session hii; endelea bila kosa
+                return _go_next(request)
         if ok:
             _pass(request, rec)
-            return redirect(_safe_next(request))
+            return _go_next(request)
         if _register_failure(request):
             return redirect('/manage/login/')
         error = ('That recovery code is not valid or was already used.' if mode == 'recovery'
                  else 'That code is not valid. Check the time on your phone and try again.')
 
     return render(request, 'account/two_factor_verify.html', {
-        'mode': mode, 'error': error, 'next': _safe_next(request),
-        'remaining': len(rec.recovery_hashes),
+        'mode': mode, 'error': error, 'remaining': len(rec.recovery_hashes),
     })
 
 
@@ -273,7 +302,8 @@ def setup(request):
     already = bool(rec and rec.confirmed and decrypt(rec.secret_encrypted))
     if already and request.session.get(SESSION_FLAG) != request.user.pk:
         # Kubadilisha simu kunahitaji kwanza kuthibitisha kwa code ya sasa
-        return redirect(f'/account/2fa/?next={quote("/account/2fa/setup/")}')
+        request.session[NEXT_KEY] = '/account/2fa/setup/'
+        return redirect('/account/2fa/')
 
     # Siri ya muda inakaa kwenye session mpaka code ya kwanza ithibitishwe
     pending = request.session.get('staff_2fa_pending')
@@ -300,16 +330,19 @@ def setup(request):
             request.session.pop('staff_2fa_pending', None)
             _pass(request, rec)
             log.warning('2FA: imewashwa kwa %s', request.user)
+            nxt = _safe_next(request)
+            request.session.pop(NEXT_KEY, None)
+            if nxt.startswith('/account/2fa/'):
+                nxt = '/manage/'
             return render(request, 'account/two_factor_codes.html', {
-                'codes': codes, 'next': _safe_next(request), 'fresh_setup': True,
+                'codes': codes, 'next': nxt, 'fresh_setup': True,
             })
 
     account = request.user.email or request.user.username
     uri = provisioning_uri(pending, account)
-    spaced = ' '.join(pending[i:i + 4] for i in range(0, len(pending), 4))
+    groups = [pending[i:i + 4] for i in range(0, len(pending), 4)]
     return render(request, 'account/two_factor_setup.html', {
-        'qr': qr_svg(uri), 'secret': spaced, 'error': error, 'next': _safe_next(request),
-        'replacing': already,
+        'qr': qr_svg(uri), 'secret_groups': groups, 'error': error, 'replacing': already,
     })
 
 
@@ -330,3 +363,12 @@ def recovery_codes(request):
     rec.save(update_fields=['recovery_hashes'])
     log.warning('2FA: recovery codes mpya kwa %s', request.user)
     return render(request, 'account/two_factor_codes.html', {'codes': codes, 'next': '/manage/'})
+
+
+def sign_out(request):
+    """Kutoka bila kufichua ni sehemu gani ya mfumo (inatumiwa na kurasa za 2FA)."""
+    from django.http import HttpResponseNotAllowed
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+    logout(request)
+    return redirect('/')

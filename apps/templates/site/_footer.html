@@ -1,4 +1,4 @@
-{% load static jt_contact %}
+{% load static jt_contact blog_extras %}
 <footer class="ft" id="site-footer">
   <div class="wrap">
     <div class="news">
@@ -67,7 +67,7 @@
           <li><a href="{% url 'portal_login' %}">Client portal</a></li>
           <li><a href="{% url 'portal_register' %}">Create account</a></li>
           <li><a href="{% url 'contact' %}">Submit a request</a></li>
-          <li><a href="{% url 'company_profile_view' %}">Company profile</a></li>
+          {% company_profile_live as profile_live %}{% if profile_live %}<li><a href="{% url 'company_profile_view' %}">Company profile</a></li>{% endif %}
           <li><a href="{% url 'get_started' %}">Start a project</a></li>
         </ul>
       </div>

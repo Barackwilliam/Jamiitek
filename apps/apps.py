@@ -14,3 +14,6 @@ class AppsConfig(AppConfig):
         from . import template_signals  # noqa: F401
         # Usalama: kuhesabu makosa ya login (brute-force lockout)
         from . import security  # noqa: F401
+        # Admin: dropdown za tovuti bila swali kwa kila chaguo
+        from .admin_speed import speed_up_admin
+        speed_up_admin()
