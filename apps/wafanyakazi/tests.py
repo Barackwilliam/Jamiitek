@@ -416,7 +416,10 @@ class OfisiTests(Base):
     def test_office_shows_people_their_work_and_the_feed(self):
         self.invoice()
         run_all(now=self.now)
-        r = self.client.get('/manage/wafanyakazi/')
+        # "online" = mzunguko ndani ya dakika 50 zilizopita. Ukurasa ukisoma saa
+        # halisi, test ingepita asubuhi tu (kabla ya 09:50) — tunaibana saa.
+        with mock.patch('apps.wafanyakazi.ofisi.timezone.now', return_value=self.now + timedelta(minutes=10)):
+            r = self.client.get('/manage/wafanyakazi/')
         self.assertEqual(r.status_code, 200)
         for slug in ('william', 'ibrahimu', 'selvester', 'grace', 'diana'):
             self.assertContains(r, f'wafanyakazi/team/{slug}')
