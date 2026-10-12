@@ -16,57 +16,7 @@ $$('img[data-hide-broken], .brand img').forEach(function(img){
   img.addEventListener('error', function(){ (img.closest('picture') || img).style.display = 'none'; });
 });
 
-/* ── Header: inajificha ukishuka, inarudi ukipanda; mstari wa maendeleo ── */
-var hdr = $('#hdr');
-if (hdr) {
-  var lastY = scrollY, ticking = false;
-  function onScroll(){
-    var y = scrollY, max = document.documentElement.scrollHeight - innerHeight;
-    hdr.classList.toggle('is-stuck', y > 8);
-    hdr.classList.toggle('is-hidden', y > 320 && y > lastY + 4 && !document.body.classList.contains('nav-open'));
-    if (y < lastY - 4) hdr.classList.remove('is-hidden');
-    hdr.style.setProperty('--p', max > 0 ? Math.min(1, y / max) : 0);
-    lastY = y; ticking = false;
-  }
-  addEventListener('scroll', function(){ if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, {passive:true});
-  onScroll();
-
-  /* Kidonge cheupe kinateleza kwenda link unayoielekea */
-  var nav = $('.nav', hdr), pill = $('.nav__pill', hdr);
-  if (nav && pill) {
-    var on = $('a.is-on', nav);
-    function moveTo(a){
-      if (!a) { pill.style.opacity = 0; return; }
-      pill.style.width = a.offsetWidth + 'px';
-      pill.style.transform = 'translateX(' + a.offsetLeft + 'px)';
-      pill.style.opacity = 1;
-    }
-    $$('a', nav).forEach(function(a){ a.addEventListener('mouseenter', function(){ moveTo(a); }); });
-    nav.addEventListener('mouseleave', function(){ moveTo(on); });
-    addEventListener('load', function(){ moveTo(on); });
-    addEventListener('resize', function(){ moveTo(on); });
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ moveTo(on); });
-  }
-}
-
-/* ── Sidebar ya simu ── */
-var side = $('#side'), burger = $('#burger'), scrim = $('#scrim');
-if (side && burger) {
-  function setNav(open){
-    side.classList.toggle('is-open', open);
-    if (scrim) scrim.classList.toggle('is-on', open);
-    side.setAttribute('aria-hidden', open ? 'false' : 'true');
-    burger.setAttribute('aria-expanded', open ? 'true' : 'false');
-    document.body.classList.toggle('nav-open', open);
-    document.body.style.overflow = open ? 'hidden' : '';
-    if (open) $('#sideX').focus(); else if (side.contains(document.activeElement)) burger.focus();
-  }
-  burger.addEventListener('click', function(){ setNav(true); });
-  $('#sideX').addEventListener('click', function(){ setNav(false); });
-  if (scrim) scrim.addEventListener('click', function(){ setNav(false); });
-  side.addEventListener('click', function(e){ if (e.target.closest('a')) setNav(false); });
-  addEventListener('keydown', function(e){ if (e.key === 'Escape' && side.classList.contains('is-open')) setNav(false); });
-}
+/* Header na sidebar ya simu: static/js/jt-nav.js (moja kwa tovuti nzima) */
 
 /* ── Kichwa (h1.split): maneno yanaingia moja moja ── */
 $$('.split').forEach(function(h){

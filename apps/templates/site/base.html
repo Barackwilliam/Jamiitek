@@ -40,6 +40,7 @@
 {% block schema_markup %}{% endblock %}
 <link rel="preload" as="font" type="font/woff2" href="{% static 'fonts/sora-800.woff2' %}" crossorigin>
 <link rel="preload" as="font" type="font/woff2" href="{% static 'fonts/inter-400.woff2' %}" crossorigin>
+<link rel="stylesheet" href="{% static 'css/jt-nav.css' %}">
 <link rel="stylesheet" href="{% static 'css/jt-site.css' %}">
 <link rel="stylesheet" href="{% static 'css/interaction.css' %}" media="print" onload="this.media='all'">
 <script>document.documentElement.classList.add('js')</script>
@@ -51,6 +52,7 @@
 {% block content %}{% endblock %}
 </main>
 {% include 'site/_footer.html' %}
+<script src="{% static 'js/jt-nav.js' %}"></script>
 <script src="{% static 'js/jt-site.js' %}"></script>
 {% block scripts %}{% endblock %}
 {% include 'includes/offline_guard.html' %}
