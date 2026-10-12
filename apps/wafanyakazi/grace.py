@@ -9,6 +9,9 @@ Kila siku (baada ya saa 1 asubuhi) anaandaa post MOJA ya mitandao ya kijamii
 Hakuna API ya mitandao iliyounganishwa bado, kwa hiyo Grace anaandaa na wewe
 unachapisha: post inaingia kwenye ripoti ya asubuhi ya William tayari
 kunakiliwa, na kwenye panel kuna kitufe cha "Nimechapisha".
+
+Mara moja kwa wiki pia anafanya ukaguzi wa SEO kutoka Google Search Console
+(apps/wafanyakazi/seo.py) na kuandaa vichwa vipya vya kurasa zinazopoteza mibofyo.
 """
 from datetime import timedelta
 
@@ -93,8 +96,16 @@ def _caption(facts, link):
 
 
 def run(now):
-    # Post za zamani ambazo hazikuchapishwa zinaondoka zenyewe
-    old = Kazi.objects.filter(worker=SLUG, status__in=Kazi.LIVE,
+    from . import seo
+    result = _post(now)
+    result.update(seo.run(now))      # ukaguzi wa SEO wa kila wiki (Search Console)
+    return result
+
+
+def _post(now):
+    # Post za zamani ambazo hazikuchapishwa zinaondoka zenyewe (si rasimu za SEO —
+    # hizo zinasubiri uamuzi wako hata wiki nzima)
+    old = Kazi.objects.filter(worker=SLUG, status__in=Kazi.LIVE, channel='social',
                               created_at__lt=now - timedelta(days=STALE_DAYS))
     expired = 0
     for kazi in old:

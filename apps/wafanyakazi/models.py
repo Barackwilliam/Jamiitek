@@ -26,6 +26,7 @@ class Kazi(models.Model):
         ('whatsapp', 'WhatsApp'),
         ('social', 'Mitandao ya kijamii'),
         ('faq', 'FAQ ya JamiiBot'),
+        ('seo', 'SEO ya Google'),
     ]
     PRIORITY = [(1, 'Juu'), (2, 'Kawaida'), (3, 'Chini')]
 
@@ -147,3 +148,30 @@ class Mtihani(models.Model):
 
     def __str__(self):
         return f'Mtihani {self.created_at:%d/%m %H:%M} ({self.status})'
+
+
+class SeoRipoti(models.Model):
+    """
+    Ukaguzi wa SEO wa wiki moja (Grace, apps/wafanyakazi/seo.py): jumla ya
+    Search Console kwa siku 28, ikilinganishwa na siku 28 zilizotangulia, na
+    fursa zilizopatikana (maneno yenye impressions nyingi lakini clicks chache).
+    """
+
+    week = models.CharField(max_length=10, unique=True, help_text='Mfano 2026-W41')
+    start = models.DateField()
+    end = models.DateField()
+    totals = models.JSONField(default=dict, blank=True)
+    previous = models.JSONField(default=dict, blank=True)
+    opportunities = models.JSONField(default=list, blank=True)
+    movers = models.JSONField(default=dict, blank=True)
+    top_queries = models.JSONField(default=list, blank=True)
+    error = models.CharField(max_length=400, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-start', '-created_at']
+        verbose_name = 'Ripoti ya SEO'
+        verbose_name_plural = 'Ripoti za SEO'
+
+    def __str__(self):
+        return f'SEO {self.week}'

@@ -1,0 +1,170 @@
+{% extends 'management/base.html' %}
+{% load static %}
+{% block title %}SEO ya Google{% endblock %}
+{% block content %}
+<style>
+  .sx{--ok:#10d98a;--bad:#ff5a6e;--warn:#fbbf24;--blue:#3b82f6;--pink:#db2777}
+  .sx-top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+  .sx-who{display:flex;gap:14px;align-items:center}
+  .sx-who img{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--pink)}
+  .sx-who h1{font-family:var(--head);font-size:22px;font-weight:800;margin:0}
+  .sx-who p{color:var(--text-2);font-size:13px;margin:3px 0 0;max-width:640px;line-height:1.5}
+  .sx-b{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 14px;border-radius:10px;font:inherit;
+    font-size:12.5px;font-weight:600;cursor:pointer;text-decoration:none;border:1px solid var(--border);background:var(--card-s);color:var(--text)}
+  .sx-b.pri{background:var(--blue);border-color:var(--blue);color:#fff}
+  .sx-acts{display:flex;gap:8px;flex-wrap:wrap}.sx-acts form{margin:0}
+  .sx-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 18px;margin-bottom:14px}
+  .sx-card h2{font-size:15px;margin:0 0 12px;display:flex;gap:9px;align-items:center}
+  .sx-card h2 small{font-weight:500;color:var(--text-2);font-size:12px}
+  .sx-note{font-size:13px;padding:11px 13px;border-radius:10px;line-height:1.55;margin-bottom:14px}
+  .sx-note.warn{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25)}
+  .sx-note.bad{background:rgba(255,90,110,.08);border:1px solid rgba(255,90,110,.25)}
+  .sx-steps{margin:0;padding-left:20px;font-size:13.5px;line-height:1.75;color:var(--text-2)}
+  .sx-steps b,.sx-steps code{color:var(--text)}
+  .sx-steps code{font-family:var(--mono);font-size:12px;background:var(--bg2);padding:1px 6px;border-radius:6px}
+  .sx-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+  @media(max-width:900px){.sx-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  .sx-kpi{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+  .sx-kpi span{font-size:12px;color:var(--text-2)}
+  .sx-kpi b{display:block;font-family:var(--head);font-size:26px;font-weight:800;margin:4px 0 2px}
+  .sx-kpi em{font-style:normal;font-size:12px;font-weight:600}
+  .up{color:var(--ok)}.down{color:var(--bad)}.flat{color:var(--text-2)}
+  .sx-bars{display:flex;align-items:flex-end;gap:8px;height:110px;padding-top:6px}
+  .sx-bars div{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+  .sx-bars i{width:100%;max-width:46px;border-radius:7px 7px 3px 3px;background:linear-gradient(180deg,var(--pink),#7c3aed);min-height:3px}
+  .sx-bars small{font-size:10.5px;color:var(--text-2);font-family:var(--mono)}
+  .sx-bars b{font-size:11.5px}
+  .sx-t{width:100%;border-collapse:collapse;font-size:13px}
+  .sx-t th{text-align:left;font-weight:600;color:var(--text-2);font-size:11.5px;padding:7px 8px;border-bottom:1px solid var(--border)}
+  .sx-t td{padding:9px 8px;border-bottom:1px solid var(--border);vertical-align:top}
+  .sx-t .num{text-align:right;font-family:var(--mono);font-size:12.5px;white-space:nowrap}
+  .sx-page{font-weight:600;word-break:break-all}
+  .sx-q{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+  .sx-q span{font-size:11.5px;padding:3px 8px;border-radius:999px;background:var(--bg2);border:1px solid var(--border)}
+  .sx-q span i{font-style:normal;color:var(--text-2)}
+  .pill{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid var(--border);white-space:nowrap}
+  .pill.blue{color:#93c5fd;border-color:rgba(59,130,246,.35);background:rgba(59,130,246,.1)}
+  .pill.amber{color:var(--warn);border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.08)}
+  .sx-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:900px){.sx-two{grid-template-columns:1fr}}
+  .sx-mv{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:7px 0;border-bottom:1px solid var(--border)}
+  .sx-mv:last-child{border:0}
+  .sx-empty{font-size:13px;color:var(--text-2)}
+  .sx-scroll{overflow-x:auto}
+  @media(max-width:620px){
+    .sx-opp thead{display:none}
+    .sx-opp tr{display:grid;grid-template-columns:1fr auto;gap:6px 10px;padding:10px 0;border-bottom:1px solid var(--border)}
+    .sx-opp td{display:block;border:0;padding:0}
+    .sx-opp td:first-child{grid-column:1/-1}
+    .sx-opp td.num{text-align:left}
+    .sx-opp td.num::before{content:"Mibofyo inayopotea ";font-family:var(--body);color:var(--text-2)}
+  }
+</style>
+
+<div class="sx">
+  <div class="sx-top">
+    <div class="sx-who">
+      <img src="{% static grace.photo %}" alt="{{ grace.name }}" width="52" height="52">
+      <div>
+        <h1>SEO ya Google</h1>
+        <p>{{ grace.name }} anasoma Google Search Console kila Jumatatu: maneno yanayokuonyesha Google lakini
+          hayabofywi, na kurasa zinazopanda au kushuka. Anakuandalia vichwa vipya — vinatumika ukikubali tu.</p>
+      </div>
+    </div>
+    <div class="sx-acts">
+      <form method="post">{% csrf_token %}<button class="sx-b pri"{% if not configured %} disabled{% endif %}><i class="fas fa-rotate"></i> Endesha ukaguzi sasa</button></form>
+      <a class="sx-b" href="{% url 'wafanyakazi_dashboard' %}?w=grace#mezani"><i class="fas fa-inbox"></i> Rasimu za Grace{% if pending %} ({{ pending|length }}){% endif %}</a>
+      <a class="sx-b" href="https://search.google.com/search-console" target="_blank" rel="noopener"><i class="fab fa-google"></i> Search Console</a>
+    </div>
+  </div>
+
+  {% if not configured %}
+  <div class="sx-card">
+    <h2><i class="fas fa-plug" style="color:var(--warn)"></i> Unganisha Google Search Console <small>mara moja tu · dakika 10</small></h2>
+    <ol class="sx-steps">
+      <li>Fungua <b>console.cloud.google.com</b> → chagua au tengeneza project → <b>APIs &amp; Services → Library</b> → wezesha <b>Google Search Console API</b>.</li>
+      <li><b>IAM &amp; Admin → Service Accounts → Create</b> (jina: <code>jamiitek-seo</code>, bila role). Kisha <b>Keys → Add key → JSON</b> — faili la JSON litapakuliwa.</li>
+      <li>Fungua <b>search.google.com/search-console</b> → property ya jamiitek.com → <b>Settings → Users and permissions → Add user</b>: weka email ya service account (inaishia <code>.iam.gserviceaccount.com</code>), ruhusa <b>Restricted</b>.</li>
+      <li>Render → <b>Environment</b>: <code>GSC_SERVICE_ACCOUNT_JSON</code> = maudhui yote ya faili la JSON. Kama property yako si ya domain, weka pia <code>GSC_SITE_URL</code> (mfano <code>https://www.jamiitek.com/</code>). Sasa hivi: <code>{{ site_url }}</code>.</li>
+    </ol>
+    <div class="sx-note warn" style="margin:12px 0 0">🔒 Faili la JSON ni ufunguo wa siri — liweke Render tu. Usilitume kwenye chat, email wala GitHub.</div>
+  </div>
+  {% endif %}
+
+  {% if r and r.error %}<div class="sx-note bad"><b>Ukaguzi wa mwisho haukufaulu:</b> {{ r.error }}</div>{% endif %}
+
+  {% if r and r.totals %}
+  <div class="sx-kpis">
+    <div class="sx-kpi"><span>Clicks · siku {{ days }}</span><b>{{ r.totals.clicks }}</b>
+      {% with c=change.clicks %}{% if c %}<em class="{% if c.diff > 0 %}up{% elif c.diff < 0 %}down{% else %}flat{% endif %}">{% if c.diff > 0 %}▲{% elif c.diff < 0 %}▼{% endif %} {{ c.diff|floatformat:0 }}{% if c.pct is not None %} ({{ c.pct }}%){% endif %}</em>{% endif %}{% endwith %}</div>
+    <div class="sx-kpi"><span>Impressions</span><b>{{ r.totals.impressions }}</b>
+      {% with c=change.impressions %}{% if c %}<em class="{% if c.diff > 0 %}up{% elif c.diff < 0 %}down{% else %}flat{% endif %}">{% if c.diff > 0 %}▲{% elif c.diff < 0 %}▼{% endif %} {{ c.diff|floatformat:0 }}{% if c.pct is not None %} ({{ c.pct }}%){% endif %}</em>{% endif %}{% endwith %}</div>
+    <div class="sx-kpi"><span>CTR</span><b>{{ ctr_pct }}%</b>
+      {% with c=change.ctr %}{% if c %}<em class="{% if c.pts > 0 %}up{% elif c.pts < 0 %}down{% else %}flat{% endif %}">{% if c.pts > 0 %}▲ +{% elif c.pts < 0 %}▼ {% endif %}{{ c.pts }} pts</em>{% endif %}{% endwith %}</div>
+    <div class="sx-kpi"><span>Nafasi ya wastani</span><b>{{ r.totals.position }}</b>
+      {% with c=change.position %}{% if c %}<em class="{% if c.diff < 0 %}up{% elif c.diff > 0 %}down{% else %}flat{% endif %}">{% if c.diff < 0 %}▲ imepanda{% elif c.diff > 0 %}▼ imeshuka{% else %}—{% endif %} {{ c.diff|floatformat:1 }}</em>{% endif %}{% endwith %}</div>
+  </div>
+  <p class="sx-empty" style="margin:-4px 0 14px">{{ r.start|date:"j M" }} – {{ r.end|date:"j M Y" }}, ikilinganishwa na siku {{ days }} zilizotangulia · ukaguzi {{ r.week }}</p>
+
+  {% if trend|length > 1 %}
+  <div class="sx-card">
+    <h2><i class="fas fa-chart-column" style="color:var(--pink)"></i> Clicks kwa kila ukaguzi</h2>
+    <div class="sx-bars">
+      {% for t in trend %}<div><b>{{ t.clicks }}</b><i style="height:{{ t.h }}px"></i><small>{{ t.week }}</small></div>{% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="sx-card">
+    <h2><i class="fas fa-bullseye" style="color:var(--warn)"></i> Fursa — mibofyo inayopotea <small>impressions ≥ {{ min_impressions }}, nafasi 1–20</small></h2>
+    {% if r.opportunities %}
+    <div class="sx-scroll"><table class="sx-t sx-opp">
+      <thead><tr><th>Ukurasa na maneno</th><th class="num">Mibofyo inayopotea</th><th>Hali</th></tr></thead>
+      <tbody>
+      {% for o in r.opportunities %}
+      <tr>
+        <td><a class="sx-page" href="{{ o.page }}" target="_blank" rel="noopener">{{ o.path|default:o.page }}</a>
+          <div class="sx-q">{% for q in o.queries|slice:":4" %}<span>{{ q.query }} <i>· {{ q.impressions }} imp · {{ q.clicks }} clk · #{{ q.position }}</i></span>{% endfor %}</div></td>
+        <td class="num">~{{ o.missed|floatformat:0 }}</td>
+        <td>{% if o.status == 'mezani' %}<span class="pill blue">Rasimu mezani</span>{% elif o.status == 'inasubiri' %}<span class="pill amber">Inasubiri Google</span>{% else %}<span class="pill">Wiki ijayo</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}<p class="sx-empty">Hakuna fursa kubwa wiki hii — au bado data ni chache. Kadri impressions zinavyoongezeka, Grace ataona zaidi.</p>{% endif %}
+  </div>
+
+  <div class="sx-two">
+    <div class="sx-card">
+      <h2><i class="fas fa-arrow-trend-up up"></i> Kurasa zinazopanda</h2>
+      {% for m in r.movers.up %}<div class="sx-mv"><a href="{{ m.page }}" target="_blank" rel="noopener" class="sx-page">{{ m.page|cut:"https://www.jamiitek.com"|cut:"https://jamiitek.com" }}</a><b class="up">+{{ m.change }}</b></div>
+      {% empty %}<p class="sx-empty">Hakuna bado.</p>{% endfor %}
+    </div>
+    <div class="sx-card">
+      <h2><i class="fas fa-arrow-trend-down down"></i> Kurasa zinazoshuka</h2>
+      {% for m in r.movers.down %}<div class="sx-mv"><a href="{{ m.page }}" target="_blank" rel="noopener" class="sx-page">{{ m.page|cut:"https://www.jamiitek.com"|cut:"https://jamiitek.com" }}</a><b class="down">{{ m.change }}</b></div>
+      {% empty %}<p class="sx-empty">Hakuna ukurasa ulioshuka. 👏</p>{% endfor %}
+    </div>
+  </div>
+
+  <div class="sx-card">
+    <h2><i class="fab fa-google" style="color:var(--blue)"></i> Maneno yanayokuletea watu</h2>
+    {% if r.top_queries %}
+    <div class="sx-scroll"><table class="sx-t">
+      <thead><tr><th>Neno la utafutaji</th><th class="num">Clicks</th><th class="num">Impressions</th><th class="num">Nafasi</th></tr></thead>
+      <tbody>{% for q in r.top_queries %}<tr><td>{{ q.query }}</td><td class="num">{{ q.clicks }}</td><td class="num">{{ q.impressions }}</td><td class="num">{{ q.position }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    {% else %}<p class="sx-empty">Hakuna data bado.</p>{% endif %}
+  </div>
+  {% elif configured and not r %}
+  <div class="sx-card"><p class="sx-empty">Search Console imeunganishwa ({{ site_url }}{% if service_email %} · {{ service_email }}{% endif %}). Ukaguzi wa kwanza utafanyika Jumatatu ijayo — au bonyeza <b>Endesha ukaguzi sasa</b>.</p></div>
+  {% endif %}
+
+  {% if applied %}
+  <div class="sx-card">
+    <h2><i class="fas fa-check-double up"></i> Mabadiliko yaliyofanyika <small>Google inahitaji wiki 2–4 kuonyesha matokeo</small></h2>
+    {% for k in applied %}<div class="sx-mv"><span>{{ k.title }}</span><small class="flat">{{ k.closed_at|date:"j M" }}</small></div>{% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
