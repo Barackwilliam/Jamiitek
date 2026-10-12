@@ -36,7 +36,8 @@ TEAM = {
         'name': 'Grace', 'role': 'Afisa masoko', 'icon': '📣', 'fa': 'fa-bullhorn',
         'color': '#db2777',
         'duty': 'Anaandaa post ya kila siku ya mitandao ya kijamii kutoka kwenye blog, '
-                'templates na huduma za JamiiTek.',
+                'templates na huduma za JamiiTek, na kila Jumatatu anakagua SEO ya Google '
+                '(Search Console) na kuandaa vichwa vipya vya kurasa zinazopoteza mibofyo.',
     },
     'diana': {
         'title': 'Meneja wa Fedha na Ofisi', 'photo': 'wafanyakazi/team/diana.webp',

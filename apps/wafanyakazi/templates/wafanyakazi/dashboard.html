@@ -306,6 +306,7 @@
             {% elif k.channel == 'whatsapp' %}Nimeandaa ujumbe wa WhatsApp — ukikubali, naupeleka.
             {% elif k.channel == 'faq' %}JamiiBot haikujua jibu. Nimeandaa jibu — ukikubali, bot itajifunza.
             {% elif k.channel == 'social' %}Post ya leo iko tayari — inakili, ichapishe, kisha nijulishe.
+            {% elif k.channel == 'seo' %}{% if k.ref|slice:":5" == "page:" %}Ukurasa huu unapoteza mibofyo Google — nimeandaa kichwa na maelezo mapya ya kuweka kwenye code yake.{% else %}Ukurasa huu unapoteza mibofyo Google — nimeandaa kichwa na maelezo mapya. Ukikubali, nayaweka papo hapo.{% endif %}
             {% else %}Nimeona hili — linahitaji jicho lako.{% endif %}</div>
           {% endif %}
           <div class="tt">{{ k.title }}</div>
@@ -315,7 +316,7 @@
             {% if k.reminders %}<span class="pill amber">William amekumbusha ×{{ k.reminders }}</span>{% endif %}
             {% if k.wilife_code %}<span class="pill blue">wILife: OK {{ k.wilife_code }}</span>{% endif %}
           </div>
-          {% if k.detail %}<div class="det">{{ k.detail|truncatechars:420 }}</div>{% endif %}
+          {% if k.detail %}<div class="det">{% if k.channel == 'seo' %}{{ k.detail|truncatechars:1400 }}{% else %}{{ k.detail|truncatechars:420 }}{% endif %}</div>{% endif %}
 
           {% if k.is_live %}
             {% if k.draft %}
@@ -332,6 +333,7 @@
                 {% elif k.channel == 'whatsapp' %}<button class="of-b ok sm"><i class="fab fa-whatsapp"></i> Kubali na utume</button>
                 {% elif k.channel == 'faq' %}<button class="of-b ok sm"><i class="fas fa-graduation-cap"></i> Kubali — ifundishe bot</button>
                 {% elif k.channel == 'social' %}<button class="of-b ok sm"><i class="fas fa-check"></i> Nimechapisha</button>
+                {% elif k.channel == 'seo' %}<button class="of-b ok sm"><i class="fas fa-magnifying-glass-chart"></i> {% if k.ref|slice:":5" == "page:" %}Nimeweka{% else %}Kubali — weka kwenye tovuti{% endif %}</button>
                 {% endif %}
                 <button type="button" class="of-b ghost sm" onclick="ofCopy({{ k.pk }}, this)"><i class="fas fa-copy"></i> Nakili</button>
                 {% if k.wa %}<a class="of-b ghost sm" href="{{ k.wa }}" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Fungua WhatsApp</a>{% endif %}

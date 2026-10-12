@@ -120,6 +120,65 @@ def exam(request):
     })
 
 
+def _trend(history):
+    weeks = [{'week': h.week[5:], 'clicks': (h.totals or {}).get('clicks', 0)} for h in reversed(history)]
+    top = max([w['clicks'] for w in weeks] + [1])
+    for w in weeks:
+        w['h'] = max(4, round(w['clicks'] / top * 76))   # px — nguzo ndefu zaidi = 76px
+    return weeks
+
+
+@staff_required
+def seo_report(request):
+    """Ripoti ya SEO ya Grace (Google Search Console) — /manage/seo/."""
+    from apps.seo import gsc
+
+    from . import seo
+    from .models import SeoRipoti
+
+    if request.method == 'POST':
+        if not gsc.is_configured():
+            messages.error(request, 'Search Console bado haijaunganishwa — angalia hatua hapa chini.')
+        else:
+            import threading
+
+            from django.db import connection
+
+            def target():
+                try:
+                    seo.audit(timezone.localtime(), force=True)
+                except Exception:
+                    seo.logger.exception('[seo] ukaguzi wa mkono')
+                finally:
+                    connection.close()
+
+            threading.Thread(target=target, name='jamiitek-seo', daemon=True).start()
+            messages.success(request, 'Grace ameanza ukaguzi — onyesha ukurasa upya baada ya dakika moja.')
+        return redirect('wafanyakazi_seo')
+
+    history = list(SeoRipoti.objects.all()[:8])
+    latest = history[0] if history else None
+    change = {}
+    if latest and latest.totals and latest.previous:
+        for k in ('clicks', 'impressions', 'ctr', 'position'):
+            now_v, old_v = latest.totals.get(k, 0), latest.previous.get(k, 0)
+            change[k] = {'diff': round(now_v - old_v, 4 if k == 'ctr' else 1),
+                         'pct': round((now_v - old_v) / old_v * 100) if old_v else None}
+        change['ctr']['pts'] = round(change['ctr']['diff'] * 100, 1)
+    pending = (Kazi.objects.filter(channel='seo', status__in=Kazi.LIVE)
+               .order_by('priority', '-created_at'))
+    applied = (Kazi.objects.filter(channel='seo', status=Kazi.DONE).order_by('-closed_at')[:8])
+    return render(request, 'wafanyakazi/seo.html', {
+        'nav': 'seo', 'title': 'SEO — Google Search Console',
+        'configured': gsc.is_configured(), 'site_url': gsc.site_url(),
+        'service_email': (gsc.credentials() or {}).get('client_email', ''),
+        'r': latest, 'change': change, 'trend': _trend(history),
+        'ctr_pct': round((latest.totals or {}).get('ctr', 0) * 100, 1) if latest else 0,
+        'pending': pending, 'applied': applied,
+        'grace': member('grace'), 'min_impressions': seo.MIN_IMPRESSIONS, 'days': seo.DAYS,
+    })
+
+
 # ══════════════════════════════════════════════════════════════
 #  CRON  — /tasks/wafanyakazi/?token=TASKS_TOKEN
 # ══════════════════════════════════════════════════════════════

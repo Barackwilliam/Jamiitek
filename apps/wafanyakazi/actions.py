@@ -4,7 +4,7 @@ Kutekeleza uamuzi wako juu ya kazi.
 Hapa ndipo PEKEE ambapo ujumbe wa mfanyakazi unamfikia mteja — na hufika tu
 baada ya wewe kukubali (kwenye panel au kwa "OK code" kupitia wILife).
 
-    approve(kazi)   tuma rasimu (email / WhatsApp / FAQ) au weka "imefanyika"
+    approve(kazi)   tuma rasimu (email / WhatsApp / FAQ), tumia kichwa cha SEO, au weka "imefanyika"
     dismiss(kazi)   achana nayo
     complete(kazi)  umeifanya mwenyewe
 """
@@ -123,6 +123,12 @@ def approve(kazi_id, draft=None):
             return True, message
         if kazi.channel == 'faq' and kazi.draft:
             message = _faq(kazi)
+            kazi.close(Kazi.DONE, message)
+            return True, message
+        if kazi.channel == 'seo' and kazi.draft:
+            from .seo import apply
+            message = apply(kazi) or ('Ukurasa huu una kichwa kwenye code — weka kichwa na '
+                                      'maelezo haya kwenye template yake.')
             kazi.close(Kazi.DONE, message)
             return True, message
     except Exception as exc:
