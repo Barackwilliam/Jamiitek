@@ -1,4 +1,4 @@
-{% load jt_contact %}
+{% load jt_contact static %}
 {% load humanize %}<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -258,16 +258,26 @@ body{background:#E8ECF1;font-size:12.5px;line-height:1.55;
 
 {% if not pdf %}
 <div class="c no-print" style="margin-top:24px">
-  <a href="?pdf=1" class="btn">
-    <svg viewBox="0 0 24 24" fill="currentColor" style="width:17px;height:17px">
+  <a href="{{ pdf_url }}" class="btn" data-download="{{ r.filename }}" data-busy="Preparing…" data-done="Downloaded" rel="nofollow">
+    <svg class="ic" viewBox="0 0 24 24" fill="currentColor" style="width:17px;height:17px">
       <path d="M12 16 6 10l1.4-1.4L11 12.2V4h2v8.2l3.6-3.6L18 10zM5 20v-2h14v2z"/></svg>
-    Download PDF
+    <svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" style="width:17px;height:17px"><path d="M12 3a9 9 0 1 0 9 9"/></svg>
+    <span data-label>Download PDF</span>
   </a>
   <div class="verify-link">
     Checking this receipt is genuine?
     <a href="{{ r.verify_path }}">Verify online</a>
   </div>
 </div>
+<style>
+.btn .spin{display:none}
+.btn[data-state="busy"]{cursor:progress;opacity:.92}
+.btn[data-state="busy"] .ic{display:none}
+.btn[data-state="busy"] .spin{display:inline-block;animation:jtspin .8s linear infinite}
+.btn[data-state="done"]{background:#13A56F!important;color:#fff!important}
+@keyframes jtspin{to{transform:rotate(360deg)}}
+</style>
+<script src="{% static 'js/jt-download.js' %}" defer></script>
 {% endif %}
 
 </body>

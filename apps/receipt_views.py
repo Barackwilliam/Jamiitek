@@ -26,22 +26,63 @@ from .receipt_graphics import qr_data_uri, barcode_data_uri
 # ══════════════════════════════════════════════════════════════
 # Helpers
 # ══════════════════════════════════════════════════════════════
-def _render_pdf(request, template, ctx, filename):
-    """Same approach used for contracts/proposals — xhtml2pdf, no system deps."""
-    html = render(request, template, ctx).content.decode('utf-8')
+def _html_to_pdf(html):
     try:
         from xhtml2pdf import pisa
         buf = BytesIO()
         status = pisa.CreatePDF(html, dest=buf, encoding='utf-8')
         if status.err:
-            raise Exception('PDF error')
-        buf.seek(0)
-        resp = HttpResponse(buf.getvalue(), content_type='application/pdf')
-        resp['Content-Disposition'] = f'attachment; filename="{filename}"'
-        return resp
+            return None
+        return buf.getvalue()
     except Exception:
-        # Never leave the user with nothing — fall back to the printable page
-        return HttpResponse(html)
+        return None
+
+
+def _pdf_response(pdf, filename):
+    resp = HttpResponse(pdf, content_type='application/pdf')
+    resp['Content-Disposition'] = f'attachment; filename="{filename}"'
+    resp['Content-Length'] = str(len(pdf))
+    # Link ina ?v=<toleo> — risiti ikibadilika, link inabadilika pia.
+    # Kwa hiyo kivinjari kinaweza kuitunza bila hatari ya kuonyesha ya zamani.
+    resp['Cache-Control'] = 'private, max-age=600'
+    return resp
+
+
+# ── PDF ya risiti: inatengenezwa MARA MOJA kwa kila toleo ─────────────
+#
+# Kutengeneza PDF (xhtml2pdf + QR + barcode) ndiyo sehemu nzito ya kupakua.
+# Risiti haibadiliki mara kwa mara, kwa hiyo PDF iliyokamilika inatunzwa
+# kwenye cache. Ufunguo una `updated_at`: risiti ikihaririwa au mteja
+# akisaini, ufunguo mpya → PDF mpya. Ya zamani inaisha muda yenyewe.
+PDF_CACHE_SECONDS = 60 * 60 * 24 * 7
+
+
+def receipt_pdf_version(receipt):
+    stamp = receipt.updated_at or receipt.created_at
+    return f'{receipt.pk}-{int(stamp.timestamp()) if stamp else 0}'
+
+
+def _receipt_pdf(request, receipt):
+    from django.core.cache import cache
+
+    key = f'receipt-pdf:{receipt_pdf_version(receipt)}'
+    try:
+        pdf = cache.get(key)
+    except Exception:          # cache ikikosekana, endelea bila hiyo
+        pdf = None
+
+    if pdf is None:
+        html = render(request, 'receipts/receipt_doc.html',
+                      _doc_ctx(receipt)).content.decode('utf-8')
+        pdf = _html_to_pdf(html)
+        if pdf is None:
+            return HttpResponse(html)
+        try:
+            cache.set(key, pdf, PDF_CACHE_SECONDS)
+        except Exception:
+            pass
+
+    return _pdf_response(pdf, receipt.filename)
 
 
 def _client_ip(request):
@@ -51,11 +92,17 @@ def _client_ip(request):
     return request.META.get('REMOTE_ADDR')
 
 
+def receipt_pdf_url(receipt):
+    """Link ya kupakua yenye toleo — risiti ikibadilika, link mpya."""
+    return f'{receipt.public_url}?pdf=1&v={receipt_pdf_version(receipt)}'
+
+
 def _doc_ctx(receipt, pdf=True):
     """Everything the receipt document needs, including generated graphics."""
     return {
         'r': receipt,
         'pdf': pdf,
+        'pdf_url': receipt_pdf_url(receipt),
         'qr': qr_data_uri(receipt.verify_url),
         'barcode': barcode_data_uri(receipt.barcode_value),
     }
@@ -250,8 +297,7 @@ def receipt_delete(request, pk):
 def receipt_pdf_staff(request, pk):
     receipt = get_object_or_404(
         DevelopmentReceipt.objects.select_related('website', 'website__client'), pk=pk)
-    return _render_pdf(request, 'receipts/receipt_doc.html',
-                       _doc_ctx(receipt), receipt.filename)
+    return _receipt_pdf(request, receipt)
 
 
 # ══════════════════════════════════════════════════════════════
@@ -277,8 +323,7 @@ def portal_receipt_pdf(request, pk):
     if receipt.needs_signature:
         return redirect('portal_receipt_sign', pk=receipt.pk)
 
-    return _render_pdf(request, 'receipts/receipt_doc.html',
-                       _doc_ctx(receipt), receipt.filename)
+    return _receipt_pdf(request, receipt)
 
 
 @client_required
@@ -337,15 +382,14 @@ def receipt_public(request, token):
     the person holding the link deserves an explanation, not a stack trace.
     """
     receipt = DevelopmentReceipt.objects.select_related(
-        'website', 'website__client').filter(token=token).first()
+        'website', 'website__client', 'client').filter(token=token).first()
 
     if receipt is None or (not receipt.is_published and not request.user.is_staff):
         return render(request, 'receipts/receipt_verify.html',
                       {'r': receipt, 'valid': False}, status=404)
 
     if request.GET.get('pdf'):
-        return _render_pdf(request, 'receipts/receipt_doc.html',
-                           _doc_ctx(receipt), receipt.filename)
+        return _receipt_pdf(request, receipt)
 
     return render(request, 'receipts/receipt_doc.html', _doc_ctx(receipt, pdf=False))
 
@@ -356,9 +400,10 @@ def receipt_verify(request, token):
     requiring a login — the token itself is the proof.
     """
     receipt = DevelopmentReceipt.objects.select_related(
-        'website', 'website__client').filter(token=token).first()
+        'website', 'website__client', 'client').filter(token=token).first()
 
     valid = receipt is not None and receipt.is_published
     return render(request, 'receipts/receipt_verify.html',
-                  {'r': receipt, 'valid': valid},
+                  {'r': receipt, 'valid': valid,
+                   'pdf_url': receipt_pdf_url(receipt) if valid else ''},
                   status=200 if valid else 404)
