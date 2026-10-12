@@ -95,19 +95,24 @@ def home(request):
         faq_schema(faqs),
     )
 
-    context = {
-        # ── slider content (all admin-managed) ──────────────────
+    # Maudhui yote ya ukurasa yanatoka kwenye cache ya RAM (apps/public_cache.py):
+    # admin akibadilisha kitu, cache inafutika; vinginevyo inaisha baada ya dakika 1.
+    from .public_cache import get_or_build
+    content = get_or_build('home', lambda: {
         # Slaidi bila picha bado inaonekana (asili ya navy), ili usidhani
-        # admin haifanyi kazi. list() — template inaitumia mara kadhaa
-        # (slaidi, dots, hesabu, preload); bila list() kila moja ni swali.
+        # admin haifanyi kazi. list() — cache inahifadhi data, si QuerySet.
         'hero_slides':  list(HeroSlide.objects.filter(is_active=True)),
         # Project bila picha bado inaonekana (kadi ina herufi ya kwanza),
         # badala ya kupotea kimya na kukufanya udhani admin haifanyi kazi.
         'portfolio':    list(PortfolioItem.objects.filter(is_featured=True)[:12]),
-        'testimonials': Testimonial.objects.filter(is_active=True)[:9],
+        'testimonials': list(Testimonial.objects.filter(is_active=True)[:9]),
         'services':     list(Service.objects.filter(show_on_home=True).order_by('order', 'created_at')[:12]),
-        'team':         Team.objects.all(),
-        'latest_posts': BlogPost.objects.filter(status='published')[:3],
+        'team':         list(Team.objects.all()),
+        'latest_posts': list(BlogPost.objects.filter(status='published')[:3]),
+    })
+
+    context = {
+        **content,
 
         # ── SEO (unchanged) ─────────────────────────────────────
         'schema_markup': schema_html,
@@ -125,8 +130,9 @@ def service(request):
     from apps.seo.schema import (
         organization_schema, faq_schema, render_schemas, breadcrumb_schema
     )
-    services = Service.objects.all()
-    questions = Question.objects.all()
+    from .public_cache import get_or_build
+    services, questions = get_or_build('service_page', lambda: (
+        list(Service.objects.all()), list(Question.objects.all())))
 
     # Build FAQ from DB questions
     faqs_data = [(q.question, q.answer) for q in questions] if questions else [
@@ -167,16 +173,18 @@ def About(request):
     """
     from .models import ManagedWebsite, Service
     from .site_content import PortfolioItem
-    stats = {
+    from .public_cache import get_or_build
+    # Namba za "hosted" zinabadilika polepole — dakika 10 zinatosha
+    stats = get_or_build('about_stats', lambda: {
         'projects': PortfolioItem.objects.filter(is_featured=True).count(),
         'services': Service.objects.filter(show_on_home=True).count(),
         'hosted': ManagedWebsite.objects.filter(status='active').count(),
-    }
-    return render(request, 'about.html', {
-        'stats': stats,
-        'services': list(Service.objects.filter(show_on_home=True).order_by('order', 'created_at')[:8]),
-        'work': list(PortfolioItem.objects.filter(is_featured=True)[:3]),
-    })
+    }, ttl=600)
+    services, work = get_or_build('about_lists', lambda: (
+        list(Service.objects.filter(show_on_home=True).order_by('order', 'created_at')[:8]),
+        list(PortfolioItem.objects.filter(is_featured=True)[:3]),
+    ))
+    return render(request, 'about.html', {'stats': stats, 'services': services, 'work': work})
 
 def contact(request):
     """

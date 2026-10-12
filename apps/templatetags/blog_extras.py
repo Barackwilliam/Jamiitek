@@ -139,11 +139,9 @@ def img_seo(value, title=''):
 @register.simple_tag
 def company_profile_live():
     """Je, kuna company profile hai? Kiungo cha footer kisiende 404. Cache dakika 10."""
-    from django.core.cache import cache
-    key = 'seo:company_profile_live'
-    live = cache.get(key)
-    if live is None:
-        from apps.models import CompanyProfile
-        live = CompanyProfile.objects.filter(is_active=True).exists()
-        cache.set(key, live, 600)
-    return live
+    # Kila ukurasa wa umma unaita hii (footer). Cache ya RAM: hakuna safari
+    # ya database hata kidogo kwa ajili ya kiungo kimoja.
+    from apps.public_cache import get_or_build
+    from apps.models import CompanyProfile
+    return get_or_build('company_profile_live',
+                        lambda: CompanyProfile.objects.filter(is_active=True).exists(), ttl=600)

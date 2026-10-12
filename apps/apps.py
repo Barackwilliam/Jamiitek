@@ -17,3 +17,6 @@ class AppsConfig(AppConfig):
         # Admin: dropdown za tovuti bila swali kwa kila chaguo
         from .admin_speed import speed_up_admin
         speed_up_admin()
+        # Kurasa za umma: cache ya RAM inafutika maudhui yakibadilishwa
+        from .public_cache import connect_signals
+        connect_signals()

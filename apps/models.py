@@ -1084,6 +1084,8 @@ class WebsiteTemplate(models.Model):
         verbose_name = 'Website Template'
         verbose_name_plural = 'Website Templates'
         ordering = ['order', '-created_at']
+        # /templates/: zilizo hai, kwa mpangilio
+        indexes = [models.Index(fields=['is_active', 'order'], name='template_active_order_idx')]
 
 
 # ============================================================
@@ -1182,6 +1184,8 @@ class BlogPost(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        # Orodha ya blog: makala zilizochapishwa, mpya kwanza
+        indexes = [models.Index(fields=['status', '-published_at'], name='blogpost_status_pub_idx')]
         ordering = ['-published_at', '-created_at']
 
     def __str__(self):
@@ -1230,6 +1234,8 @@ class BlogComment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        # Maoni yaliyokubaliwa ya makala moja — kila ukurasa wa makala
+        indexes = [models.Index(fields=['post', 'is_approved'], name='blogcomment_post_ok_idx')]
         ordering = ['created_at']
 
     def __str__(self):

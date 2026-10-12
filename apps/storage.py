@@ -178,6 +178,56 @@ def build_path(folder, filename, content_type):
 
 
 # ══════════════════════════════════════════════════════════════
+#  KUBORESHA PICHA KABLA YA KUPAKIA
+# ══════════════════════════════════════════════════════════════
+#
+# Picha za simu/kamera ni 3-8MB, 4000px. Supabase ya bure haibadilishi
+# ukubwa (transformation ni ya plan ya kulipia), kwa hiyo picha ilifika
+# kwa mteja ikiwa kubwa vilevile — kwenye data ya simu, ukurasa ulisubiri
+# sekunde kadhaa. Sasa kila picha inapunguzwa MARA MOJA wakati wa kupakia:
+#
+#   - upande mrefu zaidi ≤ 2000px (inatosha hata hero ya skrini pana)
+#   - inageuzwa WebP (ndogo kwa ~30-70% kuliko JPG/PNG kwa ubora uleule)
+#   - EXIF inaondolewa — pamoja na GPS ya mahali picha ilipigwa
+#   - mzunguko wa simu (EXIF orientation) unaheshimiwa
+#
+# Toleo jipya linatumika TU likiwa dogo kweli; vinginevyo la asili linabaki.
+# GIF (inaweza kuwa na mwendo) na PDF haziguswi.
+OPTIMIZE_MAX_SIDE = 2000
+OPTIMIZE_QUALITY = 82
+_OPTIMIZABLE = {'jpg', 'png', 'webp'}
+
+
+def optimize_image(data, ext):
+    """Inarudisha (data, ext). Haitupi kosa — ikishindwa, inarudisha ya asili."""
+    if ext not in _OPTIMIZABLE or not data:
+        return data, ext
+    try:
+        from io import BytesIO
+        from PIL import Image, ImageOps
+
+        img = Image.open(BytesIO(data))
+        if getattr(img, 'is_animated', False) and getattr(img, 'n_frames', 1) > 1:
+            return data, ext                        # mwendo — usiharibu
+        img = ImageOps.exif_transpose(img)
+        if img.mode not in ('RGB', 'RGBA'):
+            img = img.convert('RGBA' if 'A' in img.getbands() or img.mode == 'P' else 'RGB')
+        if max(img.size) > OPTIMIZE_MAX_SIDE:
+            img.thumbnail((OPTIMIZE_MAX_SIDE, OPTIMIZE_MAX_SIDE), Image.LANCZOS)
+
+        out = BytesIO()
+        # Logo/picha zenye uwazi: ubora juu kidogo ili kingo zibaki safi
+        quality = 90 if img.mode == 'RGBA' else OPTIMIZE_QUALITY
+        img.save(out, format='WEBP', quality=quality, method=5)
+        new = out.getvalue()
+        if len(new) < len(data) * 0.9:
+            return new, 'webp'
+    except Exception:
+        logger.warning('optimize_image failed; keeping original', exc_info=True)
+    return data, ext
+
+
+# ══════════════════════════════════════════════════════════════
 #  KUPAKIA
 # ══════════════════════════════════════════════════════════════
 
@@ -222,6 +272,11 @@ def upload(file_obj, folder='media', filename=None, content_type=None):
     if not _content_matches(ext, data):
         return {'success': False,
                 'error': 'File hili si picha/PDF halisi. Tumia JPG, PNG, WEBP, GIF au PDF.'}
+
+    data, new_ext = optimize_image(data, ext)
+    if new_ext != ext:
+        path = path.rsplit('.', 1)[0] + '.' + new_ext
+        ext = new_ext
     # Content-Type inatoka kwenye aina tuliyoithibitisha, si kwa browser
     canonical = {v: k for k, v in ALLOWED.items()}[ext]
     return _put(path, data, canonical)
@@ -243,6 +298,13 @@ def upload_bytes(data, folder, ext, content_type):
     if len(data) > MAX_BYTES:
         return {'success': False,
                 'error': f'File ni kubwa mno ({len(data) // 1024 // 1024}MB). Kikomo ni 10MB.'}
+    # Picha za ZIP ya website nazo zinapunguzwa (zinarejelewa kwa URL
+    # tunayorudisha, kwa hiyo kubadilika kwa kiendelezi ni salama)
+    norm = 'jpg' if ext == 'jpeg' else ext
+    if norm in _OPTIMIZABLE and _content_matches(norm, data):
+        data, new_ext = optimize_image(data, norm)
+        if new_ext != norm:
+            ext, content_type = new_ext, 'image/webp'
     now = datetime.utcnow()
     path = f"{_safe_folder(folder)}/{now:%Y/%m}/{uuid.uuid4().hex[:16]}.{ext}"
     return _put(path, data, content_type)

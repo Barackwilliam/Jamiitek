@@ -92,7 +92,7 @@
         <span class="sys__item" style="--a:{% widthratio forloop.counter0 services|slice:':8'|length 360 %}deg;--k:{{ svc.accent|default:'#2E7BF6' }}"><span><svg viewBox="0 0 24 24" fill="currentColor"><path d="{{ svc.icon_path }}"/></svg></span></span>
         {% endfor %}
       </div>
-      <div class="sys__core"><img src="{% static 'images/logo.png' %}" alt="" width="191" height="168"></div>
+      <div class="sys__core"><img src="{% static 'images/logo.png' %}" alt="" width="191" height="168" loading="lazy" decoding="async"></div>
     </div>
   </div>
 </section>

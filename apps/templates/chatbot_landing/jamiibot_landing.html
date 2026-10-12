@@ -28,11 +28,11 @@
   {% endcomment %}
   <link rel="preconnect" href="https://api.fontshare.com" crossorigin>
   <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>
-  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=satoshi@400,500,700,900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=satoshi@400,500,700,900&display=swap" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=satoshi@400,500,700,900&display=swap"></noscript>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"></noscript>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"></noscript>
   <link rel="stylesheet" href="{% static 'css/jt-nav.css' %}">
   <style>
     :root{
@@ -488,7 +488,7 @@
 </style>
   <!-- JamiiBot widget: mgeni anaijaribu bidhaa yenyewe kabla ya kujisajili -->
   <script src="https://www.jamiitek.com/chatbot/widget/b785f732-5c0d-4cc0-af87-dfcbfb100dbf.js" defer></script>
-  <link rel="stylesheet" href="{% static 'css/interaction.css' %}">
+  <link rel="stylesheet" href="{% static 'css/interaction.css' %}" media="print" onload="this.media='all'">
   <link rel="icon" type="image/png" href="{% static 'img/jamiibot-favicon.png' %}">
 </head>
 <body>
@@ -613,7 +613,7 @@
 
       <div class="mz-thread" id="mzThread" role="list" aria-label="Set-up steps">
         <div class="mz-thread-top">
-          <img src="{% static 'img/jamiibot-icon.png' %}" alt="" width="38" height="38">
+          <img src="{% static 'img/jamiibot-icon.png' %}" alt="" width="38" height="38" loading="lazy" decoding="async">
           <div><b>JamiiBot set-up</b><small>4 steps</small></div>
         </div>
         <span class="mz-day">Today</span>
@@ -733,7 +733,7 @@
 
     <div class="fs-chat" aria-hidden="true">
       <div class="fs-top">
-        <img src="{% static 'img/jamiibot-icon.png' %}" alt="" width="36" height="36">
+        <img src="{% static 'img/jamiibot-icon.png' %}" alt="" width="36" height="36" loading="lazy" decoding="async">
         <div><div class="n">JamiiBot</div><div class="st">online</div></div>
       </div>
       <div class="fs-body">

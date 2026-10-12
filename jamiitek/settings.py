@@ -117,6 +117,10 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',      # <- hapa
+    # HTML inabanwa (gzip) — ukurasa wa nyumbani 128KB → ~32KB kwenye data ya simu.
+    # Iko CHINI ya WhiteNoise: static files (zilizobanwa tayari) hazipiti hapa.
+    # Django 4.2+ inaongeza kinga ya BREACH yenyewe.
+    'django.middleware.gzip.GZipMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -171,7 +175,7 @@ DATABASE_URL = os.getenv('DATABASE_URL', '')
 if DATABASE_URL:
     import dj_database_url
     DATABASES = {'default': dj_database_url.parse(
-        DATABASE_URL, conn_max_age=60, ssl_require=True)}
+        DATABASE_URL, conn_max_age=300, conn_health_checks=True, ssl_require=True)}
 else:
     _db_password = os.getenv('DB_PASSWORD', '')
     if not _db_password and not DEBUG:
@@ -187,7 +191,10 @@ else:
             'PASSWORD': _db_password,
             'HOST':     os.getenv('DB_HOST', ''),
             'PORT':     os.getenv('DB_PORT', '5432'),
-            'CONN_MAX_AGE': 60,
+            'CONN_MAX_AGE': 300,
+            # Supabase ikifunga muunganisho uliokaa, Django inaugundua kabla
+            # ya kuutumia (badala ya ombi la mteja kufeli)
+            'CONN_HEALTH_CHECKS': True,
             'OPTIONS': {
                 'sslmode': 'require',
                 'connect_timeout': 10,
@@ -402,6 +409,17 @@ else:
             'OPTIONS': {'MAX_ENTRIES': 5000, 'CULL_FREQUENCY': 4},
         }
     }
+
+
+# Cache ya RAM kwa maudhui ya kurasa za umma TU (apps/public_cache.py).
+# Kusoma DatabaseCache ni safari ya Supabase; hii haina gharama ya mtandao.
+# Haitumiki kwa ratiba wala usalama — hizo zinabaki 'default'.
+CACHES['local'] = {
+    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    'LOCATION': 'jamiitek-public',
+    'TIMEOUT': 60,
+    'OPTIONS': {'MAX_ENTRIES': 500},
+}
 
 
 # ── Mitandao ya kijamii ───────────────────────────────
