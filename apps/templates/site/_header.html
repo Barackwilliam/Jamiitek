@@ -1,5 +1,5 @@
-{% load static jt_contact %}{% with u=request.resolver_match.url_name %}
-<header class="hdr" id="hdr">
+{% load static jt_contact %}{% with u=request.resolver_match.url_name p=request.path %}
+<header class="hdr" id="hdr"{% if hdr_pin %} data-pin{% endif %}>
   <i class="hdr__bar" aria-hidden="true"></i>
   <div class="wrap hdr__in">
     <a class="brand" href="{% url 'home' %}" aria-label="JamiiTek home">
@@ -10,9 +10,9 @@
       <i class="nav__pill" aria-hidden="true"></i>
       <a href="{% url 'home' %}"{% if u == 'home' %} class="is-on" aria-current="page"{% endif %}>Home</a>
       <a href="{% url 'service' %}"{% if u == 'service' %} class="is-on" aria-current="page"{% endif %}>Services</a>
-      <a href="{% url 'jamiibot_landing' %}">JamiiBot</a>
-      <a href="{% url 'templates_marketplace' %}">Templates</a>
-      <a href="{% url 'blog_list' %}">Blog</a>
+      <a href="{% url 'jamiibot_landing' %}"{% if u == 'jamiibot_landing' %} class="is-on" aria-current="page"{% endif %}>JamiiBot</a>
+      <a href="{% url 'templates_marketplace' %}"{% if p|slice:':11' == '/templates/' %} class="is-on" aria-current="page"{% endif %}>Templates</a>
+      <a href="{% url 'blog_list' %}"{% if p|slice:':6' == '/blog/' %} class="is-on" aria-current="page"{% endif %}>Blog</a>
       <a href="{% url 'About' %}"{% if u == 'About' %} class="is-on" aria-current="page"{% endif %}>About</a>
       <a href="{% url 'contact' %}"{% if u == 'contact' %} class="is-on" aria-current="page"{% endif %}>Contact</a>
     </nav>
@@ -24,27 +24,6 @@
   </div>
 </header>
 
-<div class="scrim" id="scrim"></div>
-<aside class="side" id="side" aria-label="Menu" aria-hidden="true">
-  <div class="side__top">
-    <a class="brand" href="{% url 'home' %}"><img src="{% static 'images/logo.png' %}" alt="" width="40" height="35" loading="lazy"><span>Jamii<em>Tek</em></span></a>
-    <button class="side__x" id="sideX" aria-label="Close menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-  </div>
-  <nav aria-label="Mobile">
-    <a href="{% url 'home' %}" style="--i:1"{% if u == 'home' %} class="is-on" aria-current="page"{% endif %}><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>Home</a>
-    <a href="{% url 'service' %}" style="--i:2"{% if u == 'service' %} class="is-on" aria-current="page"{% endif %}><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h7v7H4zm9 0h7v7h-7zM4 14h7v6H4zm9 0h7v6h-7z"/></svg></span>Services</a>
-    <a href="{% url 'About' %}" style="--i:3"{% if u == 'About' %} class="is-on" aria-current="page"{% endif %}><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-7 9a7 7 0 0 1 14 0"/></svg></span>About</a>
-    <a href="{% url 'contact' %}" style="--i:4"{% if u == 'contact' %} class="is-on" aria-current="page"{% endif %}><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16v12H4zm0 0 8 7 8-7"/></svg></span>Contact</a>
-    <hr>
-    <a href="{% url 'jamiibot_landing' %}" style="--i:5"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H10l-5 4v-4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zm4 6h.01M15 11h.01"/></svg></span>JamiiBot</a>
-    <a href="{% url 'templates_marketplace' %}" style="--i:6"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v5H4zm0 7h7v9H4zm9 0h7v9h-7z"/></svg></span>Templates</a>
-    <a href="{% url 'blog_list' %}" style="--i:7"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l4 4v14H6zm9 0v4h4M9 12h7M9 16h7"/></svg></span>Blog</a>
-    <a href="{% url 'portal_login' %}" style="--i:8"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>Client Portal</a>
-  </nav>
-  <div class="side__ft">
-    <a class="btn btn--gold" href="{% url 'get_started' %}">Start a project</a>
-    <a class="btn btn--wa" href="https://wa.me/{% contact "wa" %}" target="_blank" rel="noopener">WhatsApp us</a>
-    <p>{% contact "phone_display" %} · Dar es Salaam</p>
-  </div>
-</aside>
+
+{% include 'site/_side.html' %}
 {% endwith %}

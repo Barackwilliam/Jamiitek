@@ -82,6 +82,7 @@
   {% block extra_css %}{% endblock %}
   <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
   <link rel="stylesheet" href="{% static 'css/interaction.css' %}">
+  <link rel="stylesheet" href="{% static 'css/jt-nav.css' %}">
 
 </head>
 <body class="{% block body_class %}{% endblock %}">
@@ -100,43 +101,9 @@
 <div id="cursor-outer"></div>
 <div id="cursor-inner"></div>
 
-<!-- Nav -->
-<nav id="site-nav">
-  <div class="nav-inner">
-    <a href="{% url 'home' %}" class="nav-logo">
-      <div class="nav-logo-mark">
-        <i class="fas fa-atom" style="position:relative;z-index:1;font-size:13px"></i>
-      </div>
-      Jamii<em>Tek</em>
-    </a>
-    <ul class="nav-menu">
-      <li><a href="{% url 'home' %}" {% if request.resolver_match.url_name == 'index' %}class="active"{% endif %}>Home</a></li>
-      <li><a href="{% url 'service' %}" {% if 'service' in request.path %}class="active"{% endif %}>Services</a></li>
-      <li><a href="{% url 'templates_marketplace' %}" {% if 'templates' in request.path %}class="active"{% endif %}>Templates</a></li>
-      <li><a href="{% url 'blog_list' %}" {% if '/blog' in request.path %}class="active"{% endif %}>Blog</a></li>
-      <li><a href="{% url 'About' %}" {% if 'about' in request.path %}class="active"{% endif %}>About</a></li>
-      <li><a href="{% url 'contact' %}" {% if 'contact' in request.path %}class="active"{% endif %}>Contact</a></li>
-      <li><a href="{% url 'portal_login' %}" class="nav-portal"><i class="fas fa-shield-halved"></i> Portal</a></li>
-    </ul>
-    <a href="{% url 'get_started' %}" class="nav-cta d-none d-lg-inline-flex">
-      <i class="fas fa-rocket"></i><span>START PROJECT</span>
-    </a>
-    <button class="nav-burger" id="nav-burger" aria-label="Open menu">
-      <span></span><span></span><span></span>
-    </button>
-  </div>
-</nav>
-
-<div id="mob-nav">
-  <a href="{% url 'home' %}">Home</a>
-  <a href="{% url 'service' %}">Services</a>
-  <a href="{% url 'templates_marketplace' %}">Templates</a>
-  <a href="{% url 'blog_list' %}">Blog</a>
-  <a href="{% url 'About' %}">About</a>
-  <a href="{% url 'contact' %}">Contact</a>
-  <a href="{% url 'portal_login' %}">Client Portal</a>
-  <a href="{% url 'get_started' %}" class="mob-cta-btn">LAUNCH YOUR Website →</a>
-</div>
+<!-- Nav: header na sidebar ya simu ni zile zile za Home (site/_header.html).
+     hdr_pin = header haijifichi ukishuka — blog ina upau wake unaokaa chini yake. -->
+{% include 'site/_header.html' with hdr_pin=1 %}
 
 {% block content %}{% endblock %}
 
@@ -215,18 +182,6 @@ window.addEventListener('load',()=>setTimeout(()=>document.getElementById('q-loa
   });
 })();
 
-/* NAV */
-const nav=document.getElementById('site-nav');
-window.addEventListener('scroll',()=>nav.classList.toggle('pinned',window.scrollY>30),{passive:true});
-const burger=document.getElementById('nav-burger'),mobNav=document.getElementById('mob-nav');
-burger.addEventListener('click',()=>{
-  burger.classList.toggle('open');mobNav.classList.toggle('open');
-  document.body.style.overflow=mobNav.classList.contains('open')?'hidden':'';
-});
-mobNav.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{
-  burger.classList.remove('open');mobNav.classList.remove('open');document.body.style.overflow='';
-}));
-
 /* SCROLL REVEAL */
 new IntersectionObserver((entries)=>{
   entries.forEach(e=>{
@@ -258,6 +213,7 @@ document.querySelectorAll('[data-tilt]').forEach(card=>{
 {% block turnstile_js %}{% if TURNSTILE_ENABLED %}
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 {% endif %}{% endblock %}
+<script src="{% static 'js/jt-nav.js' %}" defer></script>
 <script src="{% static 'js/interaction.js' %}" defer></script>
 
 </body>

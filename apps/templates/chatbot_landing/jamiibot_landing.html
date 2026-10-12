@@ -33,6 +33,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/jt-nav.css' %}">
   <style>
     :root{
       --ink:#06070a;--ink2:#1a1d26;
@@ -67,68 +68,9 @@
     .btn-nav-login:hover{border-color:var(--ink);color:var(--ink)}
     .btn-nav-start{font-size:13px;font-weight:700;background:var(--ink);color:#fff;padding:8px 18px;border-radius:9px;transition:all .15s}
     .btn-nav-start:hover{background:var(--ink2);transform:translateY(-1px)}
-    .mob-menu{display:none;background:none;border:none;font-size:20px;color:var(--ink);cursor:pointer}
+    .mob-menu{display:none;place-items:center;width:44px;height:44px;border-radius:12px;border:1.5px solid var(--border);background:#fff;font-size:17px;color:var(--ink);cursor:pointer}
 
-    /* MOBILE DRAWER (slides in from LEFT) */
-    .mob-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);opacity:0;visibility:hidden;transition:opacity .3s;z-index:1000}
-    .mob-overlay.open{opacity:1;visibility:visible}
-    .mob-drawer{-webkit-tap-highlight-color:transparent;position:fixed;top:0;left:0;bottom:0;width:82%;max-width:310px;z-index:1001;
-      background:linear-gradient(185deg,#0a1c30 0%,#07101d 45%,#06070a 100%);
-      transform:translateX(-100%);transition:transform .34s cubic-bezier(.22,.61,.36,1);
-      display:flex;flex-direction:column;box-shadow:14px 0 50px rgba(0,0,0,.55);overflow-y:auto;position:fixed}
-    .mob-drawer::before{content:'';position:absolute;top:-40px;left:-40px;width:220px;height:220px;border-radius:50%;
-      background:radial-gradient(circle,rgba(184,247,77,.16),transparent 70%);pointer-events:none}
-    .mob-drawer.open{transform:translateX(0)}
-    /* Sidebar ya simu — kitaalamu: link kushoto, ikoni kwenye kisanduku, maelezo
-       mafupi, sehemu inayosomwa inaangaziwa. Menyu ni <div role="navigation">,
-       SI <nav>: sheria ya `nav{}` hapo juu (upau wa juu) ilikuwa ikiigusa —
-       ndiyo iliyoweka kizuizi cheupe juu ya "How It Works" na kupanga link katikati. */
-    .md-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 18px 16px;position:relative;z-index:1}
-    .md-brand{display:flex;align-items:center;gap:11px;color:#fff;min-width:0}
-    .md-brand img{width:40px;height:40px;flex:none;border-radius:12px;object-fit:cover;box-shadow:0 0 0 1px rgba(255,255,255,.1),0 6px 18px rgba(37,211,102,.25)}
-    .md-brand span{display:flex;flex-direction:column;line-height:1.15;min-width:0}
-    .md-brand strong{font-family:var(--head);font-weight:700;font-size:18px;letter-spacing:-.01em}
-    .md-brand strong b{color:var(--lime);font-weight:700}
-    .md-brand small{font-size:11.5px;color:rgba(255,255,255,.5);font-weight:500;margin-top:2px;white-space:nowrap}
-    .md-close{flex:none;width:38px;height:38px;border-radius:11px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);
-      color:rgba(255,255,255,.75);cursor:pointer;display:grid;place-items:center;transition:background .2s,color .2s,transform .2s}
-    .md-close svg{width:18px;height:18px}
-    .md-close:hover{background:rgba(255,255,255,.12);color:#fff}
-    .md-close:active{transform:scale(.94)}
-    .md-label{padding:14px 22px 8px;font:600 10.5px/1 ui-monospace,Menlo,monospace;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.35);position:relative;z-index:1}
-    .md-links{display:flex;flex-direction:column;gap:2px;padding:0 12px;position:relative;z-index:1;text-align:left}
-    .md-links a{-webkit-tap-highlight-color:transparent;display:flex;align-items:center;gap:13px;padding:10px 10px;border-radius:14px;color:#fff;
-      text-decoration:none;position:relative;transition:background .2s;opacity:0;transform:translateX(-12px)}
-    .mob-drawer.open .md-links a{opacity:1;transform:none;transition:opacity .4s,transform .45s cubic-bezier(.22,1,.36,1),background .2s;transition-delay:calc(.08s + var(--i,0)*.045s),calc(.08s + var(--i,0)*.045s),0s}
-    .md-links .ic{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.07);color:rgba(255,255,255,.75);transition:background .2s,color .2s,border-color .2s}
-    .md-links .ic svg{width:19px;height:19px}
-    .md-links .tx{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
-    .md-links .tx b{font-size:15px;font-weight:600;color:#fff}
-    .md-links .tx small{font-size:12px;color:rgba(255,255,255,.48);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .md-links .go{flex:none;width:16px;height:16px;color:rgba(255,255,255,.28);transition:transform .2s,color .2s}
-    .md-links a:hover,.md-links a:focus-visible{background:rgba(255,255,255,.05);outline:none}
-    .md-links a:hover .go{transform:translateX(3px);color:rgba(255,255,255,.6)}
-    .md-links a.is-on{background:rgba(37,211,102,.1)}
-    .md-links a.is-on::before{content:'';position:absolute;left:-12px;top:12px;bottom:12px;width:3px;border-radius:0 3px 3px 0;background:var(--lime)}
-    .md-links a.is-on .ic{background:rgba(37,211,102,.16);border-color:rgba(37,211,102,.35);color:var(--lime)}
-    .md-demo{margin:14px 16px 0;padding:14px;border-radius:16px;display:flex;align-items:center;gap:12px;text-decoration:none;position:relative;z-index:1;
-      background:linear-gradient(135deg,rgba(37,211,102,.16),rgba(37,211,102,.05));border:1px solid rgba(37,211,102,.3);transition:border-color .2s,transform .2s}
-    .md-demo:active{transform:scale(.98)}
-    .md-demo .ic{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--wa);color:#fff;box-shadow:0 6px 18px rgba(37,211,102,.4)}
-    .md-demo .ic svg{width:22px;height:22px}
-    .md-demo b{display:block;color:#fff;font-size:14.5px;font-weight:700}
-    .md-demo small{display:block;color:rgba(255,255,255,.6);font-size:12px;margin-top:2px}
-    .md-demo .ic{position:relative}
-    .md-demo .live{position:absolute;top:-1px;right:-1px;width:12px;height:12px;border-radius:50%;background:#7CF0AE;border:2px solid #0b1a26;box-shadow:0 0 0 0 rgba(37,211,102,.6);animation:mdPing 1.8s infinite}
-    @keyframes mdPing{to{box-shadow:0 0 0 8px rgba(37,211,102,0)}}
-    .md-cta{margin-top:auto;padding:16px 16px calc(18px + env(safe-area-inset-bottom));border-top:1px solid rgba(255,255,255,.08);display:grid;grid-template-columns:1fr 1.4fr;gap:10px;position:relative;z-index:1}
-    .md-cta a{display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:13px;font-size:14.5px;font-weight:700;text-decoration:none;transition:transform .15s,background .15s,box-shadow .15s}
-    .md-cta a:active{transform:scale(.97)}
-    .md-cta .btn-login{color:#fff;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.03)}
-    .md-cta .btn-start{background:var(--lime);color:#04210f;box-shadow:0 8px 22px rgba(37,211,102,.3)}
-    .md-cta p{grid-column:1/-1;margin:2px 0 0;text-align:center;font-size:11.5px;color:rgba(255,255,255,.42)}
-    @media(prefers-reduced-motion:reduce){.md-links a,.mob-drawer.open .md-links a{opacity:1;transform:none;transition:none}.md-demo .live{animation:none}}
+    /* Sidebar ya simu ni ile ile ya tovuti nzima: static/css/jt-nav.css + site/_side.html */
 
     /* HERO */
     .hero{min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:80px 6% 60px;position:relative;overflow:hidden;background:var(--ink)}
@@ -298,7 +240,7 @@
     .price-note i{color:var(--wa);margin-right:4px}
     @media(max-width:768px){.need-grid{grid-template-columns:1fr}.need-steps{padding-left:36px}}
     @media(max-width:1024px){.feature-grid,.pricing-grid{grid-template-columns:1fr 1fr}.steps{grid-template-columns:1fr 1fr}.hero-inner{grid-template-columns:1fr;text-align:center}.hero-ctas{justify-content:center}.hero-right{display:none}.footer-top{grid-template-columns:1fr 1fr}.guide-grid{grid-template-columns:1fr}}
-    @media(max-width:768px){.nav-links,.nav-cta{display:none}.mob-menu{display:block}.testi-grid,.pricing-grid,.feature-grid,.steps{grid-template-columns:1fr}.section{padding:56px 5%}.section-inner{padding:0}.footer-top{grid-template-columns:1fr}.btn-cta-sec{margin-left:0;margin-top:10px}.cta-section .btn-cta-sec{display:none}.hero{padding:84px 6% 48px}.hero-ctas .btn-hero-primary,.hero-ctas .btn-hero-wa{flex:1;justify-content:center}}
+    @media(max-width:768px){.nav-links,.nav-cta{display:none}.mob-menu{display:grid}.testi-grid,.pricing-grid,.feature-grid,.steps{grid-template-columns:1fr}.section{padding:56px 5%}.section-inner{padding:0}.footer-top{grid-template-columns:1fr}.btn-cta-sec{margin-left:0;margin-top:10px}.cta-section .btn-cta-sec{display:none}.hero{padding:84px 6% 48px}.hero-ctas .btn-hero-primary,.hero-ctas .btn-hero-wa{flex:1;justify-content:center}}
     @media(max-width:480px){nav{padding:0 5%}.hero-h1{font-size:33px}.hero-sub{font-size:15px}.section-h2{font-size:26px}.price-card{padding:24px}.brands-row{gap:14px}.footer-top{gap:22px}}
 
     /* ── START FREE — maelezo yaliyohamishwa kutoka register ──
@@ -568,33 +510,11 @@
     <a href="/chatbot/login/" class="btn-nav-login">Login</a>
     <a href="/chatbot/register/" class="btn-nav-start"><i class="fas fa-rocket" style="font-size:12px"></i> Start Free Trial</a>
   </div>
-  <button class="mob-menu" onclick="toggleNav()"><i class="fas fa-bars"></i></button>
+  <button class="mob-menu" id="burger" aria-label="Open menu"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
 </nav>
 
-<!-- MOB NAV — left drawer -->
-<div class="mob-overlay" id="mobOverlay" onclick="closeNav()"></div>
-<aside class="mob-drawer" id="mobNav" aria-hidden="true" aria-label="Menu">
-  <div class="md-head">
-    <div class="md-brand"><img src="{% static 'img/jamiibot-icon.png' %}" alt="" width="256" height="256" loading="lazy"><span><strong>Jamii<b>Bot</b></strong><small>AI assistant for WhatsApp</small></span></div>
-    <button class="md-close" onclick="closeNav()" aria-label="Close menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-  </div>
-  <div class="md-label">Menu</div>
-  <div class="md-links" role="navigation" aria-label="Mobile">
-    <a href="#how-it-works" onclick="closeNav()" style="--i:1"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg></span><span class="tx"><b>How it works</b><small>Live in 3 simple steps</small></span><svg class="go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></a>
-    <a href="#features" onclick="closeNav()" style="--i:2"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8-4.3-4.1 5.9-.9z"/></svg></span><span class="tx"><b>Features</b><small>24/7, Swahili &amp; English</small></span><svg class="go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></a>
-    <a href="#pricing" onclick="closeNav()" style="--i:3"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></span><span class="tx"><b>Pricing</b><small>Plans for every business</small></span><svg class="go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></a>
-    <a href="#setup-guide" onclick="closeNav()" style="--i:4"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg></span><span class="tx"><b>Setup guide</b><small>Connect WhatsApp easily</small></span><svg class="go" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></a>
-  </div>
-  <a class="md-demo" href="https://wa.me/{% contact "bot_wa" %}?text=Habari%20JamiiBot%2C%20nataka%20kujaribu%20demo" target="_blank" rel="noopener" onclick="closeNav()">
-    <span class="ic"><i class="live" aria-hidden="true"></i><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.3-.5.1-1 .1-1.7-.1a15 15 0 0 1-1.6-.6 12 12 0 0 1-4.6-4.1 5 5 0 0 1-1.1-2.7 2.9 2.9 0 0 1 .9-2.2 1 1 0 0 1 .7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.1.1.3 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.6a9 9 0 0 0 1.6 2 8 8 0 0 0 2.3 1.4c.3.1.5.1.6-.1l.9-1.1c.2-.3.4-.2.6-.1l1.9.9c.3.1.5.2.5.3a2 2 0 0 1-.1 1.2z"/></svg></span>
-    <span><b>Try the live demo</b><small>Chat with JamiiBot on WhatsApp</small></span>
-  </a>
-  <div class="md-cta">
-    <a href="/chatbot/login/" class="btn-login">Login</a>
-    <a href="/chatbot/register/" class="btn-start">Start free trial →</a>
-    <p>7-day free trial · set up in minutes</p>
-  </div>
-</aside>
+<!-- Sidebar ya simu: ile ile ya Home, pamoja na sehemu za JamiiBot juu -->
+{% include 'site/_side.html' with side_mode="bot" %}
 
 <!-- HERO -->
 <section class="hero">
@@ -968,12 +888,7 @@
 </footer>
 
 <script>
-window.addEventListener('scroll',()=>{document.getElementById('mainNav').classList.toggle('scrolled',window.scrollY>20)})
-function toggleNav(){var d=document.getElementById('mobNav'),o=document.getElementById('mobOverlay');var open=d.classList.toggle('open');o.classList.toggle('open',open);d.setAttribute('aria-hidden',open?'false':'true');document.body.style.overflow=open?'hidden':'';if(open)mdMark()}
-/* Sidebar: angazia sehemu ya ukurasa unayoisoma sasa */
-function mdMark(){var links=[].slice.call(document.querySelectorAll('.md-links a')),cur=null,best=-1e9;links.forEach(function(a){var t=document.querySelector(a.getAttribute('href'));if(!t)return;var top=t.getBoundingClientRect().top;if(top<innerHeight*.4&&top>best){best=top;cur=a}});links.forEach(function(a){a.classList.toggle('is-on',a===cur)})}
-function closeNav(){document.getElementById('mobNav').setAttribute('aria-hidden','true');document.getElementById('mobNav').classList.remove('open');document.getElementById('mobOverlay').classList.remove('open');document.body.style.overflow=''}
-document.addEventListener('keydown',function(e){if(e.key==='Escape')closeNav()});
+window.addEventListener('scroll',()=>{document.getElementById('mainNav').classList.toggle('scrolled',window.scrollY>20)},{passive:true});
 // Mwendo mmoja uliopangwa: jumbe za hatua zinafika moja baada ya nyingine,
 // tiki zinapanda ✓ -> ✓✓ -> ✓✓ bluu, kisha JamiiBot "inaandika" na kujibu.
 // Bila JS (au ukipendelea bila mwendo) kila kitu kinaonekana kimekamilika.
@@ -999,5 +914,6 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeNav()})
 })();
 </script>
 <script src="{% static 'js/interaction.js' %}" defer></script>
+<script src="{% static 'js/jt-nav.js' %}" defer></script>
 </body>
 </html>

@@ -92,92 +92,11 @@ button{cursor:pointer;border:0;background:none}
 @keyframes led{50%{opacity:.25}}
 @keyframes dot{30%{transform:translateY(-3px);opacity:1}}
 
-/* ═══ HEADER ═══════════════════════════════════════════════════
-   Upau kamili juu (si kidonge kinachoelea). Unajificha ukishuka chini,
-   unarudi ukipanda juu. Mstari wa dhahabu unaonyesha umesoma kiasi gani. */
-.hdr{position:fixed;inset:0 0 auto;z-index:50;transition:transform .45s var(--ease),background .3s,box-shadow .3s}
-.hdr__bar{position:absolute;left:0;top:0;height:3px;width:100%;background:var(--grad);transform-origin:0 50%;transform:scaleX(var(--p,0))}
-.hdr__in{display:flex;align-items:center;gap:14px;height:72px}
-/* Header ya navy ya chapa: maandishi meupe, "Tek" ya dhahabu inang'aa.
-   Kioo chenye ukungu kidogo + mstari mwembamba wa mwanga chini — tulivu, si kelele. */
-.hdr{background:linear-gradient(180deg,rgba(10,34,69,.94),rgba(12,40,80,.92));-webkit-backdrop-filter:saturate(160%) blur(18px);backdrop-filter:saturate(160%) blur(18px);box-shadow:inset 0 -1px 0 rgba(255,255,255,.07)}
-.hdr.is-stuck{box-shadow:inset 0 -1px 0 rgba(255,255,255,.08),0 12px 32px -18px rgba(5,15,35,.55)}
-.hdr .brand{color:#fff}
-/* Logo ina maandishi ya zambarau — kibao cheupe kidogo kinaifanya isomeke juu ya navy */
-.hdr .brand img,.side .brand img{box-sizing:content-box;padding:3px 4px;border-radius:12px;background:#fff;box-shadow:0 4px 14px -6px rgba(0,0,0,.45)}
-.hdr .nav{background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
-.hdr .nav a{color:rgba(232,239,250,.72)}
-.hdr .nav a:hover{color:#fff}
-.hdr .nav a.is-on{color:#fff}
-.hdr .nav__pill{background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12)}
-.hdr .hdr__portal{color:rgba(232,239,250,.78)}
-.hdr .hdr__portal:hover{color:#fff;background:rgba(255,255,255,.08)}
-.hdr .burger{background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
-.hdr .burger i,.hdr .burger i::before,.hdr .burger i::after{background:#fff}
-.hdr.is-hidden{transform:translateY(-100%)}
+/* Header na sidebar ya simu ziko static/css/jt-nav.css — moja kwa tovuti nzima. */
+/* .brand ya jumla bado inatumiwa na footer */
 .brand{display:flex;align-items:center;gap:10px;flex:none;margin-right:auto;font:800 21px/1 'Sora',sans-serif;letter-spacing:-.045em;color:var(--ink)}
 .brand img{height:40px;width:auto}
 .brand em{font-style:normal;color:var(--gold)}
-.nav{position:relative;display:none;align-items:center;gap:2px;padding:5px;border-radius:999px;background:rgba(11,23,48,.04);box-shadow:inset 0 0 0 1px rgba(11,23,48,.05)}
-.nav a{position:relative;z-index:1;padding:9px 15px;border-radius:999px;font:500 14.5px/1 'Inter',sans-serif;color:var(--ink-2);transition:color .25s}
-.nav a:hover,.nav a.is-on{color:var(--ink)}
-.nav a.is-on{font-weight:600}
-/* Kidonge cheupe kinachoteleza kwenda link unayoielekea */
-.nav__pill{position:absolute;z-index:0;top:5px;left:0;height:calc(100% - 10px);width:0;border-radius:999px;background:#fff;box-shadow:0 1px 2px rgba(11,23,48,.08),0 4px 12px -4px rgba(11,23,48,.12);
-  transition:transform .45s var(--ease),width .45s var(--ease),opacity .3s;opacity:0;pointer-events:none}
-.hdr__side{display:flex;align-items:center;gap:8px}
-.hdr__portal{display:none;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;font:500 14px/1 'Inter';color:var(--ink-2)}
-.hdr__portal:hover{color:var(--ink);background:rgba(11,23,48,.05)}
-.hdr__portal svg{width:17px;height:17px}
-.hdr__cta{display:none}
-.burger{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:#fff;box-shadow:inset 0 0 0 1px var(--line)}
-.burger i{position:relative;display:block;width:18px;height:2px;border-radius:2px;background:var(--ink)}
-.burger i::before,.burger i::after{content:"";position:absolute;left:0;width:18px;height:2px;border-radius:2px;background:var(--ink)}
-.burger i::before{top:-6px}.burger i::after{top:6px;width:12px}
-@media (min-width:1100px){
-  .nav{display:flex}
-  .hdr__portal,.hdr__cta{display:inline-flex}
-  .burger{display:none}
-}
-
-/* ── Sidebar ya simu: paneli upande wa kulia, maandishi ya kawaida ── */
-.scrim{position:fixed;inset:0;z-index:59;background:rgba(11,23,48,.42);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);opacity:0;visibility:hidden;transition:opacity .35s,visibility 0s .35s}
-.scrim.is-on{opacity:1;visibility:visible;transition:opacity .35s}
-.side{position:fixed;z-index:60;top:0;right:0;bottom:0;width:min(86vw,360px);display:flex;flex-direction:column;background:var(--bg);
-  box-shadow:-30px 0 60px -30px rgba(11,23,48,.45);transform:translateX(102%);visibility:hidden;
-  transition:transform .5s var(--ease),visibility 0s .5s}
-.side.is-open{transform:none;visibility:visible;transition:transform .5s var(--ease)}
-.side__top{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line)}
-.side__top .brand{font-size:18px}.side__top .brand img{height:34px}
-.side__x{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--line)}
-.side__x svg{width:18px;height:18px}
-.side nav{flex:1;overflow-y:auto;padding:10px 12px}
-.side nav a{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;font:500 15.5px/1.2 'Inter',sans-serif;color:var(--ink-2);
-  opacity:0;transform:translateX(14px);transition:opacity .4s var(--ease),transform .5s var(--ease),background .2s,color .2s}
-.side.is-open nav a{opacity:1;transform:none;transition-delay:calc(.06s + var(--i)*.035s),calc(.06s + var(--i)*.035s),0s,0s}
-.side nav a:hover{background:#fff;color:var(--ink)}
-.side nav a.is-on{background:#fff;color:var(--ink);font-weight:600;box-shadow:inset 3px 0 0 var(--gold),var(--sh-1)}
-.side nav a span{display:grid;place-items:center;width:34px;height:34px;flex:none;border-radius:10px;background:var(--paper);color:var(--navy-3)}
-.side nav a.is-on span{background:rgba(245,166,35,.14);color:#B4690A}
-.side nav a span svg{width:17px;height:17px}
-.side nav hr{border:0;height:1px;margin:8px 12px;background:var(--line)}
-.side__ft{display:grid;gap:8px;padding:14px 18px calc(16px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
-.side__ft .btn{min-height:46px;font-size:14.5px}
-.side__ft p{text-align:center;font-size:13px;color:var(--muted)}
-/* Sidebar ya navy — sawa na header */
-.side{background:linear-gradient(180deg,#0C2850,var(--navy) 45%,var(--navy-d));box-shadow:-30px 0 60px -30px rgba(5,15,35,.7)}
-.side__top{border-bottom-color:rgba(255,255,255,.08)}
-.side .brand{color:#fff}
-.side__x{background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);color:#fff}
-.side nav a{color:rgba(232,239,250,.78)}
-.side nav a:hover{background:rgba(255,255,255,.06);color:#fff}
-.side nav a.is-on{background:rgba(255,255,255,.09);color:#fff;box-shadow:inset 3px 0 0 var(--gold)}
-.side nav a span{background:rgba(255,255,255,.07);color:#9CC3FF}
-.side nav a.is-on span{background:rgba(245,166,35,.18);color:var(--amber)}
-.side nav hr{background:rgba(255,255,255,.08)}
-.side__ft{border-top-color:rgba(255,255,255,.08)}
-.side__ft p{color:#93A2BE}
-@media (min-width:1100px){.side,.scrim{display:none}}
 
 /* ═══ PAGE HERO (Services, About, Contact) ════════════════════ */
 .ph{position:relative;overflow:hidden;padding:124px 0 70px;isolation:isolate}

@@ -1,0 +1,121 @@
+/* ═══════════════════════════════════════════════════════════════
+   JamiiTek — header + sidebar ya simu. FAILI MOJA kwa tovuti nzima.
+
+   Inapakiwa na:
+     site/base.html                 (Home, Services, About, Contact)
+     base.html                      (Blog, Templates, kurasa za zamani)
+     chatbot_landing/jamiibot_landing.html   (/bot/ — sidebar pekee)
+
+   Kurasa hizo zina CSS tofauti kabisa (site.css ya giza, blog nyeupe,
+   /bot/ yenye `nav{position:fixed}`), kwa hiyo KILA sheria hapa imefungwa
+   ndani ya .hdr / .side / .scrim, na rangi zake zimewekwa hapa hapa —
+   hazitegemei :root ya ukurasa.
+   ═══════════════════════════════════════════════════════════════ */
+@font-face{font-family:'Sora';font-weight:700;font-display:swap;src:url("../fonts/sora-700.woff2") format('woff2')}
+@font-face{font-family:'Sora';font-weight:800;font-display:swap;src:url("../fonts/sora-800.woff2") format('woff2')}
+@font-face{font-family:'Inter';font-weight:500;font-display:swap;src:url("../fonts/inter-500.woff2") format('woff2')}
+@font-face{font-family:'Inter';font-weight:600;font-display:swap;src:url("../fonts/inter-600.woff2") format('woff2')}
+
+.hdr,.side,.scrim{
+  --ink:#0B1730; --ink-2:#34405A; --muted:#66728A; --line:#CCD8EB; --paper:#D9E5F6; --bg:#E6EFFB;
+  --navy:#0A2245; --navy-2:#123563; --navy-3:#1B4C8C; --navy-d:#0B1A36;
+  --gold:#F5A623; --amber:#FFC456; --sun:#FF7A3D;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --grad:linear-gradient(100deg,#FFB627 0%,var(--gold) 40%,var(--sun) 100%);
+  --sh-1:0 1px 2px rgba(11,23,48,.05),0 6px 20px -8px rgba(11,23,48,.08);
+  --hpad:18px;
+}
+@media (min-width:640px){.hdr{--hpad:28px}}
+@media (min-width:1100px){.hdr{--hpad:40px}}
+
+/* Kinga dhidi ya CSS ya ukurasa (site.css ya zamani, /bot/) */
+.hdr,.side{font:400 16px/1.65 'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased;text-align:left;letter-spacing:normal}
+.hdr *,.hdr *::before,.hdr *::after,.side *,.side *::before,.side *::after{box-sizing:border-box}
+.hdr a,.side a{text-decoration:none;color:inherit;-webkit-tap-highlight-color:transparent}
+.hdr img,.hdr svg,.side img,.side svg{display:block;max-width:100%}
+.hdr button,.side button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0;margin:0}
+.hdr p,.side p{margin:0}
+.hdr :focus-visible,.side :focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:6px}
+
+/* Vitufe — nakala ndogo ya .btn ya jt-site.css, kwa header/sidebar tu */
+.hdr .btn,.side .btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:50px;padding:0 24px;
+  border-radius:999px;font:600 15px/1 'Sora',sans-serif;letter-spacing:-.01em;white-space:nowrap;
+  transition:transform .35s var(--ease),box-shadow .35s var(--ease),background .25s,color .25s}
+.hdr .btn:active,.side .btn:active{transform:scale(.97)}
+.hdr .btn--gold,.side .btn--gold{color:#2A1702;background:var(--grad);box-shadow:0 10px 26px -10px rgba(245,140,35,.7),inset 0 1px 0 rgba(255,255,255,.45)}
+.hdr .btn--gold:hover,.side .btn--gold:hover{color:#2A1702;transform:translateY(-2px);box-shadow:0 16px 36px -10px rgba(255,122,61,.7),inset 0 1px 0 rgba(255,255,255,.5)}
+.side .btn--wa{color:#fff;background:#1DA851}
+.side .btn--wa:hover{color:#fff;background:#178F45;transform:translateY(-2px)}
+.hdr .btn--sm{min-height:42px;padding:0 18px;font-size:14px}
+
+/* ═══ HEADER ═══════════════════════════════════════════════════
+   Upau kamili juu (si kidonge kinachoelea). Unajificha ukishuka chini,
+   unarudi ukipanda juu. Mstari wa dhahabu unaonyesha umesoma kiasi gani.
+   Ukurasa wenye `data-pin` (blog, templates) header haijifichi. */
+.hdr{position:fixed;inset:0 0 auto;z-index:50;transition:transform .45s var(--ease),background .3s,box-shadow .3s;
+  background:linear-gradient(180deg,rgba(10,34,69,.94),rgba(12,40,80,.92));-webkit-backdrop-filter:saturate(160%) blur(18px);backdrop-filter:saturate(160%) blur(18px);box-shadow:inset 0 -1px 0 rgba(255,255,255,.07)}
+.hdr__bar{position:absolute;left:0;top:0;height:3px;width:100%;background:var(--grad);transform-origin:0 50%;transform:scaleX(var(--p,0))}
+.hdr .hdr__in{display:flex;align-items:center;gap:14px;height:72px;width:100%;max-width:1240px;margin-inline:auto;padding-inline:var(--hpad)}
+.hdr.is-stuck{box-shadow:inset 0 -1px 0 rgba(255,255,255,.08),0 12px 32px -18px rgba(5,15,35,.55)}
+.hdr.is-hidden{transform:translateY(-100%)}
+
+.hdr .brand,.side .brand{display:flex;align-items:center;gap:10px;flex:none;margin-right:auto;font:800 21px/1 'Sora',sans-serif;letter-spacing:-.045em;color:#fff}
+.hdr .brand img{height:40px;width:auto}
+.hdr .brand em,.side .brand em{font-style:normal;color:var(--gold)}
+/* Logo ina maandishi ya zambarau — kibao cheupe kidogo kinaifanya isomeke juu ya navy */
+.hdr .brand img,.side .brand img{box-sizing:content-box;padding:3px 4px;border-radius:12px;background:#fff;box-shadow:0 4px 14px -6px rgba(0,0,0,.45)}
+
+.hdr .nav{position:relative;display:none;align-items:center;gap:2px;padding:5px;margin:0;border-radius:999px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+.hdr .nav a{position:relative;z-index:1;padding:9px 15px;border-radius:999px;font:500 14.5px/1 'Inter',sans-serif;color:rgba(232,239,250,.72);transition:color .25s}
+.hdr .nav a:hover,.hdr .nav a.is-on{color:#fff}
+.hdr .nav a.is-on{font-weight:600}
+/* Kidonge kinachoteleza kwenda link unayoielekea */
+.hdr .nav__pill{position:absolute;z-index:0;top:5px;left:0;height:calc(100% - 10px);width:0;border-radius:999px;background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);
+  transition:transform .45s var(--ease),width .45s var(--ease),opacity .3s;opacity:0;pointer-events:none}
+.hdr .hdr__side{display:flex;align-items:center;gap:8px}
+.hdr .hdr__portal{display:none;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;font:500 14px/1 'Inter';color:rgba(232,239,250,.78)}
+.hdr .hdr__portal:hover{color:#fff;background:rgba(255,255,255,.08)}
+.hdr .hdr__portal svg{width:17px;height:17px}
+.hdr .hdr__cta{display:none}
+.hdr .burger{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+.hdr .burger i{position:relative;display:block;width:18px;height:2px;border-radius:2px;background:#fff}
+.hdr .burger i::before,.hdr .burger i::after{content:"";position:absolute;left:0;width:18px;height:2px;border-radius:2px;background:#fff}
+.hdr .burger i::before{top:-6px}.hdr .burger i::after{top:6px;width:12px}
+@media (min-width:1100px){
+  .hdr .nav{display:flex}
+  .hdr .hdr__portal,.hdr .hdr__cta{display:inline-flex}
+  .hdr .burger{display:none}
+}
+
+/* ═══ SIDEBAR YA SIMU — paneli ya navy upande wa kulia ═══════════ */
+.scrim{position:fixed;inset:0;z-index:1059;background:rgba(11,23,48,.42);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);opacity:0;visibility:hidden;transition:opacity .35s,visibility 0s .35s}
+.scrim.is-on{opacity:1;visibility:visible;transition:opacity .35s}
+.side{position:fixed;z-index:1060;top:0;right:0;bottom:0;left:auto;width:min(86vw,360px);height:auto;display:flex;flex-direction:column;
+  background:linear-gradient(180deg,#0C2850,var(--navy) 45%,var(--navy-d));box-shadow:-30px 0 60px -30px rgba(5,15,35,.7);
+  transform:translateX(102%);visibility:hidden;transition:transform .5s var(--ease),visibility 0s .5s}
+.side.is-open{transform:none;visibility:visible;transition:transform .5s var(--ease)}
+.side__top{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,.08)}
+.side__top .brand{font-size:18px}.side__top .brand img{height:34px;width:auto}
+.side__x{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.07)!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);color:#fff!important}
+.side__x svg{width:18px;height:18px}
+/* `.side nav` imeandikwa kikamilifu: /bot/ ina `nav{position:fixed;height:64px;…}` */
+.side nav{position:static;inset:auto;z-index:auto;height:auto;display:block;flex:1;overflow-y:auto;padding:10px 12px;margin:0;
+  background:none;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;transition:none}
+.side nav a{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;font:500 15.5px/1.2 'Inter',sans-serif;color:rgba(232,239,250,.78);
+  opacity:0;transform:translateX(14px);transition:opacity .4s var(--ease),transform .5s var(--ease),background .2s,color .2s}
+.side.is-open nav a{opacity:1;transform:none;transition-delay:calc(.06s + var(--i)*.035s),calc(.06s + var(--i)*.035s),0s,0s}
+.side nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.side nav a.is-on{background:rgba(255,255,255,.09);color:#fff;font-weight:600;box-shadow:inset 3px 0 0 var(--gold)}
+.side nav a span{display:grid;place-items:center;width:34px;height:34px;flex:none;border-radius:10px;background:rgba(255,255,255,.07);color:#9CC3FF}
+.side nav a.is-on span{background:rgba(245,166,35,.18);color:var(--amber)}
+.side nav a span svg{width:17px;height:17px}
+.side nav hr{border:0;height:1px;margin:8px 12px;background:rgba(255,255,255,.08)}
+.side__lbl{display:block;padding:10px 12px 4px;font:600 11px/1.2 ui-monospace,'SF Mono',Menlo,Consolas,monospace;letter-spacing:.14em;text-transform:uppercase;color:#7F93B5}
+.side__ft{display:grid;gap:8px;padding:14px 18px calc(16px + env(safe-area-inset-bottom));border-top:1px solid rgba(255,255,255,.08)}
+.side__ft .btn{min-height:46px;font-size:14.5px}
+.side__ft p{text-align:center;font-size:13px;color:#93A2BE}
+@media (min-width:1100px){.side,.scrim{display:none}}
+@media (prefers-reduced-motion:reduce){
+  .side,.side.is-open,.side nav a,.side.is-open nav a,.scrim{transition:none}
+  .side nav a{opacity:1;transform:none}
+}
