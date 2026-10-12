@@ -390,11 +390,14 @@ def receipt_public(request, token):
         return render(request, 'receipts/receipt_verify.html',
                       {'r': receipt, 'valid': False}, status=404)
 
+    # Risiti inayohitaji uthibitisho: mteja athibitishe kwanza (mara moja),
+    # kisha aone hati — PDF NA ukurasa wa kuchapisha. Ukurasa wa HTML nao
+    # ulikuwa mlango wa nyuma: ulikuwa na kitufe chake cha PDF na unaweza
+    # kuchapishwa. Staff wanaona wakati wowote.
+    if receipt.needs_signature and not request.user.is_staff:
+        return redirect(f'{receipt.verify_path}#confirm')
+
     if request.GET.get('pdf'):
-        # Risiti inayohitaji uthibitisho: mteja athibitishe kwanza (mara moja),
-        # kisha PDF — sawa na portal. Staff wanapakua wakati wowote.
-        if receipt.needs_signature and not request.user.is_staff:
-            return redirect(f'{receipt.verify_path}#confirm')
         return _receipt_pdf(request, receipt)
 
     return render(request, 'receipts/receipt_doc.html', _doc_ctx(receipt, pdf=False))

@@ -83,6 +83,15 @@ class ReceiptConfirmTest(TestCase):
         self.assertEqual(resp.status_code, 302)
         self.assertIn('#confirm', resp['Location'])
 
+    def test_view_page_is_locked_until_confirmed(self):
+        # "View" ilikuwa mlango wa nyuma: ukurasa wa risiti una kitufe chake
+        # cha PDF na unaweza kuchapishwa.
+        resp = self.client.get(self.r.public_url)
+        self.assertEqual(resp.status_code, 302)
+        self.assertIn('#confirm', resp['Location'])
+        self.client.post(self.base + 'sign/', {'signature_name': 'Hibrahim Haule'})
+        self.assertEqual(self.client.get(self.r.public_url).status_code, 200)
+
     def test_staff_can_still_download_unconfirmed(self):
         from django.contrib.auth.models import User
         staff = User.objects.create_user('s', password='x', is_staff=True)

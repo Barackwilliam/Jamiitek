@@ -25,6 +25,9 @@ var altToggle = document.getElementById('cfAltToggle');
 var noBio = document.getElementById('cfNoBio');
 var err = document.getElementById('cfErr');
 var dl = document.querySelector('a.dl');
+var sheet = document.getElementById('cfSheet');
+var bar = document.getElementById('cfBar');
+var confirmed = false, opener = null;
 
 /* ── base64url <-> ArrayBuffer ── */
 function b64uToBuf(s){
@@ -66,25 +69,34 @@ function busy(btn, on, text){
   }
 }
 
-/* ── Imefaulu: badilisha kadi, washa kupakua, pakua ── */
+/* ── Imefaulu: alama ya tiki, funga paneli, fungua kupakua, pakua ── */
 function success(data){
+  box.classList.remove('is-scanning');
   box.classList.add('is-done');
+  confirmed = true;
   var when = document.getElementById('cfWhen');
   if (when) when.textContent = data.when;
   var how = document.getElementById('cfHow');
   if (how) how.textContent = data.label;
   var sig = document.getElementById('sigState');
-  if (sig) sig.innerHTML = '<span class="sig yes">' + data.label + ' · ' + data.when + '</span>';
+  if (sig) sig.innerHTML = '<span class="sig yes">' + data.label + '</span><small>' + data.when + '</small>';
+
+  [].forEach.call(document.querySelectorAll('[data-needs-confirm]'), function(el){ el.removeAttribute('data-needs-confirm'); });
+  if (bar) bar.classList.remove('is-on');
+  document.body.classList.remove('has-cfbar');
 
   if (dl && data.pdf_url) {
     dl.href = data.pdf_url;
     dl.setAttribute('data-download', data.filename || 'receipt.pdf');
-    dl.removeAttribute('data-needs-confirm');
     var lbl = dl.querySelector('[data-label]');
     if (lbl) lbl.textContent = 'Download receipt';
     if (window.JTDownload) window.JTDownload.bind(dl);
-    setTimeout(function(){ dl.click(); }, 650);
   }
+  /* Mteja aone tiki kwanza, kisha paneli ishuke na PDF ianze */
+  setTimeout(function(){
+    closeSheet();
+    if (dl && data.pdf_url) setTimeout(function(){ dl.click(); }, 380);
+  }, 1500);
 }
 
 function handle(data){
@@ -98,6 +110,7 @@ function handle(data){
 function confirmWithDevice(){
   showError('');
   busy(bioBtn, true, 'Waiting for your phone…');
+  box.classList.add('is-scanning');
   post(base + 'options/', '', false).then(function(opts){
     if (opts.status && opts.status >= 400) { handle(opts); throw null; }
     var pk = {
@@ -129,9 +142,11 @@ function confirmWithDevice(){
     };
     return post(base + 'device/', JSON.stringify(payload), true);
   }).then(function(data){
+    box.classList.remove('is-scanning');
     if (data) handle(data);
     busy(bioBtn, false);
   }).catch(function(e){
+    box.classList.remove('is-scanning');
     busy(bioBtn, false);
     if (e === null) return;
     /* Mteja alighairi, au simu haikuruhusu */
@@ -221,14 +236,56 @@ if (!window.PublicKeyCredential || !navigator.credentials || !window.isSecureCon
 }
 if (bioBtn) bioBtn.addEventListener('click', confirmWithDevice);
 
-/* Kitufe cha kupakua kabla ya kuthibitisha → peleka kwenye uthibitisho */
-if (dl && dl.hasAttribute('data-needs-confirm')) {
-  dl.addEventListener('click', function(e){
-    if (!dl.hasAttribute('data-needs-confirm')) return;
-    e.preventDefault();
-    box.scrollIntoView({behavior: 'smooth', block: 'center'});
-    box.classList.remove('is-nudge'); void box.offsetWidth; box.classList.add('is-nudge');
-  });
+/* ── Paneli inayoelea ── */
+function openSheet(){
+  if (!sheet || confirmed) return;
+  opener = document.activeElement;
+  sheet.classList.add('is-open');
+  sheet.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('sheet-open');
+  if (bar) bar.classList.remove('is-on');
+  setTimeout(function(){
+    /* Lenga paneli yenyewe (si kitufe) — skrini ya simu isionyeshe pete ya focus */
+    var panel = sheet.querySelector('.sheet__panel');
+    if (panel) panel.focus({preventScroll: true});
+    sizePad();
+  }, 420);
 }
-if (location.hash === '#confirm') setTimeout(function(){ box.scrollIntoView({block: 'center'}); }, 300);
+function closeSheet(){
+  if (!sheet) return;
+  sheet.classList.remove('is-open');
+  sheet.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('sheet-open');
+  if (!confirmed && bar) {
+    bar.classList.add('is-on');
+    document.body.classList.add('has-cfbar');
+  }
+  if (opener && opener.focus) opener.focus({preventScroll: true});
+}
+[].forEach.call(document.querySelectorAll('[data-close]'), function(el){ el.addEventListener('click', closeSheet); });
+[].forEach.call(document.querySelectorAll('[data-open-confirm]'), function(el){ el.addEventListener('click', openSheet); });
+addEventListener('keydown', function(e){
+  if (e.key === 'Escape' && sheet.classList.contains('is-open') && !box.classList.contains('is-done')) closeSheet();
+  /* Tab ibaki ndani ya paneli ikiwa wazi */
+  if (e.key === 'Tab' && sheet.classList.contains('is-open')) {
+    var f = [].filter.call(sheet.querySelectorAll('button,a[href],input,canvas'), function(el){ return el.offsetParent !== null && !el.disabled; });
+    if (!f.length) return;
+    var first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+});
+
+/* Kupakua au kuangalia kabla ya kuthibitisha → fungua paneli */
+document.addEventListener('click', function(e){
+  var el = e.target.closest && e.target.closest('[data-needs-confirm]');
+  if (!el) return;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  openSheet();
+  box.classList.remove('is-shake'); void box.offsetWidth; box.classList.add('is-shake');
+}, true);
+
+/* Fungua yenyewe ukurasa ukifunguka — mteja aone kinachohitajika mara moja */
+setTimeout(openSheet, location.hash === '#confirm' ? 150 : 650);
 })();

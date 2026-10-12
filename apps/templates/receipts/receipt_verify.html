@@ -38,6 +38,7 @@ p{margin:0}
 a{color:inherit;text-decoration:none;-webkit-tap-highlight-color:transparent}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent}
 svg{display:block;flex:none}
+[hidden]{display:none!important}
 :focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:8px}
 .wrap{width:100%;max-width:1040px;margin:0 auto;padding:0 16px}
 @media (min-width:640px){.wrap{padding:0 28px}}
@@ -59,7 +60,7 @@ svg{display:block;flex:none}
    kila upande unakua kwa urefu wake, hakuna mapengo. */
 .grid{position:relative;z-index:2;margin-top:-66px;display:flex;flex-direction:column;gap:16px;padding-bottom:40px}
 .col{display:contents}
-.hero,.bad{order:1}.amount{order:2}.cf{order:3}.acts{order:4}.details,.why{order:5}.items{order:6}.trust{order:7}
+.hero,.bad{order:1}.amount{order:2}.acts{order:4}.details,.why{order:5}.items{order:6}.trust{order:7}
 @media (min-width:900px){
   .grid{display:grid;grid-template-columns:minmax(0,1.04fr) minmax(0,.96fr);gap:20px;align-items:start}
   .col{display:flex;flex-direction:column;gap:20px;min-width:0}
@@ -173,30 +174,78 @@ svg{display:block;flex:none}
 .why{padding:8px 22px 10px}
 .why .di dd{font-weight:500}
 
-/* ── Uthibitisho wa mteja (mara moja) ── */
-.cf{position:relative;padding:22px;overflow:hidden;border:1.5px solid rgba(18,162,110,.28);
-  background:linear-gradient(180deg,#F3FBF7,#fff 55%)}
-.cf.is-nudge{animation:nudge .55s var(--ease)}
-.cf__head{display:flex;gap:14px;align-items:flex-start}
-.cf__ic{display:grid;place-items:center;width:48px;height:48px;flex:none;border-radius:15px;background:var(--mint);color:var(--green-d)}
-.cf__ic svg{width:28px;height:28px}
-.cf h2{font-size:17.5px;font-weight:700;letter-spacing:-.025em}
-.cf__head p{margin-top:4px;font-size:13.5px;color:var(--ink-2)}
-.cf__terms{margin-top:14px;padding:11px 13px;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px var(--line);font-size:13px;color:var(--ink-2)}
-.cf__terms b{color:var(--ink)}
-.cf__bio{position:relative;overflow:hidden;width:100%;margin-top:14px;display:flex;align-items:center;justify-content:center;gap:11px;min-height:58px;padding:0 20px;border-radius:16px;
-  background:linear-gradient(135deg,#0E7A55,var(--green));color:#fff;font:700 16px/1 'Sora',sans-serif;letter-spacing:-.01em;
-  box-shadow:0 14px 28px -14px rgba(12,110,75,.9),inset 0 1px 0 rgba(255,255,255,.25);transition:transform .25s var(--ease),box-shadow .25s}
+/* ═══ Uthibitisho wa mteja — paneli inayoelea juu ya ukurasa ═══════════
+   Simu: "bottom sheet" inayopanda kutoka chini. Kompyuta: dirisha katikati.
+   Nyuma yake ukurasa unafifia na kuzimika — hawezi kupakua mpaka athibitishe. */
+.sheet{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-end;justify-content:center;visibility:hidden;pointer-events:none}
+.sheet.is-open{visibility:visible;pointer-events:auto}
+.sheet__scrim{position:absolute;inset:0;background:rgba(7,18,40,.55);-webkit-backdrop-filter:blur(7px) saturate(120%);backdrop-filter:blur(7px) saturate(120%);
+  opacity:0;transition:opacity .4s var(--ease)}
+.sheet.is-open .sheet__scrim{opacity:1}
+.sheet__panel{position:relative;width:100%;max-height:min(94vh,100%);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  border-radius:28px 28px 0 0;background:#fff;
+  box-shadow:0 -1px 0 rgba(255,255,255,.7) inset,0 -24px 70px -10px rgba(4,14,34,.55);
+  padding:10px 0 calc(18px + env(safe-area-inset-bottom));
+  transform:translateY(105%);transition:transform .55s cubic-bezier(.32,.72,0,1)}
+.sheet.is-open .sheet__panel{transform:none}
+.sheet__panel::before{content:"";position:absolute;inset:0 0 auto;height:180px;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(120% 100% at 50% 0%,rgba(18,162,110,.14),transparent 70%)}
+.sheet__panel:focus{outline:0}
+.sheet__grip{display:block;width:42px;height:5px;margin:2px auto 6px;border-radius:9px;background:#D5DDE8}
+.sheet__x{position:absolute;top:14px;right:14px;z-index:2;display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#F1F4F9;color:var(--ink-2);transition:background .2s}
+.sheet__x:hover{background:#E5EAF2}
+.sheet__x svg{width:18px;height:18px}
+@media (min-width:640px){
+  .sheet{align-items:center;padding:24px}
+  .sheet__panel{width:min(480px,100%);border-radius:28px;padding:14px 0 22px;
+    box-shadow:0 0 0 1px rgba(255,255,255,.08),0 40px 100px -24px rgba(4,14,34,.7);
+    transform:translateY(18px) scale(.96);opacity:0;transition:transform .5s var(--ease),opacity .35s var(--ease)}
+  .sheet.is-open .sheet__panel{transform:none;opacity:1}
+  .sheet__grip{display:none}
+}
+body.sheet-open{overflow:hidden}
+body.sheet-open .top,body.sheet-open main{filter:saturate(.85)}
+
+.cf{position:relative;padding:8px 24px 4px}
+.cf.is-shake{animation:nudge .5s var(--ease)}
+
+/* Kitambuzi: duara linalong'aa, mstari unaopita likisubiri simu */
+.scan{position:relative;width:92px;height:92px;margin:6px auto 16px;border-radius:30px;display:grid;place-items:center;color:var(--green-d);
+  background:linear-gradient(160deg,#EAF8F1,#D7F2E5);box-shadow:inset 0 0 0 1px rgba(18,162,110,.22),0 14px 30px -16px rgba(12,110,75,.6)}
+.scan svg{width:50px;height:50px;position:relative;z-index:1}
+.scan::before{content:"";position:absolute;inset:-7px;border-radius:36px;border:1.5px solid rgba(18,162,110,.28);animation:halo 2.6s var(--ease) infinite}
+.scan::after{content:"";position:absolute;left:12px;right:12px;top:14px;height:2px;border-radius:2px;opacity:0;
+  background:linear-gradient(90deg,transparent,#12A26E,transparent);box-shadow:0 0 12px 2px rgba(18,162,110,.55)}
+.cf.is-scanning .scan::after{opacity:1;animation:sweep 1.25s ease-in-out infinite alternate}
+.cf.is-scanning .scan svg{animation:breathe 1.25s ease-in-out infinite}
+.cf h2{text-align:center;font-size:clamp(20px,5.4vw,23px);font-weight:800;letter-spacing:-.035em}
+.cf__sub{margin-top:6px;text-align:center;font-size:14px;color:var(--muted)}
+
+/* Muhtasari wa risiti — kama tiketi ndogo */
+.tkt{position:relative;margin-top:18px;padding:16px 18px;border-radius:18px;background:linear-gradient(180deg,#F7F9FC,#F1F5FA);box-shadow:inset 0 0 0 1px var(--line)}
+.tkt::before,.tkt::after{content:"";position:absolute;top:50%;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 1px var(--line)}
+.tkt::before{left:-8px;clip-path:inset(0 0 0 50%)}.tkt::after{right:-8px;clip-path:inset(0 50% 0 0)}
+.tkt__row{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.tkt__amt{font:800 26px/1.05 'Sora',sans-serif;letter-spacing:-.04em;color:var(--navy)}
+.tkt__amt span{font-size:13px;font-weight:700;letter-spacing:0;color:var(--muted);margin-right:5px}
+.tkt__no{font:600 12px/1 var(--mono);color:var(--muted);white-space:nowrap}
+.tkt__for{margin-top:9px;padding-top:10px;border-top:1.5px dashed #D7DFEA;font-size:13.5px;color:var(--ink-2);line-height:1.45}
+.tkt__for b{color:var(--ink);font-weight:600}
+.cf__terms{margin-top:12px;font-size:12.5px;color:var(--muted);text-align:center;line-height:1.5}
+
+.cf__bio{position:relative;overflow:hidden;width:100%;margin-top:16px;display:flex;align-items:center;justify-content:center;gap:11px;min-height:60px;padding:0 20px;border-radius:18px;
+  background:linear-gradient(135deg,#0E7A55,var(--green) 70%,#1FBF86);color:#fff;font:700 16.5px/1 'Sora',sans-serif;letter-spacing:-.01em;
+  box-shadow:0 16px 30px -14px rgba(12,110,75,.95),inset 0 1px 0 rgba(255,255,255,.28);transition:transform .25s var(--ease),box-shadow .25s}
+.cf__bio::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.28) 50%,transparent 70%);transform:translateX(-120%);animation:shine 3.4s 1.2s var(--ease) infinite}
 .cf__bio:hover{transform:translateY(-2px)}
 .cf__bio:active{transform:scale(.98)}
 .cf__bio svg{width:24px;height:24px}
 .cf__bio[data-state="busy"]{cursor:progress}
-.cf__bio[data-state="busy"] svg{animation:breathe 1.2s ease-in-out infinite}
-.cf__bio[disabled]{opacity:.95}
-.cf__note{display:flex;gap:8px;align-items:flex-start;margin-top:12px;font-size:12.5px;color:var(--muted);line-height:1.5}
+.cf__bio[data-state="busy"]::after{animation:none}
+.cf__note{display:flex;gap:9px;align-items:flex-start;margin-top:14px;padding:11px 12px;border-radius:12px;background:#F6F8FB;font-size:12.5px;color:var(--muted);line-height:1.5}
 .cf__note svg{width:15px;height:15px;margin-top:2px;color:var(--green-d)}
 .cf__nobio{margin-top:14px;padding:11px 13px;border-radius:12px;background:#FFF6E5;color:#7A4E06;font-size:13px}
-.cf__alt-t{margin-top:12px;font-size:13.5px;font-weight:600;color:var(--navy-2);text-decoration:underline;text-underline-offset:3px;text-decoration-color:#B9C6DA}
+.cf__alt-t{display:block;margin:14px auto 0;font-size:13.5px;font-weight:600;color:var(--navy-2);text-decoration:underline;text-underline-offset:3px;text-decoration-color:#B9C6DA}
 .cf__alt{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)}
 .cf-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:12px;background:#EEF2F7}
 .cf-tab{min-height:38px;border-radius:9px;font-size:13px;font-weight:600;color:var(--muted)}
@@ -209,20 +258,48 @@ svg{display:block;flex:none}
 .cf-name:focus{outline:0;box-shadow:inset 0 0 0 2px var(--green)}
 .cf-agree{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-size:13px;color:var(--ink-2);cursor:pointer}
 .cf-agree input{width:19px;height:19px;margin:1px 0 0;flex:none;accent-color:var(--green)}
-.cf-sign{width:100%;margin-top:12px;min-height:50px;border-radius:14px;background:var(--navy);color:#fff;font:600 15px/1 'Sora',sans-serif}
+.cf-sign{width:100%;margin-top:12px;min-height:52px;border-radius:15px;background:var(--navy);color:#fff;font:600 15px/1 'Sora',sans-serif}
 .cf-sign[disabled]{background:#C9D3E2;cursor:not-allowed}
-.cf__err{margin-top:12px;padding:10px 12px;border-radius:10px;background:#FDECEC;color:#9B2C2C;font-size:13px}
-.cf__done{display:none;text-align:center;padding:6px 0 2px}
+.cf__err{margin-top:12px;padding:10px 12px;border-radius:10px;background:#FDECEC;color:#9B2C2C;font-size:13px;text-align:center}
+
+/* Imefaulu */
+.cf__done{display:none;text-align:center;padding:10px 0 8px}
 .cf.is-done .cf__todo{display:none}
-.cf.is-done .cf__done{display:block;animation:rise .5s var(--ease) both}
-.cf__done .seal-s{display:grid;place-items:center;width:58px;height:58px;margin:0 auto 12px;border-radius:50%;background:var(--mint);color:var(--green-d)}
-.cf__done .seal-s svg{width:30px;height:30px}
-.cf__done h2{font-size:19px}
-.cf__done p{margin-top:5px;font-size:13.5px;color:var(--muted)}
+.cf.is-done .cf__done{display:block}
+.okring{position:relative;width:92px;height:92px;margin:6px auto 16px}
+.okring svg{width:100%;height:100%}
+.okring circle{stroke-dasharray:264;stroke-dashoffset:264;animation:draw .7s var(--ease) forwards}
+.okring path{stroke-dasharray:40;stroke-dashoffset:40;animation:draw .45s .5s var(--ease) forwards}
+.cf__done h2{animation:rise .5s .3s var(--ease) both}
+.cf__done p{margin-top:6px;font-size:14px;color:var(--muted);animation:rise .5s .4s var(--ease) both}
+.cf__done .stamp{display:inline-flex;align-items:center;gap:7px;margin-top:14px;padding:8px 13px;border-radius:99px;background:var(--mint);color:var(--green-d);font-size:12.5px;font-weight:600;animation:rise .5s .5s var(--ease) both}
+
+/* Upau unaoelea chini — paneli ikifungwa bila kuthibitisha */
+.cfbar{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));z-index:30;width:calc(100% - 28px);max-width:520px;
+  display:flex;align-items:center;gap:12px;padding:10px 10px 10px 14px;border-radius:20px;
+  background:rgba(10,34,69,.94);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);color:#fff;
+  box-shadow:0 18px 40px -14px rgba(4,14,34,.7),inset 0 0 0 1px rgba(255,255,255,.08);
+  transform:translate(-50%,140%);transition:transform .5s cubic-bezier(.32,.72,0,1)}
+.cfbar.is-on{transform:translate(-50%,0)}
+.cfbar__ic{display:grid;place-items:center;width:40px;height:40px;flex:none;border-radius:13px;background:rgba(31,191,134,.18);color:#5FE3AE}
+.cfbar__ic svg{width:22px;height:22px}
+.cfbar p{flex:1;min-width:0;font-size:13px;line-height:1.35;color:#C9D6EA}
+.cfbar p b{display:block;color:#fff;font-size:14px}
+.cfbar button{flex:none;min-height:44px;padding:0 16px;border-radius:13px;background:linear-gradient(135deg,#13A56F,#1FBF86);color:#fff;font:700 14px/1 'Sora',sans-serif}
+body.has-cfbar main{padding-bottom:84px}
+
 .dl[data-needs-confirm]{background:#E7ECF4;color:#5B6880;box-shadow:none}
 .dl[data-needs-confirm]:hover{transform:none;box-shadow:none}
-@keyframes nudge{0%,100%{transform:none}25%{transform:translateX(-6px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
-@keyframes breathe{50%{opacity:.45;transform:scale(.92)}}
+.ghost[data-needs-confirm]{color:#97A3B6}
+.lock{display:none;width:14px!important;height:14px!important;margin-left:-2px}
+[data-needs-confirm] .lock{display:block}
+.dl[data-needs-confirm] .ic,.ghost[data-needs-confirm] svg:not(.lock){display:none}
+.dl .lock{width:20px!important;height:20px!important;margin:0}
+@keyframes nudge{0%,100%{transform:none}25%{transform:translateX(-7px)}50%{transform:translateX(6px)}75%{transform:translateX(-3px)}}
+@keyframes breathe{50%{opacity:.5;transform:scale(.93)}}
+@keyframes halo{0%{transform:scale(.94);opacity:.9}80%,100%{transform:scale(1.14);opacity:0}}
+@keyframes sweep{from{top:14px}to{top:calc(100% - 16px)}}
+@keyframes shine{0%{transform:translateX(-120%)}35%,100%{transform:translateX(120%)}}
 
 .toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translate(-50%,20px);opacity:0;pointer-events:none;
   padding:11px 16px;border-radius:12px;background:var(--ink);color:#fff;font-size:13.5px;font-weight:500;box-shadow:0 12px 30px -10px rgba(0,0,0,.5);
@@ -298,58 +375,16 @@ svg{display:block;flex:none}
     {% endif %}
   </section>
 
-  {% if r.needs_signature %}
-  <section class="card cf" id="confirm" data-base="{{ r.public_url }}confirm/" data-csrf="{{ csrf_token }}" aria-labelledby="cfh">
-    <div class="cf__todo">
-      <div class="cf__head">
-        <span class="cf__ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 4.9A8.5 8.5 0 0 1 20.4 11"/><path d="M3.6 9.3a8.6 8.6 0 0 1 1.6-2.6"/><path d="M5 19.6a12.5 12.5 0 0 0 1.4-5.6 5.6 5.6 0 0 1 9.4-4.1"/><path d="M8.9 21.2c.9-1.9 1.4-4.2 1.4-7.2a1.7 1.7 0 0 1 3.4 0c0 .6 0 1.2-.1 1.8"/><path d="M12 14c0 3.4-.7 6-1.7 7.6"/><path d="M17.5 13.4c0 2.2-.3 4.3-.9 6.1"/><path d="M20.3 15.7c-.1.9-.3 1.8-.5 2.6"/><path d="M13.8 21.6c.4-.9.7-1.9.9-3"/></svg></span>
-        <div>
-          <h2 id="cfh">Confirm you received this receipt</h2>
-          <p>A quick step, done only once. Your PDF downloads straight after.</p>
-        </div>
-      </div>
-      <p class="cf__terms">By confirming, you agree that you paid <b>{{ r.currency }} {{ r.amount_paid|floatformat:0|intcomma }}</b> to JamiiTek for <b>{{ r.subject_name }}</b>.</p>
-
-      <div id="cfBioWrap">
-        <button class="cf__bio" id="cfBio" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 4.9A8.5 8.5 0 0 1 20.4 11"/><path d="M3.6 9.3a8.6 8.6 0 0 1 1.6-2.6"/><path d="M5 19.6a12.5 12.5 0 0 0 1.4-5.6 5.6 5.6 0 0 1 9.4-4.1"/><path d="M8.9 21.2c.9-1.9 1.4-4.2 1.4-7.2a1.7 1.7 0 0 1 3.4 0c0 .6 0 1.2-.1 1.8"/><path d="M12 14c0 3.4-.7 6-1.7 7.6"/><path d="M17.5 13.4c0 2.2-.3 4.3-.9 6.1"/><path d="M20.3 15.7c-.1.9-.3 1.8-.5 2.6"/><path d="M13.8 21.6c.4-.9.7-1.9.9-3"/></svg><span data-label>Confirm with fingerprint</span></button>
-        <p class="cf__note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="10" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>
-          <span>Your fingerprint never leaves your phone. JamiiTek only receives a confirmation that you unlocked it. Face ID or your phone PIN works too. If your phone says <i>"Create a passkey"</i>, tap Continue.</span></p>
-      </div>
-      <p class="cf__nobio" id="cfNoBio" hidden>This browser can't use your fingerprint, so please sign below. To use your fingerprint instead, open this link in Chrome or Safari.</p>
-
-      <button type="button" class="cf__alt-t" id="cfAltToggle" aria-expanded="false" aria-controls="cfAlt">Can't use fingerprint? Sign instead</button>
-      <div class="cf__alt" id="cfAlt" hidden>
-        <div class="cf-tabs" role="tablist">
-          <button type="button" class="cf-tab on" data-mode="draw" role="tab" aria-selected="true">Draw signature</button>
-          <button type="button" class="cf-tab" data-mode="type" role="tab" aria-selected="false">Type name</button>
-        </div>
-        <div id="cfDraw"><div class="cf-pad"><button type="button" class="cf-clear" id="cfClear">Clear</button><canvas id="cfPad" aria-label="Signature pad"></canvas></div></div>
-        <div id="cfType" hidden><input class="cf-name" id="cfName" type="text" autocomplete="name" placeholder="Your full name" value="{{ r.client_name }}"></div>
-        <label class="cf-agree"><input type="checkbox" id="cfAgree"><span>I confirm this payment and that this signature is mine.</span></label>
-        <button type="button" class="cf-sign" id="cfSign" disabled><span data-label>Confirm &amp; download</span></button>
-      </div>
-
-      <p class="cf__err" id="cfErr" role="alert" hidden></p>
-    </div>
-
-    <div class="cf__done" aria-live="polite">
-      <div class="seal-s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
-      <h2>Receipt confirmed</h2>
-      <p><span id="cfHow"></span> · <span id="cfWhen"></span></p>
-      <p>Thank you. Your PDF is downloading.</p>
-    </div>
-  </section>
-  {% endif %}
-
   <div class="acts">
     <a class="dl" {% if r.needs_signature %}href="#confirm" data-needs-confirm{% else %}href="{{ pdf_url }}" data-download="{{ r.filename }}"{% endif %} data-busy="Preparing your receipt…" data-done="Downloaded" rel="nofollow">
+<svg class="lock lock--dl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="10" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>
       <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 19.5h14"/></svg>
       <svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 3a9 9 0 1 0 9 9" opacity=".95"/></svg>
       <svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
-      <span><span data-label>{% if r.needs_signature %}Confirm above to download{% else %}Download receipt{% endif %}</span><small>PDF · {{ r.receipt_number }}</small></span>
+      <span><span data-label>{% if r.needs_signature %}Confirm to download{% else %}Download receipt{% endif %}</span><small>PDF · {{ r.receipt_number }}</small></span>
     </a>
     <div class="acts__sub">
-      <a class="ghost" href="{{ r.public_url }}">
+      <a class="ghost" href="{{ r.public_url }}"{% if r.needs_signature %} data-needs-confirm{% endif %}><svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="10" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z"/><circle cx="12" cy="12" r="3"/></svg>View
       </a>
       <button class="ghost" type="button" data-share="{{ r.verify_url }}" data-title="JamiiTek receipt {{ r.receipt_number }}">
@@ -445,6 +480,67 @@ svg{display:block;flex:none}
   <a href="mailto:info@jamiitek.com">info@jamiitek.com</a>
 </p>
 </main>
+
+{% if valid and r.needs_signature %}
+<div class="sheet" id="cfSheet" aria-hidden="true">
+  <div class="sheet__scrim" data-close></div>
+  <div class="sheet__panel" role="dialog" aria-modal="true" aria-labelledby="cfh" tabindex="-1">
+    <span class="sheet__grip" aria-hidden="true"></span>
+    <button class="sheet__x" type="button" data-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+
+    <section class="cf" id="confirm" data-base="{{ r.public_url }}confirm/" data-csrf="{{ csrf_token }}">
+      <div class="cf__todo">
+        <div class="scan" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 4.9A8.5 8.5 0 0 1 20.4 11"/><path d="M3.6 9.3a8.6 8.6 0 0 1 1.6-2.6"/><path d="M5 19.6a12.5 12.5 0 0 0 1.4-5.6 5.6 5.6 0 0 1 9.4-4.1"/><path d="M8.9 21.2c.9-1.9 1.4-4.2 1.4-7.2a1.7 1.7 0 0 1 3.4 0c0 .6 0 1.2-.1 1.8"/><path d="M12 14c0 3.4-.7 6-1.7 7.6"/><path d="M17.5 13.4c0 2.2-.3 4.3-.9 6.1"/><path d="M20.3 15.7c-.1.9-.3 1.8-.5 2.6"/><path d="M13.8 21.6c.4-.9.7-1.9.9-3"/></svg></div>
+        <h2 id="cfh">Confirm you received this receipt</h2>
+        <p class="cf__sub">One quick step, done only once. Your PDF unlocks straight after.</p>
+
+        <div class="tkt">
+          <div class="tkt__row">
+            <div class="tkt__amt"><span>{{ r.currency }}</span>{{ r.amount_paid|floatformat:0|intcomma }}</div>
+            <div class="tkt__no">{{ r.receipt_number }}</div>
+          </div>
+          <div class="tkt__for">Paid to <b>JamiiTek</b> for <b>{{ r.subject_name }}</b>{% if r.client_name %} · {{ r.client_name }}{% endif %}</div>
+        </div>
+        <p class="cf__terms">By confirming, you agree that you made this payment.</p>
+
+        <div id="cfBioWrap">
+          <button class="cf__bio" id="cfBio" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 4.9A8.5 8.5 0 0 1 20.4 11"/><path d="M3.6 9.3a8.6 8.6 0 0 1 1.6-2.6"/><path d="M5 19.6a12.5 12.5 0 0 0 1.4-5.6 5.6 5.6 0 0 1 9.4-4.1"/><path d="M8.9 21.2c.9-1.9 1.4-4.2 1.4-7.2a1.7 1.7 0 0 1 3.4 0c0 .6 0 1.2-.1 1.8"/><path d="M12 14c0 3.4-.7 6-1.7 7.6"/><path d="M17.5 13.4c0 2.2-.3 4.3-.9 6.1"/><path d="M20.3 15.7c-.1.9-.3 1.8-.5 2.6"/><path d="M13.8 21.6c.4-.9.7-1.9.9-3"/></svg><span data-label>Confirm with fingerprint</span></button>
+          <p class="cf__note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="10" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>
+            <span>Your fingerprint never leaves your phone. JamiiTek only receives a confirmation that you unlocked it. Face ID or your phone PIN works too. If your phone says <i>"Create a passkey"</i>, tap Continue.</span></p>
+        </div>
+        <p class="cf__nobio" id="cfNoBio" hidden>This browser can't use your fingerprint, so please sign below. To use your fingerprint instead, open this link in Chrome or Safari.</p>
+
+        <button type="button" class="cf__alt-t" id="cfAltToggle" aria-expanded="false" aria-controls="cfAlt">Can't use fingerprint? Sign instead</button>
+        <div class="cf__alt" id="cfAlt" hidden>
+          <div class="cf-tabs" role="tablist">
+            <button type="button" class="cf-tab on" data-mode="draw" role="tab" aria-selected="true">Draw signature</button>
+            <button type="button" class="cf-tab" data-mode="type" role="tab" aria-selected="false">Type name</button>
+          </div>
+          <div id="cfDraw"><div class="cf-pad"><button type="button" class="cf-clear" id="cfClear">Clear</button><canvas id="cfPad" aria-label="Signature pad"></canvas></div></div>
+          <div id="cfType" hidden><input class="cf-name" id="cfName" type="text" autocomplete="name" placeholder="Your full name" value="{{ r.client_name }}"></div>
+          <label class="cf-agree"><input type="checkbox" id="cfAgree"><span>I confirm this payment and that this signature is mine.</span></label>
+          <button type="button" class="cf-sign" id="cfSign" disabled><span data-label>Confirm &amp; unlock</span></button>
+        </div>
+
+        <p class="cf__err" id="cfErr" role="alert" hidden></p>
+      </div>
+
+      <div class="cf__done" aria-live="polite">
+        <div class="okring"><svg viewBox="0 0 100 100" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="50" cy="50" r="42" stroke="#12A26E" stroke-width="5" transform="rotate(-90 50 50)"/><path d="m32 51 12 12 24-26" stroke="#12A26E" stroke-width="6.5"/></svg></div>
+        <h2>Receipt confirmed</h2>
+        <p>Thank you. Your receipt is downloading now.</p>
+        <span class="stamp"><span id="cfHow"></span> · <span id="cfWhen"></span></span>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="cfbar" id="cfBar" role="region" aria-label="Confirm receipt">
+  <span class="cfbar__ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 4.9A8.5 8.5 0 0 1 20.4 11"/><path d="M3.6 9.3a8.6 8.6 0 0 1 1.6-2.6"/><path d="M5 19.6a12.5 12.5 0 0 0 1.4-5.6 5.6 5.6 0 0 1 9.4-4.1"/><path d="M8.9 21.2c.9-1.9 1.4-4.2 1.4-7.2a1.7 1.7 0 0 1 3.4 0c0 .6 0 1.2-.1 1.8"/><path d="M12 14c0 3.4-.7 6-1.7 7.6"/><path d="M17.5 13.4c0 2.2-.3 4.3-.9 6.1"/><path d="M20.3 15.7c-.1.9-.3 1.8-.5 2.6"/><path d="M13.8 21.6c.4-.9.7-1.9.9-3"/></svg></span>
+  <p><b>Confirm to unlock your receipt</b>Takes 3 seconds · only once</p>
+  <button type="button" data-open-confirm>Confirm</button>
+</div>
+{% endif %}
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
