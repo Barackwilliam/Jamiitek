@@ -129,6 +129,16 @@
 </div>
 
 <div class="errs" id="errs"></div>
+{% if invoice.grand_total <= 0 %}
+<div class="errs show" style="color:var(--yellow);background:var(--yellow-d);border-color:rgba(255,184,0,.3)">
+  <b>This invoice has no priced items — the total is {{ invoice.currency }} 0.</b><br>
+  Add the item(s) in section 3 (e.g. "Website development — deposit", qty 1, price 250000). The client sees a zero amount until you do.
+</div>
+{% elif invoice.paid_total > invoice.grand_total %}
+<div class="errs show" style="color:var(--yellow);background:var(--yellow-d);border-color:rgba(255,184,0,.3)">
+  <b>Recorded payments ({{ invoice.currency }} {{ invoice.paid_total|floatformat:"0g" }}) are more than the total.</b> Check the payment history below.
+</div>
+{% endif %}
 
 {% if invoice.pk %}
 <div class="share-box">
@@ -264,7 +274,8 @@
       {% if history or invoice.unlogged_paid %}
       <table class="hist">
         <tr><th>Date</th><th>Method</th><th>Reference</th><th>By</th><th style="text-align:right">Amount</th><th></th></tr>
-        {% if invoice.unlogged_paid %}<tr><td>—</td><td colspan="3">Earlier payment (before history)</td><td class="amt" style="text-align:right">{{ invoice.currency }} {{ invoice.unlogged_paid|floatformat:"0g" }}</td><td></td></tr>{% endif %}
+        {% if invoice.unlogged_paid %}<tr><td>—</td><td colspan="3">Earlier payment (entered in the old "Amount paid" box)</td><td class="amt" style="text-align:right">{{ invoice.currency }} {{ invoice.unlogged_paid|floatformat:"0g" }}</td>
+          <td style="text-align:right"><button type="button" class="icon-btn del" title="Remove — the client has not paid this" onclick="clearEarlier()">✕</button></td></tr>{% endif %}
         {% for p in history %}
         <tr><td>{{ p.at|date:"d M Y H:i"|default:"—" }}</td><td>{{ p.method|default:"—" }} <span class="src">{{ p.source }}</span></td>
           <td style="font-family:var(--mono);font-size:12px">{{ p.reference|default:"—" }}</td><td>{{ p.by|default:"—" }}</td>
@@ -365,6 +376,10 @@ async function removePayment(i){
   if(!confirm('Remove this payment? Use this only for a payment recorded by mistake.'))return;
   const {ok,d}=await post(`/manage/invoices/${PK}/payments/${i}/remove/`,new FormData());
   if(ok){toast('Payment removed','ok');setTimeout(()=>location.reload(),700);}else toast(d.error||'Failed','err');}
+async function clearEarlier(){
+  if(!confirm('Remove this amount from "paid"? Use this when the client has NOT actually paid it.'))return;
+  const {ok,d}=await post(`/manage/invoices/${PK}/payments/earlier/remove/`,new FormData());
+  if(ok){toast('Removed — balance updated','ok');setTimeout(()=>location.reload(),700);}else toast(d.error||'Failed','err');}
 async function sendInvoice(btn){
   const saved=await saveInvoice(true);if(!saved)return;
   const fd=new FormData();fd.append('to',document.getElementById('sTo').value.trim());fd.append('lang',document.getElementById('sLang').value);

@@ -436,6 +436,11 @@ def _save_invoice_form(request, inv):
         errors.append('Discount is larger than the subtotal')
 
     status = d.get('status')
+    if status in ('sent', 'viewed', 'partial', 'paid') and inv.grand_total <= 0:
+        # Ankara ya TZS 0 haina maana kwa mteja — ibaki ilivyo hadi vitu viongezwe
+        errors.append('Add at least one item with a price — the invoice total is 0')
+        if inv.status == 'draft':
+            status = 'draft'
     if status in dict(Invoice.STATUS) and status != 'overdue':
         if status in ('sent', 'viewed') and not inv.sent_at:
             inv.sent_at = timezone.now()
@@ -459,8 +464,16 @@ def invoice_mark_paid(request, pk):
     inv = get_object_or_404(Invoice, pk=pk)
     if inv.status == 'cancelled':
         return JsonResponse({'ok': False, 'error': 'This invoice is cancelled'}, status=400)
+    if inv.grand_total <= 0:
+        return JsonResponse({'ok': False, 'error': 'Add the invoice items first — the total is 0'}, status=400)
     raw = request.POST.get('amount', '').replace(',', '').strip()
     amount = raw or inv.balance_due
+    try:
+        if float(amount) > inv.balance_due + 0.005:
+            return JsonResponse({'ok': False, 'error': (
+                f'That is more than the balance due ({inv.currency} {inv.balance_due:,.0f})')}, status=400)
+    except ValueError:
+        return JsonResponse({'ok': False, 'error': 'Invalid amount'}, status=400)
     try:
         inv.record_payment(amount,
                            method=request.POST.get('method', '').strip() or 'Manual',
@@ -495,6 +508,24 @@ def invoice_remove_payment(request, pk, index):
 
 @staff_member_required
 @require_POST
+def invoice_clear_earlier_payment(request, pk):
+    """Ondoa kiasi cha 'Earlier payment' (kilichowekwa kwenye 'Amount paid' ya zamani
+    bila historia) — mfano kiasi cha deposit kiliandikwa kama kimelipwa."""
+    from decimal import Decimal
+    inv = get_object_or_404(Invoice, pk=pk)
+    earlier = Decimal(str(inv.unlogged_paid))
+    if earlier <= 0:
+        return JsonResponse({'ok': False, 'error': 'Nothing to remove'}, status=400)
+    inv.amount_paid = (Decimal(str(inv.amount_paid or 0)) - earlier) or None
+    if inv.status == 'paid':
+        inv.status = 'sent'
+    inv.sync_payment_status()
+    inv.save()
+    return JsonResponse({'ok': True, 'status': inv.status, 'balance_due': inv.balance_due})
+
+
+@staff_member_required
+@require_POST
 def invoice_send(request, pk):
     """Tuma ankara kwa email ya mteja (link + muhtasari), na uiweke 'sent'."""
     from django.core.mail import EmailMultiAlternatives
@@ -506,8 +537,8 @@ def invoice_send(request, pk):
         return JsonResponse({'ok': False, 'error': 'Add the client email first'}, status=400)
     if inv.status == 'cancelled':
         return JsonResponse({'ok': False, 'error': 'This invoice is cancelled'}, status=400)
-    if not inv.items:
-        return JsonResponse({'ok': False, 'error': 'Add at least one item first'}, status=400)
+    if not inv.items or inv.grand_total <= 0:
+        return JsonResponse({'ok': False, 'error': 'Add at least one item with a price first'}, status=400)
     if inv.status == 'draft':
         inv.status = 'sent'
     inv.sent_at = inv.sent_at or timezone.now()

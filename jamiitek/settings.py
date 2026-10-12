@@ -312,6 +312,11 @@ CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET', '')
 
 # ── Chatbot / WhatsApp ─────────────────────────────────
 GROQ_API_KEY = os.getenv('GROQ_API_KEY', '')
+
+# Google Search Console — ukaguzi wa SEO wa kila wiki (apps/seo/gsc.py).
+# JSON ya service account (au base64 yake); ruhusa ya kusoma tu.
+GSC_SERVICE_ACCOUNT_JSON = os.getenv('GSC_SERVICE_ACCOUNT_JSON', '')
+GSC_SITE_URL             = os.getenv('GSC_SITE_URL', 'sc-domain:jamiitek.com')
 # www ni MUHIMU. `jamiitek.com` ni redirect 301, na 301 kwenye POST
 # inageuzwa kuwa GET — Django inajibu 405. Pia viungo vya email
 # vinapaswa kwenda moja kwa moja, si kupitia redirect.

@@ -69,6 +69,7 @@ urlpatterns = [
     path('manage/invoices/<int:pk>/edit/', docs_views.invoice_edit, name='invoice_edit'),
     path('manage/invoices/<int:pk>/mark-paid/', docs_views.invoice_mark_paid, name='invoice_mark_paid'),
     path('manage/invoices/<int:pk>/payments/<int:index>/remove/', docs_views.invoice_remove_payment, name='invoice_remove_payment'),
+    path('manage/invoices/<int:pk>/payments/earlier/remove/', docs_views.invoice_clear_earlier_payment, name='invoice_clear_earlier_payment'),
     path('manage/invoices/<int:pk>/send/', docs_views.invoice_send, name='invoice_send'),
     path('manage/invoices/<int:pk>/duplicate/', docs_views.invoice_duplicate, name='invoice_duplicate'),
     path('manage/invoices/ai-assist/', docs_views.invoice_ai_assist, name='invoice_ai_assist'),

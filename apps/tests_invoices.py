@@ -119,6 +119,32 @@ class InvoiceStaffViewsTest(TestCase):
         inv.refresh_from_db()
         self.assertEqual(inv.status, 'sent')
 
+    def test_deposit_typed_as_amount_paid_can_be_cleared(self):
+        # INV-2026-0028: hakuna items, 250,000 iliwekwa kwenye "Amount paid" ya zamani
+        inv = make(line_items=[], amount_paid=Decimal('250000'), invoice_type='deposit')
+        self.assertEqual(inv.unlogged_paid, 250000)
+        r = self.client.post(f'/manage/invoices/{inv.pk}/payments/earlier/remove/', secure=True)
+        self.assertTrue(r.json()['ok'])
+        inv.refresh_from_db()
+        self.assertIsNone(inv.amount_paid)
+        self.assertEqual(inv.status, 'sent')
+
+    def test_zero_total_cannot_be_sent_or_paid(self):
+        inv = make(status='draft', line_items=[])
+        r = self.post(inv, status='sent')
+        self.assertEqual(r.status_code, 400)
+        inv.refresh_from_db()
+        self.assertEqual(inv.status, 'draft')
+        self.assertFalse(self.client.post(f'/manage/invoices/{inv.pk}/send/', secure=True).json()['ok'])
+        self.assertFalse(self.client.post(f'/manage/invoices/{inv.pk}/mark-paid/', {'amount': '1000'}, secure=True).json()['ok'])
+
+    def test_payment_above_balance_refused(self):
+        inv = make()
+        r = self.client.post(f'/manage/invoices/{inv.pk}/mark-paid/', {'amount': '1500000'}, secure=True)
+        self.assertEqual(r.status_code, 400)
+        inv.refresh_from_db()
+        self.assertIsNone(inv.amount_paid)
+
     def test_list_filters(self):
         make(due_date=timezone.localdate() - timedelta(days=2))
         make(status='draft')

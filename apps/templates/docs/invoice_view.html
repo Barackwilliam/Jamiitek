@@ -226,6 +226,9 @@
 <div class="wrap">
   {% for m in flash %}<div class="flash {{ m.tags }}">{{ m }}</div>{% endfor %}
 
+  {% if invoice.grand_total <= 0 and not invoice.is_paid %}
+  <div class="flash">{% if lang == 'sw' %}Ankara hii bado inaandaliwa. Tafadhali wasiliana nasi kwa kiasi sahihi cha kulipa.{% else %}This invoice is still being prepared. Please contact us for the correct amount to pay.{% endif %}</div>
+  {% endif %}
   {% with st=invoice.display_status %}
   <div class="summary {{ st }}">
     <div class="sum-l">
@@ -242,7 +245,7 @@
         <div class="sum-due ok">⏱ {% if lang == 'sw' %}Siku {{ invoice.days_to_due }} zimebaki · lipa kabla ya {{ invoice.due_date|localdate:lang }}{% else %}Due in {{ invoice.days_to_due }} day{{ invoice.days_to_due|pluralize }} · {{ invoice.due_date|localdate:lang }}{% endif %}</div>
         {% endif %}
       {% endif %}
-      {% if invoice.paid_total and not invoice.is_paid %}
+      {% if invoice.paid_total and not invoice.is_paid and invoice.grand_total > 0 %}
       <div class="prog">
         <div class="prog-bar"><i style="width:{{ invoice.paid_percent }}%"></i></div>
         <div class="prog-txt"><span>{% if lang == 'sw' %}Umelipa{% else %}Paid{% endif %} {{ invoice.currency }} {{ invoice.paid_total|thousands }} ({{ invoice.paid_percent }}%)</span><span>{% if lang == 'sw' %}Jumla{% else %}Total{% endif %} {{ invoice.grand_total|thousands }}</span></div>
