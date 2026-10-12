@@ -16,7 +16,7 @@ from . import infra_views
 from . import client_portal_views as portal
 from builder import views as builder_views
 from . import domain_views
-from . import receipt_views
+from . import receipt_views, receipt_confirm
 from . import bulk_actions
 from django.views.generic import TemplateView
 from . import sw_views
@@ -89,6 +89,10 @@ urlpatterns = [
     path('portal/receipts/<int:pk>/sign/', receipt_views.portal_receipt_sign, name='portal_receipt_sign'),
 
     path('receipt/verify/<str:token>/', receipt_views.receipt_verify, name='receipt_verify'),
+    # Mteja anathibitisha kupokea risiti (kidole/Face ID, au sahihi) — mara moja
+    path('receipt/<str:token>/confirm/options/', receipt_confirm.confirm_options, name='receipt_confirm_options'),
+    path('receipt/<str:token>/confirm/device/', receipt_confirm.confirm_device, name='receipt_confirm_device'),
+    path('receipt/<str:token>/confirm/sign/', receipt_confirm.confirm_sign, name='receipt_confirm_sign'),
     path('receipt/<str:token>/', receipt_views.receipt_public, name='receipt_public'),
 
     # ── PROPOSAL BUILDER (ndani ya /manage/, staff-only) ────

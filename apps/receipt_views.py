@@ -343,10 +343,12 @@ def portal_receipt_sign(request, pk):
         if drawn.startswith('data:image/png;base64,') and len(drawn) <= 400_000:
             receipt.signature_data = drawn
         receipt.signature_name = typed[:160]
+        receipt.signature_method = 'drawn' if receipt.signature_data else 'typed'
         receipt.signed_at = timezone.now()
         receipt.signed_ip = _client_ip(request)
         receipt.save(update_fields=[
-            'signature_data', 'signature_name', 'signed_at', 'signed_ip', 'updated_at'])
+            'signature_data', 'signature_name', 'signature_method',
+            'signed_at', 'signed_ip', 'updated_at'])
 
         return redirect('portal_receipt_pdf', pk=receipt.pk)
 
@@ -389,6 +391,10 @@ def receipt_public(request, token):
                       {'r': receipt, 'valid': False}, status=404)
 
     if request.GET.get('pdf'):
+        # Risiti inayohitaji uthibitisho: mteja athibitishe kwanza (mara moja),
+        # kisha PDF — sawa na portal. Staff wanapakua wakati wowote.
+        if receipt.needs_signature and not request.user.is_staff:
+            return redirect(f'{receipt.verify_path}#confirm')
         return _receipt_pdf(request, receipt)
 
     return render(request, 'receipts/receipt_doc.html', _doc_ctx(receipt, pdf=False))

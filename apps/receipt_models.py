@@ -112,6 +112,24 @@ class DevelopmentReceipt(models.Model):
     signed_at = models.DateTimeField(null=True, blank=True)
     signed_ip = models.GenericIPAddressField(null=True, blank=True)
 
+    # ── Uthibitisho kwa kifaa (WebAuthn) ──
+    # Mteja anathibitisha kwa alama ya kidole / Face ID / PIN ya simu yake.
+    # Alama ya kidole HAIJI kwetu kamwe — inabaki ndani ya simu. Tunapokea
+    # uthibitisho wa kidijitali kwamba mwenye kifaa amekifungua, na
+    # tunahifadhi kitambulisho cha ufunguo huo (credential id) kama ushahidi.
+    SIGN_METHODS = [
+        ('device', "Confirmed on client's device"),
+        ('drawn',  'Drawn signature'),
+        ('typed',  'Typed name'),
+    ]
+    signature_method = models.CharField(
+        max_length=10, choices=SIGN_METHODS, blank=True)
+    signature_device = models.CharField(
+        max_length=160, blank=True, help_text='e.g. "Android · Chrome"')
+    signature_credential = models.CharField(
+        max_length=255, blank=True,
+        help_text='WebAuthn credential id (base64url) used to confirm')
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -212,7 +230,20 @@ class DevelopmentReceipt(models.Model):
     # ── signature / verification ──────────────────────────────
     @property
     def is_signed(self):
-        return bool(self.signed_at and (self.signature_data or self.signature_name))
+        return bool(self.signed_at and (
+            self.signature_data or self.signature_name
+            or self.signature_method == 'device'))
+
+    @property
+    def signed_label(self):
+        """Maneno mafupi ya jinsi mteja alivyothibitisha."""
+        if self.signature_method == 'device':
+            return "Confirmed on client's device"
+        if self.signature_data:
+            return 'Signed by hand'
+        if self.signature_name:
+            return f'Signed as {self.signature_name}'
+        return ''
 
     @property
     def needs_signature(self):

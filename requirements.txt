@@ -33,6 +33,9 @@ pypdf==5.0.1
 html5lib==1.1
 qrcode==8.0
 
+# ── Uthibitisho wa risiti kwa kidole / Face ID (WebAuthn) ──
+webauthn==2.5.2
+
 # ── AI (Groq) ─────────────────────────────────────────
 groq>=0.13.0
 feedparser>=6.0.10

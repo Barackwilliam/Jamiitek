@@ -204,7 +204,10 @@ body{background:#E8ECF1;font-size:12.5px;line-height:1.55;
     <td width="50%">
       <div class="xs mu">CLIENT SIGNATURE</div>
       <div class="sig-box c" style="height:46px">
-        {% if r.signature_data %}
+        {% if r.signature_method == 'device' %}
+          <div class="b" style="font-size:7.4pt;padding-top:7pt">&#10003; CONFIRMED ON DEVICE</div>
+          <div class="xs mu">{{ r.signature_device|default:"client's phone" }}</div>
+        {% elif r.signature_data %}
           <img src="{{ r.signature_data }}" class="sig-img" alt="signature">
         {% elif r.signature_name %}
           <div style="font-family:Times,serif;font-style:italic;font-size:11pt;padding-top:8pt">
@@ -214,7 +217,7 @@ body{background:#E8ECF1;font-size:12.5px;line-height:1.55;
         {% endif %}
       </div>
       <div class="xs c mu">
-        {% if r.signed_at %}Signed {{ r.signed_at|date:"d-m-Y H:i" }}{% else %}&mdash;{% endif %}
+        {% if r.signed_at %}{% if r.signature_method == 'device' %}Confirmed{% else %}Signed{% endif %} {{ r.signed_at|date:"d-m-Y H:i" }}{% else %}&mdash;{% endif %}
       </div>
     </td>
   </tr>

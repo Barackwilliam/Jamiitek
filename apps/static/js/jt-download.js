@@ -19,7 +19,9 @@ var inApp = /; wv\)|FBAN|FBAV|Instagram|WhatsApp|Line\/|Snapchat|TikTok/i.test(n
 var canBlob = !inApp && 'download' in document.createElement('a') && window.URL && URL.createObjectURL;
 var idle = window.requestIdleCallback || function(f){ return setTimeout(f, 500); };
 
-[].forEach.call(document.querySelectorAll('a[data-download]'), function(a){
+function bind(a){
+  if (a.__jtdl) return;
+  a.__jtdl = true;
   var url = a.href, name = a.getAttribute('data-download') || 'receipt.pdf', job = null, timer = null;
   var label = a.querySelector('[data-label]');
   var texts = {
@@ -81,5 +83,10 @@ var idle = window.requestIdleCallback || function(f){ return setTimeout(f, 500);
       }, Math.max(0, 300 - (Date.now() - t0)));
     });
   });
-});
+}
+
+[].forEach.call(document.querySelectorAll('a[data-download]'), bind);
+
+/* Ukurasa wa uthibitisho unaitumia baada ya mteja kuthibitisha */
+window.JTDownload = {bind: bind};
 })();
