@@ -28,7 +28,7 @@ import requests
 from apps.seo import gsc
 
 from . import ai
-from .board import found, site
+from .board import found
 from .models import Alama, Kazi, SeoRipoti
 from .team import member
 
@@ -42,6 +42,13 @@ MIN_IMPRESSIONS = 30         # kwa siku 28 — chini ya hapo ni kelele
 MAX_POSITION = 20
 PAGES_PER_WEEK = 5
 COOLDOWN_DAYS = 28           # Google inahitaji muda kuona mabadiliko
+MEASURE_START = 3            # siku baada ya badiliko — Google ianze kuliona
+MEASURE_DAYS = 28            # kipindi cha kupima kabla na baada
+
+# Mibofyo ya kurasa za biashara ina thamani kuliko ya habari za kimataifa:
+# mtu anayesoma habari za carbon credits hatafuti website. Uzito huu unapanga
+# fursa — habari bado zinaonekana, lakini nyuma ya kurasa zinazoleta wateja.
+WEIGHT = {'biashara': 1.0, 'makala': 0.8, 'habari': 0.25}
 
 # CTR ya wastani kwa kila nafasi ya matokeo ya Google (makadirio ya tasnia)
 CTR_CURVE = {1: .28, 2: .15, 3: .10, 4: .07, 5: .055, 6: .045, 7: .035, 8: .03, 9: .025, 10: .02}
@@ -78,6 +85,13 @@ def target(url):
         if post:
             return 'blog', post
     return 'page', None
+
+
+def business_kind(kind, obj):
+    """'biashara' (huduma, templates…), 'makala' (blog ya ushauri) au 'habari'."""
+    if kind == 'blog':
+        return 'habari' if getattr(obj, 'is_news', False) else 'makala'
+    return 'biashara'
 
 
 def _plain(html):
@@ -225,24 +239,57 @@ def _fallback(snap, queries):
     return title, desc[:155]
 
 
+EXCERPT = 1800      # herufi za maandishi ya ukurasa ambazo AI inasoma
+
+# Maneno ya kawaida ambayo hayahesabiwi kama "dai jipya"
+STOP = set('''
+a an and are as at be by for from has have how in is it its new of on or the to was what when
+where which who why will with your you this that these those than into over after before
+best top guide 2024 2025 2026 2027 tanzania jamiitek dar salaam
+na ya wa za la kwa ni katika kwenye jinsi bora mpya hii hizi huu yako yetu
+'''.split())
+
+
+def unsupported(text, snap, queries):
+    """Maneno ya kichwa/maelezo mapya ambayo HAYAMO kwenye ukurasa wala kwenye utafutaji."""
+    known = _words(' '.join([snap['title'], snap['description'], snap['text'],
+                             *[q['query'] for q in queries]]))
+    out = []
+    for w in re.findall(r'[a-z0-9]+', (text or '').lower()):
+        if len(w) >= 4 and w not in STOP and w not in known and w not in out:
+            out.append(w)
+    return out
+
+
 def draft_for(snap, queries):
+    """Rudisha (rasimu, maneno_yasiyo_kwenye_ukurasa)."""
     who = member(SLUG)
     lines = '\n'.join(f"- \"{q['query']}\": impressions {q['impressions']}, clicks {q['clicks']}, "
                       f"nafasi {q['position']}" for q in queries[:5])
+    excerpt = snap['text'][:EXCERPT]
     text = ai.write(
         ai.persona(who['name'], who['role']) + ' Wewe pia ni mtaalamu wa SEO wa Google.',
-        f"Ukurasa wa JamiiTek una kichwa: \"{snap['title']}\"\nna maelezo: \"{snap['description']}\".\n"
+        f"Ukurasa wa JamiiTek una kichwa: \"{snap['title']}\"\nna maelezo: \"{snap['description']}\".\n\n"
+        f"MAUDHUI YA UKURASA (mwanzo wake):\n\"\"\"\n{excerpt}\n\"\"\"\n\n"
         f"Watu wanautafuta Google kwa maneno haya lakini hawabofyi vya kutosha:\n{lines}\n\n"
-        "Andika kichwa kipya (herufi 50–60) na maelezo mapya (herufi 140–155) yanayotumia "
-        "kwa kawaida maneno muhimu zaidi hapo juu, kwa lugha ileile ambayo watu wanatafutia "
-        "(Kiingereza au Kiswahili), yanayomshawishi mtu abofye, bila kudanganya wala bei za "
-        "kubuni. Jibu kwa mistari miwili tu, hasa hivi:\n"
+        "Andika kichwa kipya (herufi 50–60) na maelezo mapya (herufi 140–155).\n"
+        "SHERIA:\n"
+        "1. Eleza TU kilichomo kwenye maudhui hapo juu — usiongeze madai, matokeo, takwimu, "
+        "bei wala sababu ambazo hazimo. Ukishindwa kuthibitisha jambo kwenye maudhui, usiliandike.\n"
+        "2. Weka neno kuu la utafutaji mwanzoni mwa kichwa, kwa kawaida (si kulazimisha).\n"
+        "3. Tumia lugha ileile ambayo watu wanatafutia (Kiingereza au Kiswahili).\n"
+        "4. Maelezo yajibu swali la mtafutaji na yampe sababu ya kufungua ukurasa — bila kupotosha.\n"
+        "Jibu kwa mistari miwili tu, hasa hivi:\n"
         "Title: …\nDescription: …",
-        max_tokens=200, temperature=0.4)
+        max_tokens=220, temperature=0.3)
     title, desc = parse_draft(text)
     if not title or not desc:
         title, desc = _fallback(snap, queries)
-    return f'Title: {title}\nDescription: {desc}'
+    risky = unsupported(f'{title} {desc}', snap, queries)
+    if len(risky) >= 4:     # AI imebuni mengi mno — tumia toleo salama
+        title, desc = _fallback(snap, queries)
+        risky = unsupported(f'{title} {desc}', snap, queries)
+    return f'Title: {title}\nDescription: {desc}', risky
 
 
 def _detail(snap, queries):
@@ -303,7 +350,13 @@ def audit(now, force=False):
         report.save(update_fields=['error'])
         return {'seo': f'kosa: {exc}'}
 
-    found_pages = opportunities(rows)
+    found_pages = opportunities(rows)[:40]
+    for opp in found_pages:
+        kind, obj = target(opp['page'])
+        opp['_target'] = (kind, obj)
+        opp['type'] = business_kind(kind, obj)
+        opp['score'] = round(opp['missed'] * WEIGHT[opp['type']], 1)
+    found_pages.sort(key=lambda o: -o['score'])
     report.totals, report.previous = _totals(days_now), _totals(days_prev)
     report.movers, report.top_queries = movers(pages_now, pages_prev), top_queries(rows)
     report.error = ''
@@ -314,7 +367,7 @@ def audit(now, force=False):
             break
         url = opp['page']
         path = _path(url)
-        kind, obj = target(url)
+        kind, obj = opp['_target']
         ref = f'{kind}:{obj.pk}' if obj else f'page:{path}'[:60]
         opp.update({'path': path, 'kind': kind})
         if _recently_handled(ref, now):
@@ -328,17 +381,66 @@ def audit(now, force=False):
             title = f'SEO: "{top}" — {path} inapoteza mibofyo ~{opp["missed"]:.0f}'
         else:
             title = f'SEO: kichwa kipya kwa {obj} ("{top}")'
-        found(SLUG, _key(path, week), title[:200],
-              draft=(lambda s=snap, q=opp['queries']: draft_for(s, q)),
-              ref=ref, priority=1 if opp['missed'] >= 20 else 2,
-              detail=_detail(snap, opp['queries']), link=site(path), channel='seo')
+        key = _key(path, week)
+        detail = _detail(snap, opp['queries'])
+        if opp['type'] == 'habari':
+            detail = ('ℹ️ Hii ni makala ya habari — wasomaji wake mara nyingi si wateja. '
+                      'Kurasa za huduma zimepewa kipaumbele.\n\n' + detail)
+        draft = None
+        if not Kazi.objects.filter(key=key).exists():
+            draft, risky = draft_for(snap, opp['queries'])
+            if risky:
+                detail = ('⚠️ Kichwa/maelezo mapya yana maneno yasiyo kwenye ukurasa: '
+                          f"{', '.join(risky[:6])}. Hakikisha ni sahihi kabla ya kukubali.\n\n" + detail)
+        found(SLUG, key, title[:200], draft=draft,
+              ref=ref, priority=1 if opp['score'] >= 20 else 2,
+              detail=detail, link=url, channel='seo')
         opp['status'] = 'mezani'
         created += 1
 
+    for opp in found_pages:
+        opp.pop('_target', None)
     report.opportunities = found_pages[:20]
     report.save()
+    measure(now)
     return {'seo': f"fursa {len(found_pages)}, rasimu mpya {created}",
             'clicks': report.totals['clicks'], 'impressions': report.totals['impressions']}
+
+
+def _page_totals(page, start, end):
+    return _totals(gsc.query(start, end, dimensions=('date',), page=page))
+
+
+def measure(now):
+    """Jaza 'kabla' na 'baada' ya kila badiliko la SEO (Search Console, ukurasa mmoja)."""
+    from .models import SeoBadiliko
+
+    today = now.date()
+    done = 0
+    for change in SeoBadiliko.objects.filter(after={}):
+        applied = timezone_date(change.applied_at)
+        try:
+            if not change.before:
+                end = applied - timedelta(days=LAG_DAYS + 1)
+                change.before = _page_totals(change.page, end - timedelta(days=MEASURE_DAYS - 1), end)
+                change.before['range'] = f'{end - timedelta(days=MEASURE_DAYS - 1)}…{end}'
+            start = applied + timedelta(days=MEASURE_START)
+            end = start + timedelta(days=MEASURE_DAYS - 1)
+            if today - timedelta(days=LAG_DAYS) >= end:
+                change.after = _page_totals(change.page, start, end)
+                change.after['range'] = f'{start}…{end}'
+                change.checked_at = now
+                done += 1
+            change.save()
+        except gsc.GSCError:
+            logger.warning('[seo] kupima %s kumeshindikana', change.page)
+            break
+    return done
+
+
+def timezone_date(value):
+    from django.utils import timezone
+    return timezone.localtime(value).date() if timezone.is_aware(value) else value.date()
 
 
 def run(now):
@@ -356,9 +458,21 @@ def apply(kazi):
     from apps.indexnow import ping
     from apps.models import BlogPost, WebsiteTemplate
 
+    from django.utils import timezone
+
+    from .models import SeoBadiliko
+
     title, desc = parse_draft(kazi.draft)
     if not title and not desc:
         raise ValueError('Rasimu haina "Title:" wala "Description:".')
+    old = re.search(r'kichwa: "(.*?)"', kazi.detail or '')
+    old_desc = re.search(r'maelezo: "(.*?)"', kazi.detail or '')
+    if kazi.link:
+        SeoBadiliko.objects.update_or_create(kazi=kazi, defaults={
+            'page': kazi.link, 'applied_at': timezone.now(),
+            'old_title': (old.group(1) if old else '')[:200],
+            'old_description': (old_desc.group(1) if old_desc else '')[:300],
+            'new_title': title[:200], 'new_description': desc[:300]})
     kind, _, pk = kazi.ref.partition(':')
     if kind == 'template':
         obj = WebsiteTemplate.objects.filter(pk=pk).first()

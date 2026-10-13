@@ -10,7 +10,7 @@ from apps.models import BlogPost, WebsiteTemplate
 from apps.seo import gsc
 
 from . import actions, grace, seo
-from .models import Alama, Kazi, SeoRipoti
+from .models import Alama, Kazi, SeoBadiliko, SeoRipoti
 from .tests import Base
 
 
@@ -101,8 +101,9 @@ class AnalysisTest(Base):
         self.assertEqual(seo.parse_draft('Title: "X"\nDescription: Y'), ('X', 'Y'))
 
 
-@GSC
-class AuditTest(Base):
+class AuditBase(Base):
+    """Data ya pamoja ya ukaguzi: template, makala, ukurasa wa code na Search Console bandia."""
+
     def setUp(self):
         super().setUp()
         SeoRipoti.objects.all().delete()
@@ -120,8 +121,12 @@ class AuditTest(Base):
             row('web developer dar es salaam', f'{base}/service/', 250, 0, 12.0),
         ]
 
-    def _gsc(self, start, end, dimensions=('query', 'page'), **kw):
+    def _gsc(self, start, end, dimensions=('query', 'page'), page=None, **kw):
         """Search Console bandia: jibu kulingana na dimensions za ombi."""
+        if page:   # kupima ukurasa mmoja: kabla ya badiliko CTR ndogo, baada kubwa
+            after = start > self.now.date()
+            return [{'keys': ['2026-10-01'], 'clicks': 24 if after else 3, 'impressions': 600,
+                     'ctr': 0, 'position': 5.0 if after else 6.0}]
         current = end >= self.now.date() - timedelta(days=seo.LAG_DAYS)
         if dimensions == ('date',):
             # Jumla halisi ni kubwa kuliko safu za query (maneno yaliyofichwa)
@@ -141,6 +146,8 @@ class AuditTest(Base):
             result = seo.audit(now or self.now)
         return result, q
 
+@GSC
+class AuditTest(AuditBase):
     def test_weekly_audit_creates_drafts_and_a_report(self):
         result, q = self._audit()
         self.assertIn('rasimu mpya 3', result['seo'])
@@ -244,3 +251,92 @@ class NotConfiguredTest(Base):
             r = self.client.get('/manage/seo/')
         self.assertContains(r, 'Unganisha Google Search Console')
         self.assertContains(r, 'GSC_SERVICE_ACCOUNT_JSON')
+
+
+
+@GSC
+class SmarterGraceTest(AuditBase):
+    """Maboresho: makala inasomwa, madai yasiyo kwenye ukurasa, biashara kwanza, matokeo."""
+
+    def test_ai_reads_the_page_and_invented_claims_are_flagged(self):
+        snap = {'title': 'Koko Networks wind-down', 'description': 'Creditors take over.',
+                'text': 'Koko Networks UK put its carbon credits up for sale but found no buyers. '
+                        'Creditors are now winding down the company.'}
+        queries = [{'query': 'koko networks carbon credit sale', 'impressions': 1003, 'clicks': 0,
+                    'position': 7.7}]
+        with mock.patch('apps.wafanyakazi.ai.write',
+                        return_value='Title: Koko Networks Carbon Credit Sale Finds No Buyers\n'
+                                     'Description: Koko Networks UK carbon credits found no buyers.') as w:
+            draft, risky = seo.draft_for(snap, queries)
+        prompt = w.call_args.args[1]
+        self.assertIn('found no buyers', prompt)                  # AI inaona maudhui
+        self.assertIn('usiongeze madai', prompt)
+        self.assertIn('Koko Networks Carbon Credit Sale Finds No Buyers', draft)
+        self.assertEqual(risky, ['finds'] if 'finds' not in snap['text'] else [])
+
+        with mock.patch('apps.wafanyakazi.ai.write',
+                        return_value='Title: Koko Networks Bankruptcy Shocks Kenyan Investors Worldwide\n'
+                                     'Description: Billions lost overnight.'):
+            draft, risky = seo.draft_for(snap, queries)
+        self.assertNotIn('Bankruptcy', draft)                     # mengi mno ya kubuni → toleo salama
+        self.assertIn('Koko networks carbon credit sale', draft)
+
+    def test_business_pages_come_before_news(self):
+        news = BlogPost.objects.create(title='Koko Networks', slug='koko', excerpt='Habari.', body='<p>x</p>',
+                                       status='published', is_news=True)
+        self.rows.append(row('koko networks carbon credit sale', 'https://www.jamiitek.com/blog/koko/',
+                             1003, 0, 7.7))
+        self._audit()
+        report = SeoRipoti.objects.get()
+        paths = [o['path'] for o in report.opportunities]
+        self.assertGreater(paths.index('/blog/koko/'), paths.index('/templates/savanna-luxe/'))
+        koko = next(o for o in report.opportunities if o['path'] == '/blog/koko/')
+        self.assertEqual(koko['type'], 'habari')
+        kazi = Kazi.objects.get(ref=f'blog:{news.pk}')
+        self.assertIn('makala ya habari', kazi.detail)
+
+    def test_results_are_measured_before_and_after(self):
+        self._audit()
+        kazi = Kazi.objects.get(ref=f'template:{self.tpl.pk}')
+        actions.approve(kazi.pk, draft='Title: Safari Website Template\nDescription: Premium safari site.')
+        change = SeoBadiliko.objects.get()
+        self.assertEqual(change.page, 'https://www.jamiitek.com/templates/savanna-luxe/')
+        self.assertEqual(change.new_title, 'Safari Website Template')
+        self.assertTrue(change.old_title)
+        self.assertEqual(change.verdict[0], 'inasubiri')
+
+        with mock.patch('apps.seo.gsc.query', side_effect=self._gsc):
+            seo.measure(self.now + timedelta(days=7))           # mapema: "kabla" tu
+        change.refresh_from_db()
+        self.assertEqual(change.before['clicks'], 3)
+        self.assertEqual(change.after, {})
+
+        with mock.patch('apps.seo.gsc.query', side_effect=self._gsc):
+            seo.measure(self.now + timedelta(days=40))
+        change.refresh_from_db()
+        self.assertEqual(change.after['clicks'], 24)
+        self.assertEqual(change.verdict[0], 'imeboreka')
+
+        self.client.force_login(User.objects.create_user('boss2', 'b2@example.com', 'p', is_staff=True))
+        r = self.client.get('/manage/seo/')
+        self.assertContains(r, 'Matokeo ya mabadiliko')
+        self.assertContains(r, 'Imeboreka')
+
+
+class GracePostTest(Base):
+    def test_post_rotates_angles_avoids_repeats_and_has_whatsapp(self):
+        Kazi.objects.create(worker='grace', key='grace:post:old', channel='social', status=Kazi.SENT,
+                            title='Post', draft='Je, wateja wanakupata Google?\nMaelezo…')
+        with mock.patch('apps.wafanyakazi.ai.write', return_value='Post mpya') as w:
+            grace._caption('JamiiBot inajibu wateja WhatsApp.', 'https://www.jamiitek.com/bot/', day=0)
+            first = w.call_args.args[1]
+            grace._caption('JamiiBot inajibu wateja WhatsApp.', 'https://www.jamiitek.com/bot/', day=1)
+            second = w.call_args.args[1]
+        self.assertIn('TATIZO', first)
+        self.assertIn('MATOKEO', second)
+        self.assertIn('Je, wateja wanakupata Google?', first)   # isirudie mwanzo wa karibuni
+        self.assertIn('wa.me/255629712678', first)
+        self.assertIn('LinkedIn', first)
+        with mock.patch('apps.wafanyakazi.ai.write', return_value=''):
+            fallback = grace._caption('Huduma za JamiiTek.', 'https://www.jamiitek.com/service/')
+        self.assertIn('wa.me/255629712678', fallback)

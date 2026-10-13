@@ -81,17 +81,50 @@ def _service(day):
     return f'service:{slug}:{day}', label, facts, site(path)
 
 
-def _caption(facts, link):
+WHATSAPP = 'https://wa.me/255629712678'
+
+# Pembe ya post inazunguka kila siku ili ujumbe usijirudie: kila pembe ni
+# sababu tofauti ya mteja kuchukua hatua leo.
+ANGLES = (
+    ('tatizo', 'Anza na TATIZO halisi la mfanyabiashara wa Tanzania (mfano: wateja wanakutafuta '
+               'Google hawakupati, unajibu WhatsApp usiku kucha), kisha onyesha jinsi hiki kinavyolitatua.'),
+    ('faida', 'Anza na MATOKEO ambayo mteja atapata (wateja zaidi, muda unaookolewa, kuaminika zaidi) — '
+              'si orodha ya vipengele.'),
+    ('swali', 'Anza kwa SWALI fupi linalomgusa msomaji moja kwa moja, kisha jibu kwa sentensi 2–3.'),
+    ('hatua', 'Onyesha jinsi ilivyo RAHISI kuanza: hatua 3 fupi zenye namba (1️⃣ 2️⃣ 3️⃣).'),
+    ('dhana', 'Anza kwa kuvunja DHANA potofu inayozuia watu (mfano: "website ni ghali", '
+              '"chatbot ni kwa makampuni makubwa tu") — bila kubuni bei.'),
+)
+
+
+def _recent_openers(limit=6):
+    """Mistari ya kwanza ya post za karibuni — Grace asirudie mwanzo uleule."""
+    drafts = (Kazi.objects.filter(worker=SLUG, channel='social').exclude(draft='')
+              .order_by('-created_at').values_list('draft', flat=True)[:limit])
+    return [d.strip().splitlines()[0][:90] for d in drafts if d.strip()]
+
+
+def _caption(facts, link, day=0):
     who = member(SLUG)
+    angle, how = ANGLES[day % len(ANGLES)]
+    recent = _recent_openers()
+    avoid = ('\nPost za karibuni zilianza hivi — USIRUDIE mwanzo wala muundo huu:\n'
+             + '\n'.join(f'- {r}' for r in recent)) if recent else ''
     text = ai.write(
         ai.persona(who['name'], who['role']),
-        f"{facts}\n\nAndika post moja ya mitandao ya kijamii (Facebook/Instagram/WhatsApp Status) "
-        "kwa Kiswahili: mstari wa kwanza wa kuvutia, sentensi 2-3 za faida kwa msomaji, wito wa "
-        "kuchukua hatua, kisha hashtags 4-6 (mfano #JamiiTek #Tanzania). Emoji chache. "
-        "Usiweke link — itaongezwa.",
-        max_tokens=320, temperature=0.8)
+        f"UKWELI (tumia huu tu — usibuni bei, takwimu wala ahadi):\n{facts}\n\n"
+        f"Andika post ya leo kwa Kiswahili. Pembe: {how}{avoid}\n\n"
+        "Muundo:\n"
+        "• Facebook/Instagram/WhatsApp Status: mstari wa kwanza wenye nguvu; sentensi 2–4 fupi; "
+        "ikiwezekana orodha fupi ya ✅ ya mambo 2–3; wito wa kuchukua hatua unaotaja WhatsApp "
+        f"({WHATSAPP}); hashtags 4–6 (mfano #JamiiTek #Tanzania #Biashara). Emoji chache.\n"
+        "• Kisha mstari wenye '———' peke yake, halafu 'LinkedIn:' na toleo fupi la kitaalamu "
+        "(sentensi 2–3, bila emoji nyingi, hashtags 2–3).\n"
+        "Usiweke link ya ukurasa — itaongezwa.",
+        max_tokens=480, temperature=0.8)
     if not text:
-        text = f"{facts}\n\n👉 Jifunze zaidi na uanze leo.\n\n#JamiiTek #Tanzania #Biashara #Teknolojia"
+        text = (f"{facts}\n\n💬 Tuandikie WhatsApp leo: {WHATSAPP}\n\n"
+                "#JamiiTek #Tanzania #Biashara #Teknolojia")
     return f"{text}\n\n🔗 {link}"
 
 
@@ -130,6 +163,6 @@ def _post(now):
         return {'post': 'hakuna chanzo', 'expired': expired}
 
     ref, label, facts, link = pick
-    found(SLUG, key, f'Post ya leo: {label}', draft=lambda: _caption(facts, link),
+    found(SLUG, key, f'Post ya leo: {label}', draft=lambda: _caption(facts, link, day),
           ref=ref, priority=2, detail=facts[:600], link=link, channel='social')
     return {'post': label, 'expired': expired}
