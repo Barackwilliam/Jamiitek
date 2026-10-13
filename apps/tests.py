@@ -792,3 +792,57 @@ class StaffTwoFactorDoubleSubmitTest(TestCase):
         self.assertEqual(r2['Location'], '/manage/')
         self.assertIn('_auth_user_id', self.client.session)
         self.assertEqual(self.client.get('/manage/').status_code, 200)
+
+
+class RobotsCrawlBudgetTest(TestCase):
+    """Kurasa za kazi zimezuiwa, lakini hakuna URL ya sitemap iliyozuiwa kimakosa."""
+
+    @staticmethod
+    def _allowed(robots, path, agent='*'):
+        # Kanuni za Google: kundi la user-agent, '*' na '$', sheria ndefu zaidi inashinda,
+        # Allow inashinda ikilingana kwa urefu.
+        import re as _re
+        groups, current, rules = {}, [], []
+        for line in robots.splitlines():
+            line = line.split('#', 1)[0].strip()
+            if not line or ':' not in line:
+                continue
+            key, value = [x.strip() for x in line.split(':', 1)]
+            if key.lower() == 'user-agent':
+                if rules:
+                    current, rules = [], []
+                current.append(value)
+                rules = groups.setdefault(tuple(current), rules)
+                for a in current:
+                    groups[a] = rules
+            elif key.lower() in ('allow', 'disallow') and value:
+                rules.append((key.lower() == 'allow', value))
+        best = None
+        for allow, pattern in groups.get(agent, []):
+            rx = '^' + _re.escape(pattern).replace(r'\*', '.*').replace(r'\$', '$')
+            if _re.match(rx, path) and (best is None or len(pattern) > best[1]
+                                        or (len(pattern) == best[1] and allow)):
+                best = (allow, len(pattern))
+        return True if best is None else best[0]
+
+    def test_work_pages_blocked_but_sitemap_urls_allowed(self):
+        import re as _re
+        from apps.models import BlogPost, WebsiteTemplate
+        WebsiteTemplate.objects.create(name='Wild Heritage', category='Tourism', description='x', preview_html='<p>x</p>')
+        BlogPost.objects.create(title='Bei ya website', slug='bei-ya-website', excerpt='x', body='<p>x</p>',
+                                status='published')
+        robots = self.client.get('/robots.txt').content.decode()
+        for path in ('/proposals/form/10/?template=22', '/proposals/?template=21', '/proposals/form/9/',
+                     '/builder/', '/builder/templates/21/use/', '/builder/signup/?next=/builder/templates/21/use/',
+                     '/sw.js?ping=123'):
+            self.assertFalse(self._allowed(robots, path), path)
+            self.assertFalse(self._allowed(robots, path, 'GPTBot'), path)
+        for path in ('/proposals/', '/builder/ai/', '/templates/wild-heritage/', '/blog/bei-ya-website/'):
+            self.assertTrue(self._allowed(robots, path), path)
+
+        xml = self.client.get('/sitemap.xml').content.decode()
+        urls = _re.findall(r'<loc>(.*?)</loc>', xml)
+        self.assertTrue(urls)
+        for url in urls:
+            path = _re.sub(r'^https?://[^/]+', '', url)
+            self.assertTrue(self._allowed(robots, path), f'sitemap inaorodhesha URL iliyozuiwa: {url}')

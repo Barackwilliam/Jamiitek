@@ -45,6 +45,8 @@
   .pill{display:inline-block;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid var(--border);white-space:nowrap}
   .pill.blue{color:#93c5fd;border-color:rgba(59,130,246,.35);background:rgba(59,130,246,.1)}
   .pill.amber{color:var(--warn);border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.08)}
+  .pill.green{color:var(--ok);border-color:rgba(16,217,138,.3);background:rgba(16,217,138,.08)}
+  .pill.red{color:var(--bad);border-color:rgba(255,90,110,.3);background:rgba(255,90,110,.08)}
   .sx-two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   @media(max-width:900px){.sx-two{grid-template-columns:1fr}}
   .sx-mv{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:7px 0;border-bottom:1px solid var(--border)}
@@ -124,6 +126,7 @@
       {% for o in r.opportunities %}
       <tr>
         <td><a class="sx-page" href="{{ o.page }}" target="_blank" rel="noopener">{{ o.path|default:o.page }}</a>
+          {% if o.type == 'habari' %} <span class="pill" title="Makala ya habari — wasomaji wake mara nyingi si wateja, kwa hiyo iko nyuma ya kurasa za huduma">Habari</span>{% endif %}
           <div class="sx-q">{% for q in o.queries|slice:":4" %}<span>{{ q.query }} <i>· {{ q.impressions }} imp · {{ q.clicks }} clk · #{{ q.position }}</i></span>{% endfor %}</div></td>
         <td class="num">~{{ o.missed|floatformat:0 }}</td>
         <td>{% if o.status == 'mezani' %}<span class="pill blue">Rasimu mezani</span>{% elif o.status == 'inasubiri' %}<span class="pill amber">Inasubiri Google</span>{% else %}<span class="pill">Wiki ijayo</span>{% endif %}</td>
@@ -162,8 +165,22 @@
 
   {% if applied %}
   <div class="sx-card">
-    <h2><i class="fas fa-check-double up"></i> Mabadiliko yaliyofanyika <small>Google inahitaji wiki 2–4 kuonyesha matokeo</small></h2>
-    {% for k in applied %}<div class="sx-mv"><span>{{ k.title }}</span><small class="flat">{{ k.closed_at|date:"j M" }}</small></div>{% endfor %}
+    <h2><i class="fas fa-scale-balanced up"></i> Matokeo ya mabadiliko <small>siku 28 kabla dhidi ya siku 28 baada · yanapimwa siku 31 baada ya kukubali</small></h2>
+    <div class="sx-scroll"><table class="sx-t sx-res">
+      <thead><tr><th>Ukurasa na kichwa kipya</th><th class="num">Kabla</th><th class="num">Baada</th><th>Matokeo</th></tr></thead>
+      <tbody>
+      {% for c in applied %}
+      <tr>
+        <td><a class="sx-page" href="{{ c.page }}" target="_blank" rel="noopener">{{ c.page|cut:"https://www.jamiitek.com"|cut:"https://jamiitek.com"|default:"/" }}</a>
+          <div class="sx-empty" style="margin-top:4px">{{ c.new_title }}{% if c.old_title %} <s style="opacity:.6">{{ c.old_title }}</s>{% endif %} · {{ c.applied_at|date:"j M Y" }}</div></td>
+        <td class="num">{% if c.before %}{{ c.before.clicks }} clk · {{ c.b_ctr }}% · #{{ c.before.position }}{% else %}—{% endif %}</td>
+        <td class="num">{% if c.after %}{{ c.after.clicks }} clk · {{ c.a_ctr }}% · #{{ c.after.position }}{% else %}—{% endif %}</td>
+        <td><span class="pill {% if c.state == 'imeboreka' %}green{% elif c.state == 'imeshuka' %}red{% elif c.state == 'inasubiri' %}amber{% endif %}" title="{{ c.note }}">{% if c.state == 'imeboreka' %}▲ Imeboreka{% elif c.state == 'imeshuka' %}▼ Imeshuka{% elif c.state == 'inasubiri' %}Inapimwa{% elif c.state == 'data-ndogo' %}Data ndogo{% else %}Sawa{% endif %}</span>
+          {% if c.state == 'imeshuka' %}<div class="sx-empty" style="margin-top:4px;font-size:11.5px">{{ c.note }}</div>{% endif %}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
   </div>
   {% endif %}
 </div>

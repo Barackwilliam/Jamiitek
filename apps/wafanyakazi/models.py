@@ -175,3 +175,47 @@ class SeoRipoti(models.Model):
 
     def __str__(self):
         return f'SEO {self.week}'
+
+
+class SeoBadiliko(models.Model):
+    """
+    Kichwa/maelezo ya SEO yaliyokubaliwa — na matokeo yake. Grace anapima
+    ukurasa huo siku 28 KABLA na siku 28 BAADA ya badiliko (Search Console),
+    ili ujue kama mapendekezo yake yanasaidia au yanaharibu.
+    """
+
+    kazi = models.OneToOneField(Kazi, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name='seo_badiliko')
+    page = models.CharField(max_length=500, help_text='URL kamili kama Search Console inavyoiona')
+    old_title = models.CharField(max_length=200, blank=True)
+    old_description = models.CharField(max_length=300, blank=True)
+    new_title = models.CharField(max_length=200, blank=True)
+    new_description = models.CharField(max_length=300, blank=True)
+    applied_at = models.DateTimeField()
+    before = models.JSONField(default=dict, blank=True)
+    after = models.JSONField(default=dict, blank=True)
+    checked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-applied_at']
+        verbose_name = 'Badiliko la SEO'
+        verbose_name_plural = 'Mabadiliko ya SEO'
+
+    def __str__(self):
+        return f'{self.page} ({self.applied_at:%d/%m/%Y})'
+
+    @property
+    def verdict(self):
+        """('imeboreka'|'imeshuka'|'sawa'|'data-ndogo'|'inasubiri', maelezo)."""
+        if not self.after:
+            return 'inasubiri', 'Inapimwa siku 31 baada ya badiliko'
+        b, a = self.before or {}, self.after
+        if b.get('impressions', 0) < 20 and a.get('impressions', 0) < 20:
+            return 'data-ndogo', 'Impressions chache mno kuamua'
+        b_ctr, a_ctr = b.get('ctr', 0), a.get('ctr', 0)
+        b_clk, a_clk = b.get('clicks', 0), a.get('clicks', 0)
+        if a_clk > b_clk and a_ctr >= b_ctr:
+            return 'imeboreka', 'Clicks na CTR zimepanda'
+        if a_clk < b_clk * 0.8 and a_ctr < b_ctr:
+            return 'imeshuka', 'Clicks na CTR zimeshuka — fikiria kurudisha kichwa cha zamani'
+        return 'sawa', 'Hakuna tofauti kubwa'

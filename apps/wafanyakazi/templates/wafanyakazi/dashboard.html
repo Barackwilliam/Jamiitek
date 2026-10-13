@@ -306,6 +306,7 @@
             {% elif k.channel == 'whatsapp' %}Nimeandaa ujumbe wa WhatsApp — ukikubali, naupeleka.
             {% elif k.channel == 'faq' %}JamiiBot haikujua jibu. Nimeandaa jibu — ukikubali, bot itajifunza.
             {% elif k.channel == 'social' %}Post ya leo iko tayari — inakili, ichapishe, kisha nijulishe.
+            {% elif k.channel == 'seo' and k.ref|slice:":8" == "tpldesc:" %}Nimeandika maelezo ya kipekee ya template hii ili Google isiuone ukurasa wake kama nakala. Ukikubali, yanaingia kwenye ukurasa papo hapo.
             {% elif k.channel == 'seo' %}{% if k.ref|slice:":5" == "page:" %}Ukurasa huu unapoteza mibofyo Google — nimeandaa kichwa na maelezo mapya ya kuweka kwenye code yake.{% else %}Ukurasa huu unapoteza mibofyo Google — nimeandaa kichwa na maelezo mapya. Ukikubali, nayaweka papo hapo.{% endif %}
             {% else %}Nimeona hili — linahitaji jicho lako.{% endif %}</div>
           {% endif %}

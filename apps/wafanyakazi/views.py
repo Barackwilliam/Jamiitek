@@ -170,7 +170,12 @@ def seo_report(request):
         change['ctr']['pts'] = round(change['ctr']['diff'] * 100, 1)
     pending = (Kazi.objects.filter(channel='seo', status__in=Kazi.LIVE)
                .order_by('priority', '-created_at'))
-    applied = (Kazi.objects.filter(channel='seo', status=Kazi.DONE).order_by('-closed_at')[:8])
+    from .models import SeoBadiliko
+    applied = list(SeoBadiliko.objects.all()[:12])
+    for change in applied:
+        change.state, change.note = change.verdict
+        change.b_ctr = round((change.before or {}).get('ctr', 0) * 100, 1)
+        change.a_ctr = round((change.after or {}).get('ctr', 0) * 100, 1)
     return render(request, 'wafanyakazi/seo.html', {
         'nav': 'seo', 'title': 'SEO — Google Search Console',
         'configured': gsc.is_configured(), 'site_url': gsc.site_url(),

@@ -111,14 +111,18 @@ def _token():
     return data['access_token']
 
 
-def query(start, end, dimensions=('query', 'page'), row_limit=5000):
+def query(start, end, dimensions=('query', 'page'), row_limit=5000, page=None):
     """
     Safu za Search Analytics kati ya tarehe `start` na `end` (date).
     Kila safu: {'keys': [...], 'clicks', 'impressions', 'ctr', 'position'}.
+    `page` — URL kamili: data ya ukurasa huo mmoja tu (kupima mabadiliko).
     """
     url = API.format(site=quote(site_url(), safe=''))
     body = {'startDate': start.isoformat(), 'endDate': end.isoformat(),
             'dimensions': list(dimensions), 'rowLimit': row_limit, 'dataState': 'final'}
+    if page:
+        body['dimensionFilterGroups'] = [{'filters': [
+            {'dimension': 'page', 'operator': 'equals', 'expression': page}]}]
     try:
         r = requests.post(url, json=body, timeout=30,
                           headers={'Authorization': f'Bearer {_token()}'})
