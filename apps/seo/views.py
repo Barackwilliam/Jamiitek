@@ -31,6 +31,21 @@ def robots_txt(request):
         "Disallow: /api/",
         "Disallow: /cron/",
         "",
+        # Kurasa za KAZI (fomu za proposal, Builder, ping ya service worker):
+        # hazina thamani ya SEO, lakini links za "Write a proposal" na
+        # "Customize in Builder" kwenye kila template zilizalisha mamia ya
+        # URL (?template=21, /proposals/form/10/?template=22, /builder/templates/21/use/…).
+        # Google ilikuwa ikizisoma badala ya makala na templates halisi —
+        # Search Console: "Alternate page with canonical", "noindex",
+        # "Crawled – not indexed". /proposals/ yenyewe (bila ?template=)
+        # na /builder/ai/ (ziko kwenye sitemap) zinabaki wazi.
+        "# Work pages (forms, builder app) — no search value, save crawl budget",
+        "Disallow: /proposals/form/",
+        "Disallow: /*?template=",
+        "Disallow: /builder/",
+        "Allow: /builder/ai/",
+        "Disallow: /sw.js",
+        "",
         "# Allow important public pages",
         "Allow: /chatbot/register/",
         "Allow: /chatbot/login/",
@@ -55,6 +70,11 @@ def robots_txt(request):
         "Disallow: /manage/",
         "Disallow: /api/",
         "Disallow: /chatbot/dashboard/",
+        "Disallow: /proposals/form/",
+        "Disallow: /*?template=",
+        "Disallow: /builder/",
+        "Allow: /builder/ai/",
+        "Disallow: /sw.js",
         "",
         # Crawl-delay imeondolewa: Bing inaiheshimu na ingechelewesha
         # indexing ya habari mpya (makala ~10 kwa siku). Google inaipuuza.
