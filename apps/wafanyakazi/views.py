@@ -163,7 +163,10 @@ def seo_report(request):
         for k in ('clicks', 'impressions', 'ctr', 'position'):
             now_v, old_v = latest.totals.get(k, 0), latest.previous.get(k, 0)
             change[k] = {'diff': round(now_v - old_v, 4 if k == 'ctr' else 1),
-                         'pct': round((now_v - old_v) / old_v * 100) if old_v else None}
+                         # asilimia ya 0→1056 (+105500%) haina maana — inaonyeshwa tu
+                         # kipindi kilichopita kikiwa na data ya kutosha
+                         'pct': (round((now_v - old_v) / old_v * 100)
+                                 if k in ('clicks', 'impressions') and old_v >= 20 else None)}
         change['ctr']['pts'] = round(change['ctr']['diff'] * 100, 1)
     pending = (Kazi.objects.filter(channel='seo', status__in=Kazi.LIVE)
                .order_by('priority', '-created_at'))

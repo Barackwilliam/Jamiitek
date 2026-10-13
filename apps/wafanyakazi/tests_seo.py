@@ -120,10 +120,23 @@ class AuditTest(Base):
             row('web developer dar es salaam', f'{base}/service/', 250, 0, 12.0),
         ]
 
+    def _gsc(self, start, end, dimensions=('query', 'page'), **kw):
+        """Search Console bandia: jibu kulingana na dimensions za ombi."""
+        current = end >= self.now.date() - timedelta(days=seo.LAG_DAYS)
+        if dimensions == ('date',):
+            # Jumla halisi ni kubwa kuliko safu za query (maneno yaliyofichwa)
+            return [{'keys': ['2026-10-01'], 'clicks': 40 if current else 25, 'impressions': 2000 if current else 1600,
+                     'ctr': 0.02, 'position': 9.0}]
+        if dimensions == ('page',):
+            base = 'https://www.jamiitek.com'
+            return ([{'keys': [f'{base}/'], 'clicks': 30 if current else 18, 'impressions': 900, 'ctr': 0, 'position': 3},
+                     {'keys': [f'{base}/service/'], 'clicks': 2 if current else 7, 'impressions': 250, 'ctr': 0, 'position': 12}])
+        return self.rows if current else []
+
     def _audit(self, now=None, prev=None):
         page = mock.Mock(status_code=200, text='<title>Services | JamiiTek</title>'
                          '<meta name="description" content="Websites and apps."><p>We build.</p>')
-        with mock.patch('apps.seo.gsc.query', side_effect=[self.rows, prev or []]) as q, \
+        with mock.patch('apps.seo.gsc.query', side_effect=self._gsc) as q, \
                 mock.patch('apps.wafanyakazi.seo.requests.get', return_value=page):
             result = seo.audit(now or self.now)
         return result, q
@@ -150,7 +163,13 @@ class AuditTest(Base):
         self.assertIn('haionekani kwenye kichwa, maelezo, maandishi', page_kazi.detail)
 
         report = SeoRipoti.objects.get()
-        self.assertEqual(report.totals['impressions'], 1150)
+        # Jumla zinatoka kwa tarehe — si kwa query×page (Google huficha maneno adimu)
+        self.assertEqual(report.totals['clicks'], 40)
+        self.assertEqual(report.totals['impressions'], 2000)
+        self.assertEqual(report.previous['clicks'], 25)
+        self.assertEqual(report.movers['up'][0]['page'], 'https://www.jamiitek.com/')
+        self.assertEqual(report.movers['up'][0]['change'], 12)
+        self.assertEqual(report.movers['down'][0]['change'], -5)
         self.assertEqual(len(report.opportunities), 3)
 
         # Wiki hiyo hiyo: hakuna ukaguzi wa pili

@@ -289,17 +289,23 @@ def audit(now, force=False):
     prev_end, prev_start = start - timedelta(days=1), start - timedelta(days=DAYS)
     report, _ = SeoRipoti.objects.update_or_create(week=week, defaults={'start': start, 'end': end})
     Alama.put('seo:week', week)
+    # Google inaficha maneno yanayotafutwa na watu wachache (faragha), kwa hiyo
+    # safu za query×page hazijumlishi clicks zote. Jumla zinatoka kwa tarehe
+    # (hazifichwi) na kurasa zinazopanda/kushuka kwa ukurasa peke yake.
     try:
         rows = gsc.query(start, end)
-        prev = gsc.query(prev_start, prev_end)
+        days_now = gsc.query(start, end, dimensions=('date',))
+        days_prev = gsc.query(prev_start, prev_end, dimensions=('date',))
+        pages_now = gsc.query(start, end, dimensions=('page',))
+        pages_prev = gsc.query(prev_start, prev_end, dimensions=('page',))
     except gsc.GSCError as exc:
         report.error = str(exc)[:400]
         report.save(update_fields=['error'])
         return {'seo': f'kosa: {exc}'}
 
     found_pages = opportunities(rows)
-    report.totals, report.previous = _totals(rows), _totals(prev)
-    report.movers, report.top_queries = movers(rows, prev), top_queries(rows)
+    report.totals, report.previous = _totals(days_now), _totals(days_prev)
+    report.movers, report.top_queries = movers(pages_now, pages_prev), top_queries(rows)
     report.error = ''
 
     created = 0
