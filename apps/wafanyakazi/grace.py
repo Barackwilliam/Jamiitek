@@ -129,9 +129,13 @@ def _caption(facts, link, day=0):
 
 
 def run(now):
-    from . import seo
+    from . import maelezo, seo
     result = _post(now)
     result.update(seo.run(now))      # ukaguzi wa SEO wa kila wiki (Search Console)
+    try:
+        result.update(maelezo.run(now))   # maelezo ya kipekee ya templates (rasimu 2 kwa siku)
+    except Exception as exc:
+        result['maelezo'] = f'kosa: {type(exc).__name__}'
     return result
 
 

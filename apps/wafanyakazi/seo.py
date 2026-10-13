@@ -462,6 +462,18 @@ def apply(kazi):
 
     from .models import SeoBadiliko
 
+    if kazi.ref.startswith('tpldesc:'):
+        tpl = WebsiteTemplate.objects.filter(pk=kazi.ref.split(':', 1)[1]).first()
+        if not tpl:
+            raise ValueError('template hiyo haipo tena')
+        text = (kazi.draft or '').strip()
+        if len(text) < 120:
+            raise ValueError('Maelezo ni mafupi mno.')
+        tpl.long_description = text
+        tpl.save()
+        ping([tpl.get_absolute_url()])
+        return f'Maelezo ya kipekee yameongezwa kwenye ukurasa wa {tpl.name}.'
+
     title, desc = parse_draft(kazi.draft)
     if not title and not desc:
         raise ValueError('Rasimu haina "Title:" wala "Description:".')

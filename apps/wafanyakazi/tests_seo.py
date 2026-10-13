@@ -340,3 +340,77 @@ class GracePostTest(Base):
         with mock.patch('apps.wafanyakazi.ai.write', return_value=''):
             fallback = grace._caption('Huduma za JamiiTek.', 'https://www.jamiitek.com/service/')
         self.assertIn('wa.me/255629712678', fallback)
+
+
+class TemplateDescriptionTest(Base):
+    """Grace anaandika maelezo ya kipekee ya templates (long_description) — rasimu 2 kwa siku."""
+
+    def setUp(self):
+        super().setUp()
+        p = mock.patch('apps.indexnow.ping')
+        self.pinged = p.start()
+        self.addCleanup(p.stop)
+        demo = ('<html><body><h1>Wild Heritage Expeditions</h1><h2>Serengeti Migration Safaris</h2>'
+                '<h2>Kilimanjaro Treks</h2><p>Small-group safaris with expert guides.</p>'
+                '<script>var x=1</script></body></html>')
+        self.tpls = [WebsiteTemplate.objects.create(name=f'Wild Heritage {i}', category='Tourism',
+                                                    description='Safari company website.', preview_html=demo)
+                     for i in range(3)]
+        self.done = WebsiteTemplate.objects.create(name='Done', category='Tourism', description='x',
+                                                   preview_html='<p>x</p>', long_description='x' * 400)
+        self.text = ('Wild Heritage Expeditions is a safari website template built around Serengeti '
+                     'Migration Safaris and Kilimanjaro Treks, with a bold hero and small-group tours.\n\n'
+                     'Each section is ready for a tour operator to list itineraries, guides and departure '
+                     'dates, so travellers can plan a safari and contact you directly from any phone.')
+
+    def test_drafts_two_per_day_from_the_real_demo(self):
+        from . import maelezo
+        with mock.patch('apps.wafanyakazi.ai.write', return_value=self.text) as w:
+            result = maelezo.run(self.now)
+        self.assertEqual(result['maelezo'], 'rasimu mpya 2')
+        prompt = w.call_args.args[1]
+        self.assertIn('Serengeti Migration Safaris', prompt)        # vichwa vya demo
+        self.assertNotIn('var x=1', prompt)                          # script haisomwi
+        self.assertIn('Usibuni bei', prompt)
+        drafts = Kazi.objects.filter(ref__startswith='tpldesc:')
+        self.assertEqual(drafts.count(), 2)
+        self.assertFalse(drafts.filter(ref=f'tpldesc:{self.done.pk}').exists())   # tayari ina maelezo
+        self.assertEqual(drafts.first().status, Kazi.AWAITING)
+
+        with mock.patch('apps.wafanyakazi.ai.write', return_value=self.text):
+            self.assertEqual(maelezo.run(self.now)['maelezo'], 'rasimu mpya 0')    # siku hiyo hiyo
+
+    def test_no_ai_no_generic_draft(self):
+        from . import maelezo
+        with mock.patch('apps.wafanyakazi.ai.write', return_value=''):
+            self.assertEqual(maelezo.run(self.now)['maelezo'], 'rasimu mpya 0')
+        self.assertFalse(Kazi.objects.filter(ref__startswith='tpldesc:').exists())
+
+    def test_approving_puts_text_on_the_template_page(self):
+        from . import maelezo
+        with mock.patch('apps.wafanyakazi.ai.write', return_value=self.text):
+            maelezo.run(self.now)
+        kazi = Kazi.objects.filter(ref__startswith='tpldesc:').first()
+        ok, msg = actions.approve(kazi.pk)
+        self.assertTrue(ok, msg)
+        tpl = WebsiteTemplate.objects.get(pk=kazi.ref.split(':')[1])
+        self.assertEqual(tpl.long_description, self.text)
+        self.pinged.assert_called()
+        self.assertContains(self.client.get(tpl.get_absolute_url()), 'Kilimanjaro Treks, with a bold hero')
+
+        # Iliyokataliwa hairudi
+        other = Kazi.objects.filter(ref__startswith='tpldesc:').exclude(pk=kazi.pk).first()
+        actions.dismiss(other.pk)
+        later = self.now + timedelta(days=1)
+        with mock.patch('apps.wafanyakazi.ai.write', return_value=self.text):
+            maelezo.run(later)
+        self.assertEqual(Kazi.objects.filter(ref=other.ref).count(), 1)
+
+    def test_desk_explains_the_draft(self):
+        from . import maelezo
+        with mock.patch('apps.wafanyakazi.ai.write', return_value=self.text):
+            maelezo.run(self.now)
+        self.client.force_login(User.objects.create_user('boss', 'b@example.com', 'p', is_staff=True))
+        r = self.client.get('/manage/wafanyakazi/?w=grace')
+        self.assertContains(r, 'Maelezo ya kipekee: Wild Heritage')
+        self.assertContains(r, 'Google isiuone ukurasa wake kama nakala')
