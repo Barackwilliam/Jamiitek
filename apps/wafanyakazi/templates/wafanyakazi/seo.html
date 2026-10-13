@@ -137,12 +137,12 @@
   <div class="sx-two">
     <div class="sx-card">
       <h2><i class="fas fa-arrow-trend-up up"></i> Kurasa zinazopanda</h2>
-      {% for m in r.movers.up %}<div class="sx-mv"><a href="{{ m.page }}" target="_blank" rel="noopener" class="sx-page">{{ m.page|cut:"https://www.jamiitek.com"|cut:"https://jamiitek.com" }}</a><b class="up">+{{ m.change }}</b></div>
+      {% for m in r.movers.up %}<div class="sx-mv"><a href="{{ m.page }}" target="_blank" rel="noopener" class="sx-page">{% with p=m.page|cut:"https://www.jamiitek.com"|cut:"https://jamiitek.com" %}{% if p == "/" or not p %}Ukurasa wa mwanzo (/){% else %}{{ p }}{% endif %}{% endwith %}</a><b class="up">+{{ m.change }}</b></div>
       {% empty %}<p class="sx-empty">Hakuna bado.</p>{% endfor %}
     </div>
     <div class="sx-card">
       <h2><i class="fas fa-arrow-trend-down down"></i> Kurasa zinazoshuka</h2>
-      {% for m in r.movers.down %}<div class="sx-mv"><a href="{{ m.page }}" target="_blank" rel="noopener" class="sx-page">{{ m.page|cut:"https://www.jamiitek.com"|cut:"https://jamiitek.com" }}</a><b class="down">{{ m.change }}</b></div>
+      {% for m in r.movers.down %}<div class="sx-mv"><a href="{{ m.page }}" target="_blank" rel="noopener" class="sx-page">{% with p=m.page|cut:"https://www.jamiitek.com"|cut:"https://jamiitek.com" %}{% if p == "/" or not p %}Ukurasa wa mwanzo (/){% else %}{{ p }}{% endif %}{% endwith %}</a><b class="down">{{ m.change }}</b></div>
       {% empty %}<p class="sx-empty">Hakuna ukurasa ulioshuka. 👏</p>{% endfor %}
     </div>
   </div>

@@ -19,6 +19,8 @@ DATABASES = {
         'NAME': BASE_DIR / 'test_db.sqlite3',
     }
 }
-CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
+CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'},
+          # apps/public_cache.py — cache ya RAM ya kurasa za umma (kama settings.py)
+          'local': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache', 'LOCATION': 'jamiitek-public'}}
 EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
