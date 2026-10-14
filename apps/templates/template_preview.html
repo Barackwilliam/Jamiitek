@@ -1,748 +1,576 @@
-{% load jt_contact %}
+{% load jt_contact humanize %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Preview: {{ template.name }} — JamiiTek</title>
-<meta name="theme-color" content="#07070f">
+<meta name="theme-color" content="#05060c">
 <meta property="og:title" content="{{ template.name }} — JamiiTek Templates">
 <meta property="og:description" content="Tazama template ya {{ template.name }} kutoka JamiiTek. Bei kuanzia TSh {{ template.price_hosted_monthly|floatformat:0 }}/mo.">
 <link rel="canonical" href="{{ canonical }}">
 <meta property="og:url" content="{{ canonical }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% if anatomy.font_url %}<link rel="stylesheet" href="{{ anatomy.font_url }}" media="print" onload="this.media='all'">{% endif %}
+{% comment %}
+Studio ya preview ya template — skrini nzima.
+  · Mwanga wa nyuma (aurora) unatumia rangi za template yenyewe (--t1/--t2).
+  · Kifaa (simu/tablet/laptop) kinaonyesha template kwa upana wake HALISI
+    (390 / 810 / 1280px) na kupunguzwa kwa transform kutoshea skrini.
+  · Paneli: sehemu za template (bonyeza → demo inaruka huko, au "Auto tour"),
+    na upande wa pili rangi, fonti, bei na vitufe vya kuchukua hatua.
+Demo inapakuliwa mara moja tu; kifaa kingine kinaipata kutoka cache ya browser.
+{% endcomment %}
 <style>
-/* ═══════════════════════ TOKENS ═══════════════════════ */
-:root {
-  --bar: 58px;
-  --strip: 52px;
-  --bg: #07070f;
-  --s1: #0e0e1c;
-  --s2: #14142a;
-  --s3: #1c1c36;
-  --s4: #242444;
-  --b1: rgba(255,255,255,0.055);
-  --b2: rgba(255,255,255,0.10);
-  --b3: rgba(255,255,255,0.16);
-  --accent: #7c6dfa;
-  --accent2: #fa6d9e;
-  --accentg: linear-gradient(135deg,#7c6dfa,#fa6d9e);
-  --green: #22d3a0;
-  --t1: #f4f4fa;
-  --t2: #8888b0;
-  --t3: #48486a;
-  --r: 14px;
-  --ri: 10px;
-  --trans: all .22s cubic-bezier(.4,0,.2,1);
-  --phone-w: 390px;
-  --phone-h: 844px;
-  --tablet-w: 810px;
-  --tablet-h: 1080px;
+:root{
+  --t1:{{ template.gradient_start }};--t2:{{ template.gradient_end }};
+  --bar:62px;--bg:#05060c;--s1:rgba(255,255,255,.04);--s2:rgba(255,255,255,.07);
+  --b1:rgba(255,255,255,.07);--b2:rgba(255,255,255,.12);
+  --ink:#f4f5fb;--mut:#8f97b2;--dim:#555d78;--g:#25d366;--c:#00d4ff;
+  --ease:cubic-bezier(.22,.9,.3,1);--spring:cubic-bezier(.34,1.4,.64,1);
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
-html,body{height:100%;overflow:hidden;font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--t1);-webkit-font-smoothing:antialiased}
+html,body{height:100%;overflow:hidden;font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit}
+svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 
-/* ═══════════════════════ TOPBAR ═══════════════════════ */
-.topbar{
-  position:fixed;top:0;left:0;right:0;height:var(--bar);z-index:900;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 16px 0 14px;gap:10px;
-  background:rgba(7,7,15,0.85);
-  backdrop-filter:blur(24px) saturate(160%);
-  -webkit-backdrop-filter:blur(24px) saturate(160%);
-  border-bottom:1px solid var(--b1);
-}
-/* glow line top */
-.topbar::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent 0%,rgba(124,109,250,0.5) 30%,rgba(250,109,158,0.5) 70%,transparent 100%);
-}
+/* ═════════ MANDHARI: aurora ya rangi za template ═════════ */
+.sky{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.sky i{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55;will-change:transform}
+.sky i:nth-child(1){width:60vmax;height:60vmax;left:-18vmax;top:-22vmax;background:var(--t1);animation:drift1 22s ease-in-out infinite alternate}
+.sky i:nth-child(2){width:50vmax;height:50vmax;right:-20vmax;bottom:-24vmax;background:var(--t2);animation:drift2 26s ease-in-out infinite alternate}
+.sky i:nth-child(3){width:34vmax;height:34vmax;left:40%;top:30%;background:#5b3cff;opacity:.18;animation:drift1 30s ease-in-out infinite alternate-reverse}
+@keyframes drift1{to{transform:translate(12vmax,8vmax) scale(1.15)}}
+@keyframes drift2{to{transform:translate(-10vmax,-6vmax) scale(1.1)}}
+.sky::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 0%,rgba(5,6,12,.55) 55%,rgba(5,6,12,.92) 100%)}
+.sky::after{content:"";position:absolute;inset:0;opacity:.5;
+  background:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px) 0 0/48px 48px,linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px) 0 0/48px 48px;
+  -webkit-mask:radial-gradient(ellipse at 50% 60%,#000 10%,transparent 70%);mask:radial-gradient(ellipse at 50% 60%,#000 10%,transparent 70%)}
 
-.brand{
-  font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;
-  letter-spacing:-0.5px;text-decoration:none;flex-shrink:0;
-  background:var(--accentg);-webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;background-clip:text;
-}
-.sep{width:1px;height:16px;background:var(--b2);flex-shrink:0}
-.tpl-meta{display:flex;align-items:center;gap:7px;overflow:hidden;flex:1;min-width:0}
-.tpl-name{
-  font-size:.82rem;font-weight:600;color:var(--t1);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;
-}
-.badge{
-  flex-shrink:0;font-size:.58rem;font-weight:700;letter-spacing:.4px;
-  padding:2px 9px;border-radius:20px;
-  background:rgba(124,109,250,.12);color:#a78bfa;
-  border:1px solid rgba(124,109,250,.22);white-space:nowrap;text-transform:uppercase;
-}
-.rating{flex-shrink:0;font-size:.68rem;font-weight:700;color:#fbbf24;white-space:nowrap}
+/* ═════════ TOPBAR ═════════ */
+.top{position:fixed;top:0;left:0;right:0;height:var(--bar);z-index:50;display:flex;align-items:center;gap:12px;padding:0 16px;
+  background:linear-gradient(180deg,rgba(5,6,12,.92),rgba(5,6,12,.6));backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);
+  border-bottom:1px solid var(--b1)}
+.back{width:38px;height:38px;flex-shrink:0;display:grid;place-items:center;border-radius:11px;border:1px solid var(--b1);background:var(--s1);color:var(--mut);transition:.2s}
+.back:hover{color:#fff;border-color:var(--b2)}
+.brand{font:800 1.08rem 'Syne',sans-serif;letter-spacing:-.4px;background:linear-gradient(135deg,#9d8bff,#ff7ab0);-webkit-background-clip:text;background-clip:text;color:transparent;flex-shrink:0}
+.who{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.who-dot{width:30px;height:30px;flex-shrink:0;border-radius:9px;background:linear-gradient(135deg,var(--t1),var(--t2));box-shadow:0 0 18px color-mix(in srgb,var(--t1) 60%,transparent)}
+.who b{display:block;font-size:.86rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who small{display:block;font-size:.68rem;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.live{display:inline-flex;align-items:center;gap:6px;color:#7ef0b4;font-weight:700}
+.live::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--g);box-shadow:0 0 0 3px rgba(37,211,102,.22);animation:pulse 2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(37,211,102,0)}}
 
-/* device switcher */
-.dsw{
-  display:flex;align-items:center;gap:2px;
-  background:var(--s1);border:1px solid var(--b1);
-  border-radius:10px;padding:3px;flex-shrink:0;
-}
-.dbtn{
-  background:none;border:none;cursor:pointer;
-  padding:5px 9px;border-radius:7px;
-  color:var(--t3);transition:var(--trans);
-  display:flex;align-items:center;gap:5px;
-  font-size:.7rem;font-weight:600;white-space:nowrap;
-}
-.dbtn svg{width:15px;height:15px;fill:currentColor;flex-shrink:0;display:block}
-.dbtn:hover{color:var(--t2);background:var(--s3)}
-.dbtn.on{background:var(--accent);color:#fff;box-shadow:0 2px 12px rgba(124,109,250,.4)}
-.dlbl{display:none}
-@media(min-width:600px){.dlbl{display:inline}}
+.seg{position:relative;display:flex;padding:4px;border-radius:13px;background:rgba(255,255,255,.05);border:1px solid var(--b1);flex-shrink:0}
+.seg-pill{position:absolute;top:4px;bottom:4px;left:4px;border-radius:9px;background:#fff;box-shadow:0 6px 20px rgba(0,0,0,.35);transition:transform .45s var(--spring),width .45s var(--spring)}
+.seg button{position:relative;z-index:1;display:flex;align-items:center;gap:7px;height:34px;padding:0 13px;border:0;border-radius:9px;background:none;color:var(--mut);
+  font-size:.76rem;font-weight:700;cursor:pointer;transition:color .3s}
+.seg button.on{color:#06070d}
+.seg button:not(.on):hover{color:#fff}
 
-/* bar actions */
-.bacts{display:flex;align-items:center;gap:6px;flex-shrink:0}
-.abtn{
-  border:none;cursor:pointer;text-decoration:none;
-  font-size:.7rem;font-weight:600;
-  padding:6px 12px;border-radius:8px;
-  display:inline-flex;align-items:center;gap:5px;
-  transition:var(--trans);white-space:nowrap;font-family:inherit;
-}
-.abtn svg{width:13px;height:13px;fill:currentColor;flex-shrink:0}
-.a-ghost{background:var(--s1);color:var(--t2);border:1px solid var(--b1)}
-.a-ghost:hover{background:var(--s3);color:var(--t1)}
-.a-share{background:var(--s2);color:var(--t1);border:1px solid var(--b2)}
-.a-share:hover{border-color:var(--accent);color:var(--accent)}
-.a-order{
-  background:var(--accentg);color:#fff;border:none;
-  box-shadow:0 3px 16px rgba(124,109,250,.35);
-  font-weight:700;
-}
-.a-order:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(124,109,250,.5)}
-.a-order:active{transform:translateY(0)}
-/* hide text on very small screens */
-@media(max-width:540px){
-  .a-ghost .btnlbl,.a-share .btnlbl{display:none}
-}
-@media(max-width:420px){
-  .tpl-name,.badge,.sep{display:none}
-  .rating{display:none}
-  .topbar{padding:0 10px;gap:7px}
-}
+.acts{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:38px;padding:0 15px;border-radius:11px;border:1px solid var(--b1);
+  background:var(--s1);color:#fff;font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:transform .2s,box-shadow .2s,background .2s,border-color .2s}
+.btn:hover{transform:translateY(-1px);border-color:var(--b2);background:var(--s2)}
+.btn.go{background:linear-gradient(135deg,#2ee07a,#12b767);border:0;color:#04120a;box-shadow:0 8px 26px rgba(37,211,102,.32)}
+.btn.go:hover{box-shadow:0 12px 34px rgba(37,211,102,.45)}
+.btn.vio{background:linear-gradient(135deg,#7c6dfa,#c05cf0);border:0;box-shadow:0 8px 26px rgba(124,109,250,.35)}
 
-/* ═══════════════════════ STUDIO ═══════════════════════ */
-.studio{
-  position:fixed;
-  top:var(--bar);left:0;right:0;
-  bottom:var(--strip);
-  display:flex;align-items:center;justify-content:center;
-  overflow:hidden;
-  background:var(--bg);
-}
-/* subtle grid */
-.studio::before{
-  content:'';position:absolute;inset:0;pointer-events:none;
-  background-image:
-    linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
-  background-size:44px 44px;
-  -webkit-mask-image:radial-gradient(ellipse 90% 90% at center,black 30%,transparent 100%);
-  mask-image:radial-gradient(ellipse 90% 90% at center,black 30%,transparent 100%);
-}
-/* radial glows */
-.studio::after{
-  content:'';position:absolute;inset:0;pointer-events:none;
-  background:
-    radial-gradient(ellipse 55% 55% at 15% 70%,rgba(124,109,250,.07) 0%,transparent 100%),
-    radial-gradient(ellipse 45% 45% at 85% 35%,rgba(250,109,158,.05) 0%,transparent 100%);
-}
+/* ═════════ JUKWAA ═════════ */
+.stage{position:fixed;top:var(--bar);left:0;right:0;bottom:0;z-index:1;display:grid;grid-template-columns:270px minmax(0,1fr) 320px;gap:20px;padding:20px}
+.stage.wide{grid-template-columns:minmax(0,1fr)}
+.stage.wide .rail,.stage.wide .info{display:none}
+.center{position:relative;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;perspective:2200px}
+.dev-wrap{position:relative;transition:width .6s var(--ease),height .6s var(--ease)}
+.dev{position:absolute;left:0;top:0;transform-origin:0 0;transition:transform .6s var(--ease)}
+.float{position:absolute;inset:0;animation:levitate 7s ease-in-out infinite}
+@keyframes levitate{50%{translate:0 -8px}}
+.floor{position:absolute;left:8%;right:8%;bottom:-38px;height:60px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(ellipse at center,color-mix(in srgb,var(--t1) 55%,transparent),transparent 70%);filter:blur(18px);opacity:.75;animation:floorPulse 7s ease-in-out infinite}
+@keyframes floorPulse{50%{transform:scale(.9);opacity:.5}}
 
-/* ═══════════════════════ DEVICE FRAME HELPERS ═══════════════════════ */
-.scene{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+/* simu */
+.phone{width:414px;height:870px;padding:12px;border-radius:62px;
+  background:linear-gradient(145deg,#3a3d48,#15161c 30%,#0b0c10 70%,#2a2c34);
+  box-shadow:0 0 0 1.5px rgba(255,255,255,.14),0 0 0 6px #07080c,0 0 0 7px rgba(255,255,255,.06),
+  0 60px 120px rgba(0,0,0,.75),0 0 120px color-mix(in srgb,var(--t1) 28%,transparent),inset 0 1px 1px rgba(255,255,255,.18)}
+.phone .btns::before,.phone .btns::after{content:"";position:absolute;width:4px;border-radius:3px;background:linear-gradient(90deg,#2a2c34,#4a4d58)}
+.phone .btns::before{left:-4px;top:180px;height:70px;box-shadow:0 90px 0 #34363f}
+.phone .btns::after{right:-4px;top:220px;height:100px}
+.screen{position:relative;width:390px;height:846px;border-radius:50px;overflow:hidden;background:#000}
+.island{position:absolute;top:12px;left:50%;width:120px;height:34px;margin-left:-60px;border-radius:20px;background:#000;z-index:4}
+.sbar{position:absolute;inset:0 0 auto 0;height:50px;z-index:3;display:flex;align-items:center;justify-content:space-between;padding:6px 32px 0 36px;
+  font-size:.82rem;font-weight:700;color:#fff;background:#000;pointer-events:none}
+.sbar span:last-child{display:flex;gap:6px;align-items:center}
+.sig{display:flex;align-items:flex-end;gap:2px;height:11px}.sig i{width:3px;background:#fff;border-radius:1px}
+.sig i:nth-child(1){height:35%}.sig i:nth-child(2){height:60%}.sig i:nth-child(3){height:80%}.sig i:nth-child(4){height:100%}
+.bat{width:24px;height:11px;border:1.5px solid rgba(255,255,255,.7);border-radius:3px;position:relative}.bat::after{content:"";position:absolute;inset:1.5px;right:20%;background:#fff;border-radius:1px}
+.phone iframe{position:absolute;top:50px;left:0;width:390px;height:766px;border:0;background:#fff}
+.homebar{position:absolute;bottom:0;left:0;right:0;height:30px;background:#000;display:grid;place-items:center;z-index:3}
+.homebar::after{content:"";width:134px;height:5px;border-radius:3px;background:rgba(255,255,255,.4)}
 
-/* ── LOADER ── */
-.loader{
-  position:absolute;inset:0;background:var(--bg);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:12px;z-index:80;transition:opacity .5s ease,visibility .5s ease;
-}
-.loader.gone{opacity:0;visibility:hidden;pointer-events:none}
-.lring{
-  width:36px;height:36px;
-  border:2.5px solid rgba(124,109,250,.2);
-  border-top-color:var(--accent);
-  border-radius:50%;
-  animation:spin .7s linear infinite;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-.llbl{font-size:.7rem;color:var(--t3);font-weight:600;letter-spacing:.8px}
+/* tablet */
+.tablet{width:850px;height:1128px;padding:20px;border-radius:44px;
+  background:linear-gradient(145deg,#33363f,#141519 35%,#0b0c10 70%,#26282f);
+  box-shadow:0 0 0 1.5px rgba(255,255,255,.12),0 0 0 6px #07080c,0 60px 120px rgba(0,0,0,.75),0 0 140px color-mix(in srgb,var(--t1) 24%,transparent),inset 0 1px 1px rgba(255,255,255,.15)}
+.tablet .cam{position:absolute;top:8px;left:50%;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:#1f2230}
+.tablet .screen{width:810px;height:1088px;border-radius:24px}
+.tablet iframe{position:absolute;inset:0;width:810px;height:1088px;border:0;background:#fff}
 
-/* ═══════════════════════ PHONE FRAME ═══════════════════════ */
-.phone{
-  position:relative;flex-shrink:0;
-  width:var(--phone-w);height:var(--phone-h);
-  max-width:calc(100vw - 40px);
-  max-height:calc(100vh - var(--bar) - var(--strip) - 24px);
-  aspect-ratio:390/844;
-  transition:opacity .35s ease,transform .35s cubic-bezier(.4,0,.2,1);
-}
-.ph-shell{
-  position:absolute;inset:0;
-  background:linear-gradient(160deg,#2e2e2e,#1a1a1a 40%,#0d0d0d);
-  border-radius:54px;
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,.13),
-    0 0 0 3px #111,
-    0 0 0 4px rgba(255,255,255,.04),
-    0 40px 90px rgba(0,0,0,.9),
-    0 12px 40px rgba(0,0,0,.6),
-    inset 0 1px 0 rgba(255,255,255,.07);
-}
-.ph-btn-l{position:absolute;left:-3.5px;top:24%;display:flex;flex-direction:column;gap:9px}
-.ph-btn-l span{display:block;width:3.5px;height:12%;background:linear-gradient(90deg,#3a3a3a,#555);border-radius:3px 0 0 3px;box-shadow:-1px 0 4px rgba(0,0,0,.5)}
-.ph-btn-r{position:absolute;right:-3.5px;top:28%;width:3.5px;height:16%;background:linear-gradient(90deg,#555,#3a3a3a);border-radius:0 3px 3px 0;box-shadow:1px 0 4px rgba(0,0,0,.5)}
-.ph-scrn{position:absolute;inset:9px;background:#000;border-radius:46px;overflow:hidden}
-.ph-island{
-  position:absolute;top:11px;left:50%;transform:translateX(-50%);
-  width:115px;height:32px;background:#000;border-radius:18px;z-index:11;
-  box-shadow:0 0 0 1px rgba(255,255,255,.04);
-}
-/* notch fallback for older style */
-.ph-status{
-  position:absolute;top:0;left:0;right:0;height:44px;
-  background:#000;z-index:10;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 22px;pointer-events:none;
-}
-.st-time{font-size:.78rem;font-weight:700;color:#fff;letter-spacing:-.2px}
-.st-icons{display:flex;align-items:center;gap:5px}
-.st-sig{display:flex;align-items:flex-end;gap:2px;height:11px}
-.sb{width:2.5px;background:#fff;border-radius:1px}
-.sb:nth-child(1){height:30%}.sb:nth-child(2){height:55%}.sb:nth-child(3){height:75%}.sb:nth-child(4){height:100%}
-.st-bat{width:20px;height:10px;border:1.5px solid rgba(255,255,255,.65);border-radius:2.5px;position:relative}
-.st-bat::after{content:'';position:absolute;inset:1.5px 2px;right:25%;background:#fff;border-radius:1px}
-.ph-body{position:absolute;inset:44px 0 32px;overflow:hidden}
-.ph-body iframe{width:100%;height:100%;border:none;display:block}
-.ph-home{position:absolute;bottom:0;left:0;right:0;height:32px;background:#000;z-index:10;display:flex;align-items:center;justify-content:center}
-.ph-bar{width:120px;height:5px;background:rgba(255,255,255,.28);border-radius:3px}
+/* laptop / desktop */
+.laptop{width:1320px;padding:16px 16px 0;border-radius:22px 22px 0 0;background:linear-gradient(180deg,#2b2e38,#121318);
+  box-shadow:0 0 0 1.5px rgba(255,255,255,.12),0 60px 120px rgba(0,0,0,.7),0 0 160px color-mix(in srgb,var(--t1) 22%,transparent)}
+.laptop .cam{position:absolute;top:5px;left:50%;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:#262a36}
+.laptop .screen{width:1288px;height:820px;border-radius:8px 8px 0 0}
+.chrome{position:absolute;inset:0 0 auto 0;height:40px;z-index:3;display:flex;align-items:center;gap:10px;padding:0 14px;background:#161822;border-bottom:1px solid rgba(255,255,255,.06)}
+.chrome .tl{display:flex;gap:7px}.chrome .tl i{width:12px;height:12px;border-radius:50%;background:#ff5f57}.chrome .tl i:nth-child(2){background:#febc2e}.chrome .tl i:nth-child(3){background:#28c840}
+.chrome .url{flex:1;max-width:520px;margin:0 auto;height:26px;border-radius:8px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;gap:7px;
+  font:500 12.5px ui-monospace,monospace;color:#9aa4bd}
+.laptop iframe{position:absolute;top:40px;left:0;width:1288px;height:780px;border:0;background:#fff}
+.base{position:relative;width:1460px;height:24px;margin-left:-86px;border-radius:0 0 26px 26px;background:linear-gradient(180deg,#3a3d48,#1a1b22 60%,#0e0f13);
+  box-shadow:0 30px 60px rgba(0,0,0,.6)}
+.base::before{content:"";position:absolute;top:0;left:50%;width:200px;height:10px;margin-left:-100px;border-radius:0 0 12px 12px;background:#121318}
 
-/* ═══════════════════════ TABLET FRAME ═══════════════════════ */
-.tablet{
-  position:relative;flex-shrink:0;
-  width:var(--tablet-w);height:var(--tablet-h);
-  max-width:calc(100vw - 40px);
-  max-height:calc(100vh - var(--bar) - var(--strip) - 24px);
-  aspect-ratio:810/1080;
-  display:none;
-}
-.tb-shell{
-  position:absolute;inset:0;
-  background:linear-gradient(160deg,#282828,#1a1a1a 50%,#111);
-  border-radius:26px;
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,.1),
-    0 0 0 2px #111,
-    0 0 0 3px rgba(255,255,255,.04),
-    0 30px 80px rgba(0,0,0,.85);
-}
-.tb-cam{
-  position:absolute;top:5px;left:50%;transform:translateX(-50%);
-  width:7px;height:7px;background:#1e1e1e;border-radius:50%;z-index:5;
-  box-shadow:0 0 0 1px rgba(255,255,255,.05),inset 0 0 3px rgba(100,200,255,.3);
-}
-.tb-scrn{position:absolute;top:10px;bottom:10px;left:12px;right:12px;background:#000;border-radius:20px;overflow:hidden}
-.tb-scrn iframe{width:100%;height:100%;border:none;display:block}
+/* Mng'ao wa kioo + mwanga unaopita mara ya kwanza */
+.glass{position:absolute;inset:0;z-index:5;pointer-events:none;border-radius:inherit;
+  background:linear-gradient(115deg,rgba(255,255,255,.13) 0%,transparent 28%,transparent 72%,rgba(255,255,255,.04) 100%)}
+.sweep{position:absolute;inset:0;z-index:6;pointer-events:none;border-radius:inherit;overflow:hidden}
+.sweep::after{content:"";position:absolute;top:-20%;bottom:-20%;width:40%;left:-60%;transform:skewX(-18deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent)}
+.revealed .sweep::after{animation:sweep 1.3s .2s var(--ease) both}
+@keyframes sweep{to{left:130%}}
 
-/* ═══════════════════════ DESKTOP BROWSER ═══════════════════════ */
-.desktop{
-  position:absolute;inset:0;
-  display:none;flex-direction:column;
-}
-.br-chrome{
-  flex-shrink:0;
-  background:linear-gradient(180deg,#1e1e2c,#181828);
-  border-bottom:1px solid var(--b1);
-}
-.br-traffic{height:36px;display:flex;align-items:center;padding:0 14px;gap:7px}
-.td{width:11px;height:11px;border-radius:50%}
-.td:nth-child(1){background:#ff5f57}.td:nth-child(2){background:#febc2e}.td:nth-child(3){background:#28c840}
-.br-tabs{height:34px;display:flex;align-items:flex-end;padding:0 14px;gap:3px}
-.br-tab{
-  height:26px;background:var(--s2);
-  border-radius:8px 8px 0 0;padding:0 14px;
-  display:flex;align-items:center;gap:7px;
-  font-size:.7rem;font-weight:600;color:var(--t1);
-  border:1px solid var(--b1);border-bottom:none;
-  white-space:nowrap;max-width:200px;overflow:hidden;
-}
-.tfav{width:12px;height:12px;border-radius:3px;background:var(--accentg);flex-shrink:0}
-.ttitle{overflow:hidden;text-overflow:ellipsis}
-.br-addr{height:40px;display:flex;align-items:center;padding:0 14px;gap:8px;border-top:1px solid var(--b1)}
-.addr-btn{background:none;border:none;cursor:pointer;padding:3px;color:var(--t3)}
-.addr-btn svg{width:13px;height:13px;fill:currentColor}
-.addr-bar{
-  flex:1;height:26px;background:rgba(0,0,0,.22);
-  border:1px solid var(--b2);border-radius:7px;
-  display:flex;align-items:center;gap:6px;padding:0 10px;
-}
-.addr-lock svg{width:10px;height:10px;fill:#22d3a0}
-.addr-url{font-size:.7rem;color:var(--t2)}
-.br-body{flex:1;overflow:hidden;position:relative}
-.br-body iframe{width:100%;height:100%;border:none;display:block}
+.dev .loading{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--t1) 35%,#0b0c12),#0b0c12 70%);transition:opacity .6s}
+.dev .loading b{font:800 30px 'Syne',sans-serif;letter-spacing:-.5px;text-align:center;padding:0 30px;
+  background:linear-gradient(90deg,#fff,color-mix(in srgb,var(--t1) 60%,#fff),#fff);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 1.6s linear infinite}
+.dev .loading i{width:140px;height:3px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden;position:relative}
+.dev .loading i::after{content:"";position:absolute;inset:0;width:40%;border-radius:3px;background:linear-gradient(90deg,var(--t1),var(--t2));animation:bar 1.1s ease-in-out infinite}
+@keyframes shine{to{background-position:-200% 0}}
+@keyframes bar{0%{transform:translateX(-100%)}100%{transform:translateX(260%)}}
+.dev.ok .loading{opacity:0;pointer-events:none}
 
-/* ── VISIBILITY STATES ── */
-.studio.m-tablet .phone{display:none}
-.studio.m-tablet .tablet{display:flex}
-.studio.m-desktop .phone{display:none}
-.studio.m-desktop .desktop{display:flex}
+/* Kuingia: kifaa kinapanda kutoka chini */
+.dev-wrap.enter{animation:rise .9s var(--spring) both}
+@keyframes rise{from{opacity:0;transform:translateY(60px) scale(.94)}to{opacity:1;transform:none}}
 
-/* ── ENTRY ANIMATION ── */
-.phone,.tablet{animation:popIn .45s cubic-bezier(.34,1.56,.64,1) both}
-@keyframes popIn{
-  from{opacity:0;transform:scale(.92) translateY(18px)}
-  to{opacity:1;transform:scale(1) translateY(0)}
-}
+/* Kiashiria cha kushuka ndani ya demo */
+.prog{position:absolute;right:-18px;top:12%;bottom:12%;width:3px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden}
+.prog i{position:absolute;left:0;right:0;top:0;height:0;border-radius:3px;background:linear-gradient(180deg,var(--t1),var(--t2),var(--c))}
 
-/* ═══════════════════════ PRICE STRIP ═══════════════════════ */
-.strip{
-  position:fixed;bottom:0;left:0;right:0;height:var(--strip);z-index:900;
-  background:rgba(7,7,15,.9);
-  backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);
-  border-top:1px solid var(--b1);
-  display:flex;align-items:center;justify-content:center;gap:20px;
-  padding:0 16px;
-}
-.strip::before{
-  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(124,109,250,.25),transparent);
-}
-.pi{display:flex;align-items:center;gap:6px}
-.plbl{font-size:.62rem;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px}
-.pval{font-size:.82rem;font-weight:700;color:var(--t1)}
-.pval sub{font-size:.62rem;font-weight:500;color:var(--t2);vertical-align:baseline}
-.pdiv{width:1px;height:18px;background:var(--b2)}
-@media(max-width:420px){
-  .strip{gap:12px}
-  .pi:last-child{display:none}
-}
+/* ═════════ PANELI ═════════ */
+.panel{min-height:0;overflow:auto;scrollbar-width:none;border-radius:24px;border:1px solid var(--b1);
+  background:linear-gradient(170deg,rgba(18,20,32,.78),rgba(8,9,16,.72));backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  box-shadow:0 30px 80px rgba(0,0,0,.35);animation:slideIn .8s .25s var(--ease) both}
+.panel::-webkit-scrollbar{display:none}
+.rail{animation-name:slideL}
+@keyframes slideL{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:none}}
+@keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+.ph{padding:20px 20px 14px;border-bottom:1px solid var(--b1)}
+.kick{font-size:.66rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
+.ph h2{font:700 1.05rem 'Syne',sans-serif;margin-top:6px}
+.tour{margin-top:14px;width:100%;height:42px;border-radius:12px;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+  font-size:.8rem;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--t1),var(--t2));box-shadow:0 10px 30px color-mix(in srgb,var(--t1) 40%,transparent);
+  transition:transform .2s,filter .2s;text-shadow:0 1px 6px rgba(0,0,0,.35)}
+.tour:hover{transform:translateY(-1px);filter:brightness(1.1)}
+.tour.on{background:#fff;color:#06070d;text-shadow:none}
+.secs{list-style:none;padding:10px;counter-reset:s}
+.secs button{counter-increment:s;position:relative;display:flex;align-items:center;gap:12px;width:100%;padding:11px 12px;border:0;border-radius:12px;background:none;
+  color:var(--mut);font-size:.82rem;font-weight:600;text-align:left;cursor:pointer;transition:background .25s,color .25s}
+.secs button::before{content:counter(s,decimal-leading-zero);font:800 .66rem 'DM Sans';color:var(--dim);min-width:18px;transition:color .25s}
+.secs button:hover{background:var(--s1);color:#fff}
+.secs button.on{color:#fff;background:linear-gradient(90deg,color-mix(in srgb,var(--t1) 30%,transparent),transparent)}
+.secs button.on::before{color:#fff}
+.secs button.on::after{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:3px;background:linear-gradient(var(--t1),var(--t2))}
+.keys{padding:4px 20px 20px;font-size:.68rem;color:var(--dim);line-height:1.8}
+.keys kbd{display:inline-block;min-width:20px;padding:1px 6px;border-radius:5px;border:1px solid var(--b2);background:var(--s1);font:600 .64rem ui-monospace,monospace;color:var(--mut);text-align:center}
 
-/* ═══════════════════════ SHARE PANEL ═══════════════════════ */
-.overlay{
-  position:fixed;inset:0;z-index:1800;
-  background:rgba(0,0,0,.65);
-  backdrop-filter:blur(8px);
-  display:flex;align-items:center;justify-content:center;padding:16px;
-  opacity:0;visibility:hidden;transition:all .25s ease;
-}
+.info .ph h1{font:800 1.6rem/1.08 'Syne',sans-serif;letter-spacing:-.5px;margin-top:8px}
+.info .ph h1 span{display:block;margin-top:6px;font:600 .82rem 'DM Sans';letter-spacing:0;background:linear-gradient(90deg,var(--t1),var(--t2));-webkit-background-clip:text;background-clip:text;color:transparent;filter:brightness(1.4)}
+.info .ph p{margin-top:10px;font-size:.8rem;line-height:1.6;color:var(--mut)}
+.blk{padding:16px 20px;border-bottom:1px solid var(--b1)}
+.blk:last-child{border:0}
+.sw{display:flex;gap:6px;margin-top:10px}
+.sw button{flex:1;height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.12);cursor:pointer;position:relative;transition:transform .25s var(--spring)}
+.sw button:hover{transform:translateY(-4px) scale(1.06)}
+.sw button::after{content:attr(data-hex);position:absolute;left:50%;bottom:calc(100% + 6px);transform:translateX(-50%);padding:3px 7px;border-radius:6px;background:#000;
+  font:600 .62rem ui-monospace,monospace;color:#fff;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+.sw button:hover::after{opacity:1}
+.fonts{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.fonts div{display:flex;align-items:center;gap:12px}
+.fonts b{font-size:1.6rem;font-weight:700;min-width:42px;line-height:1}
+.fonts span{font-size:.78rem;font-weight:700}.fonts small{display:block;font-size:.66rem;color:var(--mut);font-weight:500}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.stats div{padding:10px;border-radius:12px;background:var(--s1);border:1px solid var(--b1);text-align:center}
+.stats b{display:block;font:800 1.15rem 'Syne',sans-serif}
+.stats span{font-size:.62rem;color:var(--mut);font-weight:600}
+.price{display:flex;align-items:baseline;justify-content:space-between;padding:9px 0;font-size:.78rem;color:var(--mut);border-bottom:1px dashed var(--b1)}
+.price:last-of-type{border:0}
+.price b{color:#fff;font-size:.95rem}
+.price b.free{color:#7ef0b4}
+.ctas{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.ctas .btn{width:100%;height:44px}
+/* Bei na vitufe vinabaki chini ya paneli hata skrini ikiwa fupi */
+.info .buy{position:sticky;bottom:0;z-index:2;background:linear-gradient(180deg,rgba(12,13,22,.97),#0a0b13);box-shadow:0 -24px 30px rgba(9,10,17,.85)}
+.more{display:block;margin-top:12px;text-align:center;font-size:.74rem;font-weight:700;color:var(--mut)}
+.more:hover{color:#fff}
+
+/* ═════════ DOCK (skrini ndogo) ═════════ */
+.dock{position:fixed;left:12px;right:12px;bottom:12px;z-index:40;display:none;align-items:center;gap:8px;padding:8px;border-radius:18px;
+  background:rgba(10,12,20,.86);border:1px solid var(--b2);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 20px 60px rgba(0,0,0,.55);
+  animation:dockIn .7s .4s var(--spring) both}
+@keyframes dockIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
+.dock .pr{flex:1;min-width:0;padding-left:6px}
+.dock .pr b{display:block;font-size:.84rem;white-space:nowrap}.dock .pr small{font-size:.66rem;color:var(--mut)}
+.dock .btn{height:42px}
+.dock .tbtn{width:42px;padding:0}
+
+/* ═════════ SHARE + TOAST ═════════ */
+.overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.6);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:16px;
+  opacity:0;visibility:hidden;transition:.25s}
 .overlay.open{opacity:1;visibility:visible}
-.panel{
-  background:var(--s1);
-  border:1px solid var(--b2);
-  border-radius:20px;
-  padding:26px;
-  width:min(440px,100%);
-  box-shadow:0 40px 80px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.03);
-  transform:scale(.94) translateY(14px);
-  transition:transform .25s cubic-bezier(.34,1.2,.64,1);
-}
-.overlay.open .panel{transform:scale(1) translateY(0)}
-.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
-.pt{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:800;color:var(--t1)}
-.pclose{
-  background:var(--s3);border:none;cursor:pointer;
-  width:30px;height:30px;border-radius:8px;
-  display:flex;align-items:center;justify-content:center;
-  color:var(--t2);transition:var(--trans);
-}
-.pclose:hover{background:rgba(255,70,70,.15);color:#ff5f57}
-.pclose svg{width:14px;height:14px;fill:currentColor}
-.prev{
-  background:linear-gradient(135deg,rgba(124,109,250,.1),rgba(250,109,158,.07));
-  border:1px solid var(--b2);border-radius:12px;
-  padding:14px 16px;margin-bottom:18px;
-  display:flex;align-items:center;gap:12px;
-}
-.prev-ico{
-  width:42px;height:42px;flex-shrink:0;border-radius:10px;
-  background:var(--accentg);display:flex;align-items:center;justify-content:center;
-  font-size:1.25rem;
-}
-.prev-name{font-size:.88rem;font-weight:600;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.prev-sub{font-size:.7rem;color:var(--t2);margin-top:2px}
-.url-row{display:flex;align-items:center;gap:8px;margin-bottom:18px}
-.urlin{
-  flex:1;height:38px;background:var(--bg);
-  border:1px solid var(--b2);border-radius:9px;
-  padding:0 12px;font-size:.72rem;color:var(--t2);font-family:inherit;
-  outline:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:text;
-}
-.urlin:focus{border-color:var(--accent);color:var(--t1)}
-.copybtn{
-  height:38px;padding:0 14px;flex-shrink:0;
-  background:var(--s3);border:1px solid var(--b2);
-  border-radius:9px;cursor:pointer;
-  font-size:.72rem;font-weight:700;color:var(--t1);font-family:inherit;
-  display:flex;align-items:center;gap:5px;transition:var(--trans);
-}
-.copybtn:hover{background:var(--accent);border-color:var(--accent)}
-.copybtn svg{width:13px;height:13px;fill:currentColor}
-.copybtn.ok{background:#059669;border-color:#059669;color:#fff}
-.divrow{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-.divrow::before,.divrow::after{content:'';flex:1;height:1px;background:var(--b1)}
-.divrow span{font-size:.62rem;color:var(--t3);font-weight:700;letter-spacing:.6px}
-.chs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.ch{
-  height:44px;border-radius:10px;border:1px solid var(--b2);
-  cursor:pointer;font-size:.75rem;font-weight:700;
-  display:flex;align-items:center;justify-content:center;gap:7px;
-  transition:var(--trans);text-decoration:none;
-}
-.ch-wa{background:rgba(37,211,102,.09);color:#25d366;border-color:rgba(37,211,102,.2)}
-.ch-wa:hover{background:rgba(37,211,102,.18)}
-.ch-tw{background:rgba(15,15,15,.5);color:var(--t1);border-color:var(--b2)}
-.ch-tw:hover{background:rgba(255,255,255,.06)}
-.ch svg{width:16px;height:16px;fill:currentColor;flex-shrink:0}
+.sheet{width:min(440px,100%);padding:24px;border-radius:22px;border:1px solid var(--b2);background:#0d0f19;box-shadow:0 40px 80px rgba(0,0,0,.7);
+  transform:scale(.94) translateY(14px);transition:transform .3s var(--spring)}
+.overlay.open .sheet{transform:none}
+.sheet-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.sheet-h b{font:800 1.05rem 'Syne',sans-serif}
+.x{width:32px;height:32px;border-radius:9px;border:0;background:var(--s2);color:var(--mut);cursor:pointer;display:grid;place-items:center}
+.x:hover{color:#ff6b6b}
+.card{display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;border:1px solid var(--b2);margin-bottom:16px;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--t1) 18%,transparent),color-mix(in srgb,var(--t2) 10%,transparent))}
+.card i{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--t1),var(--t2));flex-shrink:0}
+.card b{display:block;font-size:.9rem}.card small{font-size:.72rem;color:var(--mut)}
+.urlrow{display:flex;gap:8px;margin-bottom:16px}
+.urlrow input{flex:1;min-width:0;height:40px;padding:0 12px;border-radius:10px;border:1px solid var(--b2);background:#05060c;color:var(--mut);font:500 .74rem 'DM Sans';outline:none}
+.share-to{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.toast{position:fixed;left:50%;bottom:24px;z-index:120;transform:translate(-50%,20px);padding:10px 16px;border-radius:12px;background:#11131f;border:1px solid var(--b2);
+  font-size:.78rem;font-weight:700;opacity:0;visibility:hidden;transition:.3s var(--spring)}
+.toast.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
 
-/* ═══════════════════════ TOAST ═══════════════════════ */
-.toast{
-  position:fixed;bottom:calc(var(--strip) + 10px);left:50%;
-  transform:translateX(-50%) translateY(16px);
-  background:var(--s2);border:1px solid var(--b2);
-  border-radius:10px;padding:9px 16px;
-  font-size:.77rem;font-weight:600;color:var(--t1);
-  display:flex;align-items:center;gap:7px;
-  box-shadow:0 8px 30px rgba(0,0,0,.5);
-  opacity:0;visibility:hidden;transition:all .3s cubic-bezier(.34,1.2,.64,1);z-index:3000;
-  pointer-events:none;
+/* ═════════ RESPONSIVE ═════════ */
+@media(max-width:1280px){.stage{grid-template-columns:240px minmax(0,1fr) 290px;gap:16px;padding:16px}}
+@media(max-width:1080px){
+  .stage{grid-template-columns:minmax(0,1fr);padding:14px 14px 86px}
+  .rail,.info{display:none}.dock{display:flex}
+  .acts .hide-md{display:none}
 }
-.toast.show{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
-.toast svg{width:14px;height:14px;fill:#22d3a0;flex-shrink:0}
-
-/* ═══════════════════════ SAFE AREA ═══════════════════════ */
-@supports(padding-bottom:env(safe-area-inset-bottom)){
-  .strip{padding-bottom:env(safe-area-inset-bottom)}
-  .topbar{padding-top:env(safe-area-inset-top)}
+@media(max-width:720px){
+  :root{--bar:58px}
+  .top{gap:8px;padding:0 10px}.brand,.who small,.acts .btn:not(.share){display:none}
+  .seg button{padding:0 10px}.seg button span{display:none}
+  .prog{right:-10px}
 }
-
-/* ═══════════════════════ RESPONSIVE HINTS ═══════════════════════ */
-/* On narrow screens, phone auto-fills available space */
-@media(max-width:480px){
-  .phone{border-radius:46px}
-  .ph-shell{border-radius:46px}
-  .ph-scrn{border-radius:38px;inset:8px}
-  .ph-island{top:9px;width:100px;height:28px}
-  .ph-home{height:28px}
-  .ph-bar{width:100px;height:4px}
-  .ph-status{height:40px}
-  .ph-body{inset:40px 0 28px}
-}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
+<div class="sky" aria-hidden="true"><i></i><i></i><i></i></div>
 
-<!-- ══════════════ TOPBAR ══════════════ -->
-<header class="topbar">
-  <div style="display:flex;align-items:center;gap:9px;overflow:hidden;flex:1;min-width:0">
-    <a href="/templates/" class="brand">JamiiTek</a>
-    <div class="sep"></div>
-    <div class="tpl-meta">
-      <span class="tpl-name">{{ template.name }}</span>
-      <span class="badge">{{ template.get_category_display }}</span>
-      <span class="rating">★ {{ template.rating }}</span>
-    </div>
+<header class="top">
+  <a class="back" href="{{ template.get_absolute_url }}" aria-label="Back to template details"><svg class="i" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></a>
+  <a class="brand" href="/templates/">JamiiTek</a>
+  <div class="who">
+    <span class="who-dot" aria-hidden="true"></span>
+    <div style="min-width:0"><b>{{ template.name }}</b><small><span class="live">Live preview</span> · {{ template.category_plain }}</small></div>
   </div>
-
-  <div class="dsw" role="group" aria-label="Preview device">
-    <button class="dbtn on" id="btn-mobile" onclick="setDev('mobile')" title="Mobile">
-      <svg viewBox="0 0 24 24"><path d="M15.5 1h-8C6.1 1 5 2.1 5 3.5v17C5 21.9 6.1 23 7.5 23h8c1.4 0 2.5-1.1 2.5-2.5v-17C18 2.1 16.9 1 15.5 1zm-4 21c-.83 0-1.5-.67-1.5-1.5S10.67 19 11.5 19s1.5.67 1.5 1.5S12.33 22 11.5 22zm4.5-4h-9V4h9v14z"/></svg>
-      <span class="dlbl">Mobile</span>
-    </button>
-    <button class="dbtn" id="btn-tablet" onclick="setDev('tablet')" title="Tablet">
-      <svg viewBox="0 0 24 24"><path d="M18.5 0h-13C4.1 0 3 1.1 3 2.5v19C3 22.9 4.1 24 5.5 24h13c1.4 0 2.5-1.1 2.5-2.5v-19C21 1.1 19.9 0 18.5 0zm-6.5 23c-.83 0-1.5-.67-1.5-1.5S11.17 20 12 20s1.5.67 1.5 1.5S12.83 23 12 23zm6.5-4H5.5V3h13v16z"/></svg>
-      <span class="dlbl">Tablet</span>
-    </button>
-    <button class="dbtn" id="btn-desktop" onclick="setDev('desktop')" title="Desktop">
-      <svg viewBox="0 0 24 24"><path d="M21 2H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7v2H8v2h8v-2h-2v-2h7a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm0 14H3V4h18z"/></svg>
-      <span class="dlbl">Desktop</span>
-    </button>
+  <div class="seg" role="group" aria-label="Preview device">
+    <span class="seg-pill" aria-hidden="true"></span>
+    <button type="button" data-dev="mobile" class="on"><svg class="i" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg><span>Mobile</span></button>
+    <button type="button" data-dev="tablet"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M11 18h2"/></svg><span>Tablet</span></button>
+    <button type="button" data-dev="desktop"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg><span>Desktop</span></button>
   </div>
-
-  <div class="bacts">
-    <a href="/proposals/?template={{ template.pk }}" class="abtn" title="Order a website like this — we build it for you"
-       style="background:linear-gradient(135deg,#6c63ff,#5348e8);color:#fff;border:none">
-      <svg viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
-      <span class="btnlbl">Order This</span>
-    </a>
-    {# Template hii hii inafunguka kwenye builder (asiye na account anajisajili kwanza) #}
-    <a href="{% url 'builder:from_template' template.pk %}" class="abtn" title="Customize this exact design in the free JamiiTek Builder"
-       style="background:linear-gradient(135deg,#25d366,#12b767);color:#04120a;border:none">
-      <svg viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></svg>
-      <span class="btnlbl">Customize in Builder</span>
-    </a>
-    <a href="/templates/" class="abtn a-ghost">
-      <svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
-      <span class="btnlbl">Back</span>
-    </a>
-    <button class="abtn a-share" onclick="openShare()">
-      <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>
-      <span class="btnlbl">Share</span>
-    </button>
-    <button class="abtn a-order" onclick="orderNow()">
-      <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:#fff"><path d="M7 18c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-1.45-5c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0 0 20 4H5.21L4.27 2H1v2h2l3.6 7.59-1.35 2.44C4.52 15.37 5.48 17 7 17h12v-2H7l1.1-2h7.45z"/></svg>
-      Get This
-    </button>
+  <div class="acts">
+    <button type="button" class="btn share" onclick="openShare()" aria-label="Share"><svg class="i" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></button>
+    <a class="btn hide-md" href="/proposals/?template={{ template.pk }}">📝 Order this</a>
+    <a class="btn go" href="{% url 'builder:from_template' template.pk %}">✨ Customize free</a>
   </div>
 </header>
 
-<!-- ══════════════ STUDIO ══════════════ -->
-<div class="studio m-mobile" id="studio">
-  <div class="scene">
-
-    <!-- LOADER -->
-    <div class="loader" id="mainLoader">
-      <div class="lring"></div>
-      <div class="llbl">LOADING PREVIEW</div>
-    </div>
-
-    <!-- PHONE -->
-    <div class="phone" id="phoneDevice">
-      <div class="ph-shell">
-        <div class="ph-btn-l"><span></span><span></span><span></span></div>
-        <div class="ph-btn-r"></div>
-        <div class="ph-scrn">
-          <div class="ph-island"></div>
-          <div class="ph-status" aria-hidden="true">
-            <span class="st-time" id="stime">9:41</span>
-            <div class="st-icons">
-              <div class="st-sig"><div class="sb"></div><div class="sb"></div><div class="sb"></div><div class="sb"></div></div>
-              <div class="st-bat"></div>
-            </div>
-          </div>
-          <div class="ph-body">
-            <iframe id="phoneFrame" title="Preview: {{ template.name }}" onload="onLoad('mobile')"></iframe>
-          </div>
-          <div class="ph-home" aria-hidden="true"><div class="ph-bar"></div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TABLET -->
-    <div class="tablet" id="tabletDevice">
-      <div class="tb-shell">
-        <div class="tb-cam" aria-hidden="true"></div>
-        <div class="tb-scrn">
-          <iframe id="tabletFrame" title="Preview: {{ template.name }}" onload="onLoad('tablet')"></iframe>
-        </div>
-      </div>
-    </div>
-
-    <!-- DESKTOP BROWSER -->
-    <div class="desktop" id="desktopDevice">
-      <div class="br-chrome">
-        <div class="br-traffic">
-          <div class="td"></div><div class="td"></div><div class="td"></div>
-        </div>
-        <div class="br-tabs">
-          <div class="br-tab">
-            <div class="tfav"></div>
-            <span class="ttitle">{{ template.name }} — JamiiTek</span>
-          </div>
-        </div>
-        <div class="br-addr">
-          <button class="addr-btn" aria-label="Back"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
-          <button class="addr-btn" aria-label="Forward"><svg viewBox="0 0 24 24"><path d="M10 17l5-5-5-5v10z"/></svg></button>
-          <button class="addr-btn" aria-label="Reload"><svg viewBox="0 0 24 24"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button>
-          <div class="addr-bar">
-            <span class="addr-lock"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg></span>
-            <span class="addr-url">jamiitek.com/templates/preview/{{ template.pk }}/</span>
-          </div>
-        </div>
-      </div>
-      <div class="br-body">
-        <iframe id="desktopFrame" title="Preview: {{ template.name }}" onload="onLoad('desktop')"></iframe>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<!-- ══════════════ PRICE STRIP ══════════════ -->
-<div class="strip">
-  <div class="pi">
-    <span class="plbl">Hosted</span>
-    <span class="pval">TSh {{ template.price_hosted_monthly|floatformat:0 }}<sub>/mo</sub></span>
-  </div>
-  <div class="pdiv"></div>
-  <div class="pi">
-    <span class="plbl">Source Code</span>
-    <span class="pval">TSh {{ template.price_source_code|floatformat:0 }}</span>
-  </div>
-  <div class="pdiv"></div>
-  <div class="pi">
-    <span class="plbl">Rating</span>
-    <span class="pval" style="color:#fbbf24">★ {{ template.rating }}</span>
-  </div>
-</div>
-
-<!-- ══════════════ SHARE PANEL ══════════════ -->
-<div class="overlay" id="sOverlay" role="dialog" aria-modal="true" aria-label="Share template" onclick="bgClose(event)">
-  <div class="panel">
+<main class="stage" id="stage">
+  <aside class="panel rail" aria-label="Sections of this template">
     <div class="ph">
-      <span class="pt">Share Template</span>
-      <button class="pclose" onclick="closeShare()" aria-label="Close">
-        <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-      </button>
+      <div class="kick">Guided tour</div>
+      <h2>{% if anatomy.sections %}{{ anatomy.section_count }} sections inside{% else %}Explore the design{% endif %}</h2>
+      <button type="button" class="tour" data-tour><svg class="i" viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg><span>Play auto tour</span></button>
     </div>
-    <div class="prev">
-      <div class="prev-ico">🌐</div>
-      <div style="overflow:hidden">
-        <div class="prev-name">{{ template.name }}</div>
-        <div class="prev-sub">{{ template.get_category_display }} · TSh {{ template.price_hosted_monthly|floatformat:0 }}/mo · ★ {{ template.rating }}</div>
+    {% if anatomy.sections %}
+    <ol class="secs">{% for i, label in anatomy.sections %}<li><button type="button" data-i="{{ i }}">{{ label }}</button></li>{% endfor %}</ol>
+    {% endif %}
+    <div class="keys"><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> switch device · <kbd>T</kbd> tour · <kbd>Esc</kbd> close</div>
+  </aside>
+
+  <section class="center" id="center" aria-label="Live preview of {{ template.name }}">
+    <div class="dev-wrap enter" id="wrap">
+      <div class="float">
+        <div class="dev" id="dev"></div>
+        <div class="floor" aria-hidden="true"></div>
+      </div>
+      <div class="prog" aria-hidden="true"><i id="prog"></i></div>
+    </div>
+  </section>
+
+  <aside class="panel info" aria-label="About {{ template.name }}">
+    <div class="ph">
+      <div class="kick">{{ template.get_category_display }}{% if template.badge %} · {{ template.get_badge_display }}{% endif %}</div>
+      <h1>{{ template.name }}<span>{{ cat_noun|capfirst }} website template</span></h1>
+      <p>{{ template.description|truncatewords:26 }}</p>
+    </div>
+    {% if anatomy.palette %}
+    <div class="blk"><div class="kick">Colour palette</div>
+      <div class="sw">{% for c in anatomy.palette %}<button type="button" style="background:{{ c }}" data-hex="{{ c }}" aria-label="Copy {{ c }}"></button>{% endfor %}</div>
+    </div>
+    {% endif %}
+    {% if anatomy.fonts %}
+    <div class="blk"><div class="kick">Typography</div>
+      <div class="fonts">{% for f in anatomy.fonts|slice:":2" %}<div><b style="font-family:'{{ f }}',serif">Aa</b><span>{{ f }}<small>{% if forloop.first %}Headings{% else %}Body text{% endif %}</small></span></div>{% endfor %}</div>
+    </div>
+    {% endif %}
+    <div class="blk"><div class="kick">Built in</div>
+      <div class="stats">
+        <div><b>{{ anatomy.section_count|default:"—" }}</b><span>sections</span></div>
+        <div><b>3</b><span>screen sizes</span></div>
+        <div><b>{% if anatomy.animated %}Yes{% else %}—{% endif %}</b><span>animations</span></div>
       </div>
     </div>
-    <div class="url-row">
-      <input class="urlin" id="shareUrl" type="text" readonly aria-label="Share URL">
-      <button class="copybtn" id="copyBtn" onclick="copyLink()">
-        <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-        Copy
-      </button>
+    <div class="blk buy"><div class="kick">Pricing</div>
+      <div class="price"><span>Customize yourself</span><b class="free">Free</b></div>
+      <div class="price"><span>Hosted — we set it up</span><b>TSh {{ template.price_hosted_monthly|intcomma }}<small style="color:var(--mut);font-weight:500">/mo</small></b></div>
+      <div class="price"><span>Source code</span><b>TSh {{ template.price_source_code|intcomma }}</b></div>
+      <div class="ctas">
+        <a class="btn go" href="{% url 'builder:from_template' template.pk %}">✨ Customize free in Builder</a>
+        <button type="button" class="btn vio" onclick="orderNow()">💬 Get it on WhatsApp</button>
+        <a class="btn" href="/proposals/?template={{ template.pk }}">📝 Order a custom version</a>
+      </div>
+      <a class="more" href="{{ template.get_absolute_url }}">Full details, FAQ &amp; features →</a>
     </div>
-    <div class="divrow"><span>SHARE VIA</span></div>
-    <div class="chs">
-      <a class="ch ch-wa" id="waLink" href="#" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-        WhatsApp
-      </a>
-      <a class="ch ch-tw" id="twLink" href="#" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.213 5.567zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-        X (Twitter)
-      </a>
+  </aside>
+</main>
+
+<div class="dock">
+  <button type="button" class="btn tbtn" data-tour aria-label="Auto tour"><svg class="i" viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg></button>
+  <div class="pr"><b>Free to customize</b><small>Hosted from TSh {{ template.price_hosted_monthly|intcomma }}/mo</small></div>
+  <a class="btn go" href="{% url 'builder:from_template' template.pk %}">✨ Customize</a>
+</div>
+
+<!-- Vifaa (vinanakiliwa ndani ya #dev) -->
+<template id="tpl-mobile">
+  <div class="phone"><span class="btns"></span>
+    <div class="screen"><div class="island"></div>
+      <div class="sbar"><span id="clock">9:41</span><span><span class="sig"><i></i><i></i><i></i><i></i></span><span class="bat"></span></span></div>
+      <iframe title="{{ template.name }} on a phone"></iframe>
+      <div class="homebar"></div>
+      <div class="loading"><b>{{ template.name }}</b><i></i></div>
+      <div class="glass"></div><div class="sweep"></div>
+    </div>
+  </div>
+</template>
+<template id="tpl-tablet">
+  <div class="tablet"><span class="cam"></span>
+    <div class="screen"><iframe title="{{ template.name }} on a tablet"></iframe>
+      <div class="loading"><b>{{ template.name }}</b><i></i></div>
+      <div class="glass"></div><div class="sweep"></div>
+    </div>
+  </div>
+</template>
+<template id="tpl-desktop">
+  <div><div class="laptop"><span class="cam"></span>
+    <div class="screen">
+      <div class="chrome"><span class="tl"><i></i><i></i><i></i></span><span class="url">🔒 {{ template.slug }}.jamiitek.com</span></div>
+      <iframe title="{{ template.name }} on a laptop"></iframe>
+      <div class="loading"><b>{{ template.name }}</b><i></i></div>
+      <div class="glass"></div><div class="sweep"></div>
+    </div>
+  </div><div class="base"></div></div>
+</template>
+
+<div class="overlay" id="sOverlay" role="dialog" aria-modal="true" aria-label="Share template" onclick="if(event.target===this)closeShare()">
+  <div class="sheet">
+    <div class="sheet-h"><b>Share this template</b><button type="button" class="x" onclick="closeShare()" aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+    <div class="card"><i></i><div><b>{{ template.name }}</b><small>{{ template.category_plain }} · free to customize</small></div></div>
+    <div class="urlrow"><input id="shareUrl" type="text" readonly aria-label="Share URL"><button type="button" class="btn" id="copyBtn" onclick="copyLink()">Copy</button></div>
+    <div class="share-to">
+      <a class="btn" id="waLink" href="#" target="_blank" rel="noopener" style="color:#25d366">WhatsApp</a>
+      <a class="btn" id="twLink" href="#" target="_blank" rel="noopener">X (Twitter)</a>
     </div>
   </div>
 </div>
-
-<!-- TOAST -->
-<div class="toast" id="toast">
-  <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-  <span id="toastMsg">Link copied!</span>
-</div>
+<div class="toast" id="toast"></div>
 
 <script>
-const RAW="{% url 'template_preview_raw' template.pk %}";
-const NAME="{{ template.name|escapejs }}";
-const CAT="{{ template.get_category_display|escapejs }}";
-const DEVS=['mobile','tablet','desktop'];
-let cur='mobile';
-const loaded=new Set();
-
-/* clock */
-function tick(){
-  const n=new Date();
-  const el=document.getElementById('stime');
-  if(el)el.textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
-}
-tick();setInterval(tick,30000);
-
-/* device switch */
-const frameMap={mobile:'phoneFrame',tablet:'tabletFrame',desktop:'desktopFrame'};
-const btnMap={mobile:'btn-mobile',tablet:'btn-tablet',desktop:'btn-desktop'};
-const modeClass={mobile:'m-mobile',tablet:'m-tablet',desktop:'m-desktop'};
-
-function setDev(d){
-  if(d===cur)return;
-  const s=document.getElementById('studio');
-  s.classList.remove(modeClass[cur]);
-  cur=d;
-  s.classList.add(modeClass[cur]);
-  DEVS.forEach(x=>document.getElementById(btnMap[x]).classList.toggle('on',x===d));
-  lazyLoad(d);
-  try{localStorage.setItem('jt_dev',d)}catch(e){}
-}
-
-function lazyLoad(d){
-  if(loaded.has(d))return;
-  const f=document.getElementById(frameMap[d]);
-  if(f&&!f.src)f.src=RAW;
-}
-
-function onLoad(d){
-  loaded.add(d);
-  if(d===cur){
-    const l=document.getElementById('mainLoader');
-    if(l)l.classList.add('gone');
-  }
-}
-
-/* init */
 (function(){
-  let s='mobile';
-  try{s=localStorage.getItem('jt_dev')||'mobile'}catch(e){}
-  if(!DEVS.includes(s))s='mobile';
-  if(s!=='mobile'){
-    const st=document.getElementById('studio');
-    st.classList.remove('m-mobile');
-    cur=s;
-    st.classList.add(modeClass[cur]);
-    DEVS.forEach(x=>document.getElementById(btnMap[x]).classList.toggle('on',x===s));
+  const RAW = "{% url 'template_preview_raw' template.pk %}";
+  const NAME = "{{ template.name|escapejs }}", CAT = "{{ template.category_plain|escapejs }}";
+  const SIZES = {mobile: [414, 870], tablet: [850, 1128], desktop: [1320, 860]};
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const stage = document.getElementById('stage'), center = document.getElementById('center');
+  const wrap = document.getElementById('wrap'), dev = document.getElementById('dev'), prog = document.getElementById('prog');
+  const segBtns = [...document.querySelectorAll('.seg button')], pill = document.querySelector('.seg-pill');
+  const secBtns = [...document.querySelectorAll('.secs button')], tourBtns = [...document.querySelectorAll('[data-tour]')];
+  let cur = null, frame = null, touring = false, tourY = 0, last = 0;
+
+  const win = () => { try { return frame && frame.contentWindow; } catch(e){ return null; } };
+  const doc = () => { try { return frame && frame.contentDocument; } catch(e){ return null; } };
+  const jump = (w, y) => { try { w.scrollTo({top: y, behavior: 'instant'}); } catch(e){ w.scrollTo(0, y); } };
+
+  // Kifaa kinaonyeshwa kwa ukubwa halisi na kupunguzwa kutoshea nafasi iliyopo
+  function fit(){
+    if (!cur) return;
+    const [w, h] = SIZES[cur];
+    const aw = center.clientWidth - 24, ah = center.clientHeight - (cur === 'desktop' ? 30 : 50);
+    const s = Math.min(aw / w, ah / h, cur === 'mobile' ? 1 : .98);
+    dev.style.transform = 'scale(' + s + ')';
+    wrap.style.width = (w * s) + 'px'; wrap.style.height = (h * s) + 'px';
   }
-  lazyLoad(cur);
+
+  function movePill(){
+    const on = segBtns.find(b => b.classList.contains('on'));
+    if (!on) return;
+    pill.style.width = on.offsetWidth + 'px';
+    pill.style.transform = 'translateX(' + (on.offsetLeft - 4) + 'px)';
+  }
+
+  function setDev(d, first){
+    if (d === cur || !SIZES[d]) return;
+    const keepY = (win() && win().scrollY) || 0;
+    stopTour();
+    cur = d;
+    segBtns.forEach(b => b.classList.toggle('on', b.dataset.dev === d));
+    movePill();
+    stage.classList.toggle('wide', d === 'desktop');
+    dev.classList.remove('ok');
+    dev.innerHTML = '';
+    dev.appendChild(document.getElementById('tpl-' + d).content.cloneNode(true));
+    frame = dev.querySelector('iframe');
+    frame.addEventListener('load', () => onReady(keepY), {once: true});
+    frame.src = RAW;                                    // cache ya browser baada ya mara ya kwanza
+    if (!first){ wrap.classList.remove('enter'); void wrap.offsetWidth; wrap.classList.add('enter'); }
+    requestAnimationFrame(fit);
+    try { localStorage.setItem('jt_dev', d); } catch(e){}
+    tick();
+  }
+
+  function onReady(keepY){
+    dev.classList.add('ok');
+    wrap.classList.remove('revealed'); void wrap.offsetWidth; wrap.classList.add('revealed');
+    const w = win(), d = doc();
+    if (!w || !d) return;
+    if (keepY) jump(w, keepY);
+    // Kama simu/tablet halisi: hakuna scrollbar ya desktop ndani ya kifaa
+    if (cur !== 'desktop' && d.head){
+      const st = d.createElement('style');
+      st.textContent = 'html{scrollbar-width:none}html::-webkit-scrollbar{display:none}';
+      d.head.appendChild(st);
+    }
+    w.addEventListener('scroll', sync, {passive: true});
+    ['wheel', 'touchstart', 'pointerdown', 'keydown'].forEach(ev => d.addEventListener(ev, stopTour, {passive: true}));
+    sync();
+  }
+
+  function sections(){ const d = doc(); return d ? [...d.querySelectorAll('section')] : []; }
+  function sync(){
+    const w = win(), d = doc();
+    if (!w || !d || !d.documentElement) return;
+    const max = d.documentElement.scrollHeight - w.innerHeight;
+    prog.style.height = (max > 0 ? Math.min(100, w.scrollY / max * 100) : 0) + '%';
+    if (!secBtns.length) return;
+    const all = sections(); let on = secBtns[0];
+    secBtns.forEach(b => { const el = all[+b.dataset.i]; if (el && el.getBoundingClientRect().top < w.innerHeight * .4) on = b; });
+    secBtns.forEach(b => b.classList.toggle('on', b === on));
+  }
+  secBtns.forEach(b => b.addEventListener('click', () => {
+    const el = sections()[+b.dataset.i], w = win();
+    if (!el || !w) return;
+    stopTour();
+    w.scrollTo({top: el.getBoundingClientRect().top + w.scrollY, behavior: calm ? 'auto' : 'smooth'});
+  }));
+
+  // Auto tour: demo inajishusha yenyewe hadi mwisho
+  function setTourUi(){ tourBtns.forEach(b => { b.classList.toggle('on', touring); const s = b.querySelector('span'); if (s) s.textContent = touring ? 'Pause tour' : 'Play auto tour'; }); }
+  function stopTour(){ if (touring){ touring = false; setTourUi(); } }
+  function step(t){
+    if (!touring) return;
+    const w = win(), d = doc();
+    if (!w || !d) return stopTour();
+    const dt = Math.min(64, t - (last || t)); last = t;
+    const max = d.documentElement.scrollHeight - w.innerHeight;
+    tourY = Math.min(max, tourY + (cur === 'mobile' ? 120 : 170) * dt / 1000);
+    jump(w, tourY);
+    if (tourY >= max) return stopTour();
+    requestAnimationFrame(step);
+  }
+  function toggleTour(){
+    if (touring) return stopTour();
+    const w = win(), d = doc();
+    if (!w || !d || !dev.classList.contains('ok')) return;
+    tourY = w.scrollY >= d.documentElement.scrollHeight - w.innerHeight - 4 ? 0 : w.scrollY;
+    touring = true; last = 0; setTourUi(); requestAnimationFrame(step);
+  }
+  tourBtns.forEach(b => b.addEventListener('click', toggleTour));
+  segBtns.forEach(b => b.addEventListener('click', () => setDev(b.dataset.dev)));
+
+  // Kifaa kinageuka kidogo kufuata kipanya (nje ya skrini ya demo)
+  if (!calm && matchMedia('(hover: hover)').matches){
+    center.addEventListener('pointermove', e => {
+      const r = center.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+      wrap.style.transform = 'rotateY(' + (x * 8) + 'deg) rotateX(' + (-y * 6) + 'deg)';
+    });
+    center.addEventListener('pointerleave', () => { wrap.style.transform = ''; });
+    wrap.style.transition = 'transform .6s cubic-bezier(.22,.9,.3,1)';
+  }
+
+  function tick(){
+    const el = document.getElementById('clock'), n = new Date();
+    if (el) el.textContent = n.getHours() + ':' + String(n.getMinutes()).padStart(2, '0');
+  }
+  setInterval(tick, 30000);
+
+  // Rangi: bonyeza kunakili
+  document.querySelectorAll('.sw button').forEach(b => b.addEventListener('click', () => {
+    if (navigator.clipboard) navigator.clipboard.writeText(b.dataset.hex).then(() => toast('Copied ' + b.dataset.hex));
+  }));
+
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT') return;
+    if (e.key === 'Escape') closeShare();
+    if (e.key === '1') setDev('mobile');
+    if (e.key === '2') setDev('tablet');
+    if (e.key === '3') setDev('desktop');
+    if (e.key === 't' || e.key === 'T') toggleTour();
+  });
+  addEventListener('resize', () => { fit(); movePill(); });
+
+  // Mwanzo: kifaa kilichotumika mara ya mwisho; skrini ndogo → simu
+  let start = 'mobile';
+  try { start = localStorage.getItem('jt_dev') || 'mobile'; } catch(e){}
+  if (!SIZES[start] || innerWidth < 720) start = 'mobile';
+  setDev(start, true);
+  if (document.fonts) document.fonts.ready.then(movePill);
+
+  // ── Kushiriki ──
+  window.toast = function(m){ const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2400); };
+  window.openShare = function(){
+    const u = location.href;
+    document.getElementById('shareUrl').value = u;
+    document.getElementById('waLink').href = 'https://wa.me/?text=' + encodeURIComponent('Habari! 👋\n\nTazama template ya *' + NAME + '* kutoka JamiiTek:\n\n🔗 ' + u);
+    document.getElementById('twLink').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent('Tazama template hii ya ' + NAME + ' kutoka @JamiiTek 🔥\n\n' + u);
+    document.getElementById('sOverlay').classList.add('open');
+  };
+  window.closeShare = function(){ document.getElementById('sOverlay').classList.remove('open'); };
+  window.copyLink = function(){
+    const i = document.getElementById('shareUrl'), b = document.getElementById('copyBtn');
+    const ok = () => { b.textContent = 'Copied!'; toast('Link copied'); setTimeout(() => b.textContent = 'Copy', 2000); };
+    if (navigator.clipboard) navigator.clipboard.writeText(i.value).then(ok).catch(() => { i.select(); document.execCommand('copy'); ok(); });
+    else { i.select(); document.execCommand('copy'); ok(); }
+  };
+  window.orderNow = function(){
+    const m = 'Habari JamiiTek! 👋\n\nNimetazama preview ya template *' + NAME + '* (' + CAT + ') na ninaipenda sana!\n\n🔗 ' + location.href + '\n\nNaomba tuongee kuhusu jinsi ya kuipata. Asante!';
+    window.open('https://wa.me/{% contact "wa" %}?text=' + encodeURIComponent(m), '_blank');
+  };
 })();
-
-/* keyboard */
-document.addEventListener('keydown',function(e){
-  if(e.key==='Escape')closeShare();
-  if(e.altKey&&e.key==='1')setDev('mobile');
-  if(e.altKey&&e.key==='2')setDev('tablet');
-  if(e.altKey&&e.key==='3')setDev('desktop');
-});
-
-/* share */
-function openShare(){
-  const u=location.href;
-  document.getElementById('shareUrl').value=u;
-  const wa=encodeURIComponent('Habari! 👋\n\nNimetazama template ya *'+NAME+'* kutoka JamiiTek!\n\n🔗 '+u+'\n\nJamiiTek — Web Development Tanzania 🇹🇿');
-  const tw=encodeURIComponent('Tazama template hii ya '+NAME+' kutoka @JamiiTek 🔥\n\n'+u+' #WebDev #Tanzania');
-  document.getElementById('waLink').href='https://wa.me/?text='+wa;
-  document.getElementById('twLink').href='https://twitter.com/intent/tweet?text='+tw;
-  document.getElementById('sOverlay').classList.add('open');
-}
-function closeShare(){document.getElementById('sOverlay').classList.remove('open')}
-function bgClose(e){if(e.target.id==='sOverlay')closeShare()}
-
-function copyLink(){
-  const u=document.getElementById('shareUrl').value;
-  const b=document.getElementById('copyBtn');
-  function ok(){
-    b.classList.add('ok');
-    b.innerHTML='<svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> Copied!';
-    showToast('Link copied to clipboard!');
-    setTimeout(()=>{
-      b.classList.remove('ok');
-      b.innerHTML='<svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> Copy';
-    },2500);
-  }
-  if(navigator.clipboard){navigator.clipboard.writeText(u).then(ok).catch(()=>{fb(u,ok)})}
-  else fb(u,ok);
-}
-function fb(t,cb){
-  const i=document.getElementById('shareUrl');
-  i.select();i.setSelectionRange(0,99999);
-  try{document.execCommand('copy');cb()}catch(e){}
-}
-
-function showToast(m){
-  const t=document.getElementById('toast');
-  document.getElementById('toastMsg').textContent=m;
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2800);
-}
-
-function orderNow(){
-  const u=location.href;
-  const m='Habari JamiiTek! 👋\n\nNimetazama preview ya template *'+NAME+'* ('+CAT+') na ninapenda sana!\n\n🔗 '+u+'\n\nNaomba tuongee kuhusu jinsi ya kuipata. Asante!';
-  window.open('https://wa.me/{% contact "wa" %}?text='+encodeURIComponent(m),'_blank');
-}
 </script>
 </body>
 </html>

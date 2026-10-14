@@ -113,6 +113,22 @@ class TemplateSeoTest(NoPingMixin, TestCase):
         tpl.save()
         self.assertEqual(self.client.get(url).status_code, 404)
 
+    def test_preview_studio_shows_sections_prices_and_actions(self):
+        from django.test.utils import CaptureQueriesContext
+        from django.db import connection
+        tpl = _tpl(name='Studio', preview_html='<html><body><section><h2>Our Rooms</h2></section></body></html>')
+        url = '/templates/preview/%d/' % tpl.pk
+        self.client.get(url)                                   # anatomia inaingia kwenye RAM
+        with CaptureQueriesContext(connection) as q:
+            r = self.client.get(url)
+        page = r.content.decode()
+        self.assertEqual(r.status_code, 200)
+        self.assertIn('data-i="0">Our Rooms</button>', page)
+        self.assertIn('/builder/templates/%d/use/' % tpl.pk, page)
+        self.assertIn('/proposals/?template=%d' % tpl.pk, page)
+        self.assertIn('<link rel="canonical" href="https://www.jamiitek.com%s">' % tpl.get_absolute_url(), page)
+        self.assertFalse(any('preview_html' in x['sql'] for x in q.captured_queries))
+
     def test_inactive_or_unknown_template_is_404(self):
         _tpl(name='Hidden', is_active=False)
         self.assertEqual(self.client.get('/templates/hidden/').status_code, 404)
