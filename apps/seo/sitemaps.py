@@ -29,6 +29,7 @@ class StaticPageSitemap(Sitemap):
         ('home',            1.0,  'daily'),
         ('service',         0.9,  'weekly'),
         ('About',           0.7,  'monthly'),
+        ('portfolio',       0.8,  'weekly'),
         ('contact',         0.7,  'monthly'),
         ('select_website',  0.8,  'weekly'),
         ('get_started',     0.9,  'weekly'),    # vitufe vyote vya "Start a project"

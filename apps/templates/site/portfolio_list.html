@@ -1,0 +1,45 @@
+{% extends 'site/base.html' %}
+{% load static %}
+{% block head %}{% include 'site/_portfolio_css.html' %}{% endblock %}
+
+{% block content %}
+<section class="ph" data-live>
+  <div class="wrap">
+    <nav class="crumb up" style="--d:0s" aria-label="Breadcrumb"><a href="{% url 'home' %}">Home</a><i></i><span>Portfolio</span></nav>
+    <h1 class="up" style="--d:.15s">Real projects, <em>running in production.</em></h1>
+    <p class="ph__lead up" style="--d:.35s">Websites, dashboards and systems we designed and built for businesses and organisations across Tanzania. Every project here is live and used every day.</p>
+    <div class="acts up" style="--d:.5s">
+      <a class="btn btn--gold" href="{% url 'get_started' %}">Start your project <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 11h12.2l-4.6-4.6L13 5l7 7-7 7-1.4-1.4 4.6-4.6H4z"/></svg></a>
+      <a class="btn btn--line" href="{% url 'service' %}">Our services</a>
+    </div>
+  </div>
+</section>
+
+<section class="sec" style="padding-top:10px">
+  <div class="wrap">
+    {% if items %}
+    <div class="works">
+      {% for p in items %}
+      <article class="work win rv" id="p-{{ p.pk }}" style="--rd:{% cycle '0s' '.08s' '.16s' %}">
+        <div class="win__bar" aria-hidden="true"><i></i><i></i><i></i><span class="win__url">{% if p.live_url %}<b>{{ p.live_url|cut:"https://"|cut:"http://"|cut:"www."|cut:"/" }}</b>{% else %}{{ p.title }}{% endif %}</span></div>
+        <div class="work__shot">{% include 'site/_work_mock.html' %}{% if p.image %}<img src="{{ p.image }}" alt="{{ p.title }}{% if p.client %} — {{ p.client }}{% endif %}" width="1600" height="1000" loading="lazy" decoding="async" data-hide-broken>{% endif %}</div>
+        <div class="work__body">
+          {% if p.category %}<span class="work__cat">{{ p.category }}</span>{% endif %}
+          <h3>{{ p.title }}</h3>
+          {% if p.summary %}<p>{{ p.summary }}</p>{% endif %}
+          <div class="work__foot">
+            <span>{{ p.client }}{% if p.client and p.year %} · {% endif %}{{ p.year }}</span>
+            {% if p.live_url %}<a class="btn btn--line btn--sm" href="{{ p.live_url }}" target="_blank" rel="noopener" aria-label="Visit {{ p.title }} (opens in a new tab)">Visit site <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 3h7v7h-2V6.4l-9.3 9.3-1.4-1.4L17.6 5H14V3zM5 5h6v2H5v12h12v-6h2v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg></a>{% endif %}
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="pf-empty">New case studies are on their way.</p>
+    {% endif %}
+  </div>
+</section>
+
+{% include 'site/_kili.html' with eyebrow="Tujenge pamoja" title="Want a website like these? Let's" em="talk." text="Tell us about your project. We reply within one business day with a plan, a timeline and a fixed price." %}
+{% endblock %}
