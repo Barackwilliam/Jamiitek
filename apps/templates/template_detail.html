@@ -18,41 +18,126 @@
 {% comment %}
 Ukurasa wa SEO wa template moja (apps/template_seo.py). Maandishi yote hapa
 ni HTML halisi — Google na AI zinaisoma; iframe ni onyesho tu.
+Rangi za mwanga (--t1/--t2) ni rangi za template yenyewe, kwa hiyo kila
+ukurasa una hisia ya template yake.
 {% endcomment %}
 {% include 'includes/mk_style.html' %}
+{% if anatomy.font_url %}<link rel="stylesheet" href="{{ anatomy.font_url }}" media="print" onload="this.media='all'">{% endif %}
 <style>
-.td-hero{position:relative;padding:clamp(100px,12vw,140px) 0 50px;isolation:isolate}
-.td-hero::before{content:"";position:absolute;inset:0;z-index:-1;
-  background:radial-gradient(800px 480px at 15% 0%,rgba(124,92,255,.32),transparent 65%),
-  radial-gradient(700px 420px at 95% 30%,rgba(0,212,255,.16),transparent 60%)}
-.td-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:clamp(28px,4vw,56px);align-items:center}
+.td-hero{position:relative;padding:clamp(96px,11vw,130px) 0 clamp(40px,6vw,70px);isolation:isolate}
+.td-hero::before{content:"";position:absolute;inset:0;z-index:-2;
+  background:radial-gradient(760px 520px at 78% 38%,color-mix(in srgb,var(--t1) 34%,transparent),transparent 68%),
+  radial-gradient(620px 420px at 98% 85%,color-mix(in srgb,var(--t2) 26%,transparent),transparent 65%),
+  radial-gradient(700px 460px at 8% 0%,rgba(124,92,255,.26),transparent 65%)}
+.td-hero::after{content:"";position:absolute;inset:0;z-index:-1;opacity:.45;
+  background:linear-gradient(rgba(148,178,255,.06) 1px,transparent 1px) 0 0/56px 56px,linear-gradient(90deg,rgba(148,178,255,.06) 1px,transparent 1px) 0 0/56px 56px;
+  -webkit-mask:radial-gradient(ellipse at 70% 40%,#000 20%,transparent 70%);mask:radial-gradient(ellipse at 70% 40%,#000 20%,transparent 70%)}
+.td-grid{display:grid;grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr);gap:clamp(28px,4vw,60px);align-items:center;margin-top:26px}
 .td-cat{display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);
   font-size:13px;font-weight:700;color:var(--c)}
-.td-hero h1{font-size:clamp(34px,5vw,60px);line-height:1.04;letter-spacing:-.04em;font-weight:800;margin:18px 0 16px}
-.td-hero h1 small{display:block;font-size:.42em;letter-spacing:-.01em;font-weight:700;color:var(--mut);margin-top:10px}
-.td-lead{font-size:17px;line-height:1.7;color:var(--mut);margin:0 0 26px}
+.td-hero h1{font-size:clamp(36px,5.2vw,66px);line-height:1;letter-spacing:-.045em;font-weight:800;margin:18px 0 14px;
+  background:linear-gradient(180deg,#fff 40%,#b9c4d8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.td-hero h1 small{display:block;font-size:.36em;letter-spacing:-.01em;font-weight:700;margin-top:14px;
+  background:linear-gradient(90deg,var(--t1),var(--t2));-webkit-background-clip:text;background-clip:text;color:transparent;filter:brightness(1.35) saturate(1.2)}
+.td-lead{font-size:17px;line-height:1.7;color:var(--mut);margin:0 0 26px;max-width:540px}
 .td-ctas{display:flex;flex-wrap:wrap;gap:10px}
-.td-trust{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:22px;font-size:13px;color:var(--mut)}
-.td-trust span::before{content:"✓ ";color:var(--g);font-weight:800}
+.td-stats{display:grid;grid-template-columns:repeat(4,auto);justify-content:start;gap:0;margin-top:30px;border:1px solid var(--line);border-radius:18px;
+  background:rgba(255,255,255,.03);backdrop-filter:blur(8px);width:max-content;max-width:100%}
+.td-stats div{padding:12px 18px;border-right:1px solid var(--line)}.td-stats div:last-child{border:0}
+.td-stats b{display:block;font-size:20px;font-weight:800;letter-spacing:-.02em;color:#fff}
+.td-stats span{font-size:12px;color:var(--mut);white-space:nowrap}
 
-/* Laptop + simu */
-.td-show{position:relative;padding:0 0 40px 0}
-.td-laptop{border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#0a0f1c;box-shadow:0 40px 100px rgba(0,0,0,.55),0 0 0 1px rgba(0,212,255,.08)}
-.td-screen{position:relative;aspect-ratio:16/10;overflow:hidden;background:#fff}
-.td-screen iframe,.td-phone-in iframe{position:absolute;top:0;left:0;border:0;transform-origin:0 0;background:#fff;pointer-events:none}
+/* Jukwaa la 3D: laptop + simu, demo inajisogeza yenyewe */
+.td-stage{position:relative;perspective:1800px;padding:10px 0 56px}
+.td-rig{position:relative;transform-style:preserve-3d;transform:rotateY(var(--ry,-11deg)) rotateX(var(--rx,5deg));transition:transform .5s cubic-bezier(.22,.9,.3,1)}
+.td-laptop{position:relative;border-radius:16px 16px 6px 6px;padding:10px 10px 0;background:linear-gradient(180deg,#1a2133,#0b101c);
+  border:1px solid rgba(255,255,255,.12);box-shadow:0 50px 120px rgba(0,0,0,.6),0 0 0 1px rgba(0,0,0,.6),0 0 90px color-mix(in srgb,var(--t1) 22%,transparent)}
+.td-laptop::after{content:"";position:absolute;left:-7%;right:-7%;bottom:-16px;height:16px;border-radius:0 0 18px 18px;
+  background:linear-gradient(180deg,#2a3247,#121828 70%);box-shadow:0 18px 30px rgba(0,0,0,.5)}
+.td-cam{position:absolute;top:3px;left:50%;width:5px;height:5px;margin-left:-2px;border-radius:50%;background:#2c3550}
+.td-screen{position:relative;aspect-ratio:16/10;overflow:hidden;border-radius:6px 6px 0 0;background:var(--grad)}
+.td-screen iframe,.td-phone-in iframe{position:absolute;top:0;left:0;border:0;transform-origin:0 0;background:#fff;pointer-events:none;opacity:0;transition:opacity .6s}
+.td-screen iframe.ok,.td-phone-in iframe.ok{opacity:1}
 .td-screen iframe{width:1280px;height:800px}
-.td-phone{position:absolute;right:-10px;bottom:0;width:clamp(120px,24%,170px);padding:7px;border-radius:26px;background:#05070d;border:1px solid rgba(255,255,255,.14);
-  box-shadow:0 30px 70px rgba(0,0,0,.6)}
-.td-phone-in{position:relative;aspect-ratio:9/19;border-radius:20px;overflow:hidden;background:#fff}
-.td-phone-in iframe{width:390px;height:823px}
-.td-live{position:absolute;left:14px;bottom:54px;z-index:2;display:inline-flex;gap:8px;align-items:center;padding:8px 14px;border-radius:999px;
-  background:rgba(5,7,13,.85);border:1px solid var(--line);font-size:13px;font-weight:700;color:#fff;backdrop-filter:blur(8px)}
-.td-live::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--g);box-shadow:0 0 0 4px rgba(37,211,102,.25)}
+.td-glare{position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.14),transparent 32%,transparent 70%,rgba(255,255,255,.05))}
+.td-phone{position:absolute;right:-4%;bottom:-6px;width:clamp(112px,23%,168px);padding:7px;border-radius:28px;background:#05070d;border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 30px 70px rgba(0,0,0,.65);transform:translateZ(60px)}
+.td-phone::before{content:"";position:absolute;top:12px;left:50%;width:34%;height:12px;margin-left:-17%;border-radius:10px;background:#05070d;z-index:3}
+.td-phone-in{position:relative;aspect-ratio:9/19.5;border-radius:22px;overflow:hidden;background:var(--grad)}
+.td-phone-in iframe{width:390px;height:845px}
+.td-chip{position:absolute;z-index:4;display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:14px;font-size:13px;font-weight:700;color:#fff;
+  background:rgba(10,15,28,.82);border:1px solid var(--line);backdrop-filter:blur(10px);box-shadow:0 16px 40px rgba(0,0,0,.45);animation:tdFloat 6s ease-in-out infinite}
+.td-chip.a{left:-6%;top:-2%}.td-chip.b{left:6%;bottom:8px;animation-delay:-3s}
+.td-chip i{font-style:normal;width:26px;height:26px;display:grid;place-items:center;border-radius:8px;background:linear-gradient(135deg,var(--t1),var(--t2))}
+@keyframes tdFloat{50%{transform:translateY(-8px)}}
 
-/* Sehemu */
-.td-sec{padding:clamp(50px,7vw,80px) 0 0}
+/* Studio: demo kamili, unaweza kuitumia na kubadili kifaa */
+.td-studio{position:relative;padding-top:clamp(56px,8vw,96px)}
+.st-head{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:16px 30px;margin-bottom:24px}
+.st-head .td-sub{margin:0}
+.st-wrap{display:grid;grid-template-columns:250px minmax(0,1fr);gap:18px;align-items:start}
+.st-wrap.solo{grid-template-columns:minmax(0,1fr)}
+.st-rail{position:sticky;top:90px;padding:18px;border-radius:20px;border:1px solid var(--line);background:linear-gradient(170deg,#0e1526,#090d18)}
+.st-rail h3{margin:0 0 4px;font-size:14px;font-weight:800}
+.st-rail p{margin:0 0 14px;font-size:12.5px;color:var(--mut)}
+.st-rail ol{list-style:none;margin:0;padding:0;position:relative;counter-reset:s;max-height:430px;overflow:auto;scrollbar-width:thin}
+.st-rail button{counter-increment:s;display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:0;border-radius:11px;background:none;cursor:pointer;
+  color:var(--mut);font:600 13.5px var(--ff);text-align:left;transition:background .2s,color .2s}
+.st-rail button::before{content:counter(s,decimal-leading-zero);font-size:11px;font-weight:800;color:var(--dim);min-width:18px}
+.st-rail button:hover{background:rgba(255,255,255,.04);color:#fff}
+.st-rail button.on{background:linear-gradient(90deg,color-mix(in srgb,var(--t1) 26%,transparent),transparent);color:#fff}
+.st-rail button.on::before{color:var(--c)}
+.st-main{position:relative;border-radius:22px;border:1px solid var(--line);background:#0a0f1c;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,.45)}
+.st-main:fullscreen{border-radius:0;display:flex;flex-direction:column}
+.st-main:fullscreen .st-view{flex:1;height:auto}
+.st-bar{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.02)}
+.st-dots{display:flex;gap:6px}.st-dots i{width:10px;height:10px;border-radius:50%;background:#ff5f57}.st-dots i:nth-child(2){background:#febc2e}.st-dots i:nth-child(3){background:#28c840}
+.st-url{flex:1;min-width:0;display:flex;align-items:center;gap:8px;padding:7px 12px;border-radius:10px;background:rgba(255,255,255,.05);font:500 12.5px ui-monospace,monospace;color:#9fb0c8;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-url::before{content:"🔒";font-size:11px}
+.st-seg{display:flex;padding:3px;border-radius:11px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.st-seg button,.st-tool{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 11px;border:0;border-radius:8px;background:none;color:var(--mut);
+  font:700 12.5px var(--ff);cursor:pointer;transition:background .2s,color .2s}
+.st-seg button.on{background:#fff;color:#05070d}
+.st-tool{border:1px solid var(--line);background:rgba(255,255,255,.04)}.st-tool:hover,.st-seg button:hover:not(.on){color:#fff}
+.st-tool.on{color:#04120a;background:var(--g);border-color:var(--g)}
+.st-seg svg,.st-tool svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.st-view{position:relative;height:min(680px,72vh);overflow:hidden;
+  background:radial-gradient(600px 300px at 50% 0%,color-mix(in srgb,var(--t1) 16%,transparent),transparent 70%),
+  linear-gradient(rgba(148,178,255,.05) 1px,transparent 1px) 0 0/28px 28px,linear-gradient(90deg,rgba(148,178,255,.05) 1px,transparent 1px) 0 0/28px 28px,#070b14}
+.st-dev{position:absolute;top:0;left:50%;height:100%;transform:translateX(-50%);overflow:hidden;background:#fff;
+  transition:width .55s cubic-bezier(.22,.9,.3,1),top .55s cubic-bezier(.22,.9,.3,1),height .55s cubic-bezier(.22,.9,.3,1),border-radius .55s}
+.st-dev.framed{top:18px;height:calc(100% - 36px);border-radius:22px;box-shadow:0 0 0 8px #05070d,0 0 0 9px rgba(255,255,255,.14),0 30px 80px rgba(0,0,0,.6)}
+.st-dev iframe{position:absolute;top:0;left:0;border:0;background:#fff;transform-origin:0 0}
+.st-load{position:absolute;inset:0;display:grid;place-items:center;background:var(--grad);color:#fff;font-weight:800;font-size:15px;transition:opacity .5s}
+.st-dev.ok .st-load{opacity:0;pointer-events:none}
+.st-prog{position:absolute;left:0;bottom:0;height:3px;width:0;z-index:3;background:linear-gradient(90deg,var(--t1),var(--t2),var(--c))}
+.st-hint{position:absolute;left:50%;bottom:16px;z-index:3;transform:translateX(-50%);padding:8px 14px;border-radius:999px;background:rgba(5,7,13,.85);
+  border:1px solid var(--line);font-size:12.5px;font-weight:700;color:#fff;pointer-events:none;transition:opacity .4s;white-space:nowrap}
+.st-hint.off{opacity:0}
+
+/* DNA ya muundo */
+.td-dna{display:grid;grid-template-columns:1.35fr 1fr 1fr;gap:14px}
+.td-box{padding:22px;border-radius:20px;border:1px solid var(--line);background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.015))}
+.td-box h3{margin:0 0 14px;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.td-sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:10px}
+.td-sw button{display:flex;flex-direction:column;gap:7px;padding:0;border:0;background:none;color:var(--mut);font:600 11.5px ui-monospace,monospace;cursor:pointer;text-align:left}
+.td-sw button i{display:block;height:56px;border-radius:14px;border:1px solid rgba(255,255,255,.12);transition:transform .2s}
+.td-sw button:hover i{transform:translateY(-3px)}
+.td-type{display:flex;flex-direction:column;gap:12px}
+.td-type div{display:flex;align-items:center;gap:14px}
+.td-type b{font-size:40px;line-height:1;font-weight:700;color:#fff;min-width:64px}
+.td-type span{font-size:14px;font-weight:700}.td-type small{display:block;color:var(--mut);font-weight:500;font-size:12px}
+.td-nums{display:grid;grid-template-columns:1fr 1fr;gap:16px 10px}
+.td-nums b{display:block;font-size:30px;font-weight:800;letter-spacing:-.03em;background:linear-gradient(90deg,#fff,var(--c));-webkit-background-clip:text;background-clip:text;color:transparent}
+.td-nums span{font-size:12.5px;color:var(--mut)}
+.td-stack{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+.td-stack span{padding:5px 10px;border-radius:999px;border:1px solid var(--line);font-size:12px;font-weight:700;color:#cfd8e8}
+
+/* Sehemu za chini */
+.td-sec{padding-top:clamp(50px,7vw,80px)}
 .td-kick{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--c)}
-.td-sec h2{font-size:clamp(26px,3.4vw,40px);letter-spacing:-.03em;line-height:1.1;margin:10px 0 12px;font-weight:800}
+.td-sec h2,.td-studio h2{font-size:clamp(26px,3.4vw,40px);letter-spacing:-.03em;line-height:1.1;margin:10px 0 12px;font-weight:800}
 .td-sub{color:var(--mut);font-size:16px;line-height:1.65;max-width:680px;margin:0 0 28px}
 .td-feats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .td-feat{padding:22px;border-radius:18px;border:1px solid var(--line);background:linear-gradient(160deg,rgba(255,255,255,.05),rgba(255,255,255,.015))}
@@ -84,39 +169,142 @@ ni HTML halisi — Google na AI zinaisoma; iframe ni onyesho tu.
 
 .td-rel{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 .td-rel .mk-card{animation:none}
-@media(max-width:980px){.td-grid,.td-article{grid-template-columns:1fr}.td-feats,.td-plans,.td-rel{grid-template-columns:1fr 1fr}.td-show{max-width:640px}}
-@media(max-width:620px){.td-feats,.td-plans,.td-rel{grid-template-columns:1fr}.td-phone{right:0}}
+
+/* Utepe wa chini unaobaki unaposhuka */
+.td-dock{position:fixed;left:50%;bottom:18px;z-index:60;display:flex;align-items:center;gap:14px;padding:8px 8px 8px 16px;border-radius:18px;
+  background:rgba(10,15,28,.88);border:1px solid var(--line);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 20px 60px rgba(0,0,0,.55);
+  transform:translate(-50%,140%);transition:transform .45s cubic-bezier(.22,.9,.3,1);max-width:calc(100vw - 32px)}
+.td-dock.on{transform:translate(-50%,0)}
+.td-dock i{width:34px;height:34px;flex-shrink:0;border-radius:10px;background:var(--grad)}
+.td-dock b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.td-dock small{color:var(--mut);font-size:12px}
+.td-dock .mk-btn{padding:11px 16px;font-size:14px;white-space:nowrap}
+
+@media(max-width:1080px){.st-wrap{grid-template-columns:minmax(0,1fr)}.st-rail{position:static}.st-rail ol{display:flex;gap:6px;overflow-x:auto;max-height:none}
+  .st-rail li{flex-shrink:0}.st-rail button{white-space:nowrap;border:1px solid var(--line)}}
+@media(max-width:980px){.td-article{grid-template-columns:1fr}
+  /* Simu/tablet: template ionekane mara moja chini ya jina, kabla ya maelezo */
+  .td-grid{display:flex;flex-direction:column;gap:0}.td-copy{display:contents}.td-cat{align-self:flex-start;order:1}
+  .td-hero h1{order:2}.td-stage{order:3;margin:4px auto 30px}.td-lead{order:4}.td-ctas{order:5}.td-stats{order:6}
+ .td-feats,.td-plans,.td-rel{grid-template-columns:1fr 1fr}
+  .td-stage{max-width:660px;width:100%}.td-dna{grid-template-columns:1fr 1fr}.td-dna .td-box:first-child{grid-column:1/-1}}
+@media(max-width:620px){.td-feats,.td-plans,.td-rel,.td-dna{grid-template-columns:1fr}.td-stats{grid-template-columns:1fr 1fr;width:100%}
+  .td-stats div:nth-child(2){border-right:0}.td-stats div:nth-child(-n+2){border-bottom:1px solid var(--line)}
+  .td-chip{display:none}.td-phone{right:-2%}.td-stage{padding-bottom:20px}.td-rig{--ry:0deg;--rx:0deg}
+  .st-bar{flex-wrap:wrap}.st-url{order:3;flex-basis:100%}.st-dots{display:none}.st-tool span{display:none}.st-view{height:560px}
+  .td-lead{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+  .td-dock{left:12px;right:12px;max-width:none;transform:translateY(140%);gap:10px}.td-dock.on{transform:none}
+  .td-dock>div{flex:1;min-width:0}.td-dock small,.td-dock .mk-btn.s{display:none}.td-dock b{max-width:none}}
+@media(prefers-reduced-motion:reduce){.td-chip{animation:none}.td-rig,.st-dev,.td-dock{transition:none}}
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="mk">
-  <section class="td-hero">
+<div class="mk" style="--t1:{{ tpl.gradient_start }};--t2:{{ tpl.gradient_end }};--grad:{{ tpl.gradient_css }}">
+  <section class="td-hero" id="td-hero">
     <div class="mk-in">
       <nav class="mk-crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="{% url 'templates_marketplace' %}">Templates</a> ›
         <a href="{{ cat_url }}">{{ tpl.category_plain }}</a> › <span>{{ tpl.name }}</span></nav>
       <div class="td-grid">
-        <div>
+        <div class="td-copy">
           <span class="td-cat">{{ tpl.get_category_display }}{% if tpl.badge %} · {{ tpl.get_badge_display }}{% endif %}</span>
           <h1>{{ tpl.name }}<small>{{ cat_noun|capfirst }} website template</small></h1>
-          <p class="td-lead">{{ tpl.description }}</p>
+          <p class="td-lead">{{ tpl.description|truncatewords:34 }}</p>
           <div class="td-ctas">
             <a class="mk-btn p" href="{% url 'builder:from_template' tpl.pk %}">✨ Customize free in Builder</a>
-            <a class="mk-btn s" href="{% url 'template_preview' tpl.pk %}" target="_blank" rel="noopener">👁 Live preview</a>
+            <a class="mk-btn s" href="#studio">▶ Explore the live demo</a>
           </div>
-          <div class="td-trust"><span>Free to customize</span><span>Mobile-perfect</span><span>Free .jamiitek.com address</span><span>WhatsApp built in</span></div>
+          <div class="td-stats">
+            {% if anatomy.section_count %}<div><b>{{ anatomy.section_count }}</b><span>designed sections</span></div>{% endif %}
+            <div><b>3</b><span>screen sizes</span></div>
+            <div><b>EN · SW</b><span>ready languages</span></div>
+            <div><b>Free</b><span>to customize</span></div>
+          </div>
         </div>
-        <div class="td-show" aria-label="Preview of {{ tpl.name }} on a laptop and a phone">
-          <div class="td-laptop">
-            <div class="mk-chrome" style="position:static"><i></i><i></i><i></i><span>{{ tpl.slug }}.jamiitek.com</span></div>
-            <div class="td-screen"><iframe data-src="{% url 'template_preview_raw' tpl.pk %}" title="{{ tpl.name }} on desktop" tabindex="-1" loading="lazy"></iframe></div>
+        <div class="td-stage" aria-label="Preview of {{ tpl.name }} on a laptop and a phone">
+          <div class="td-rig">
+            <div class="td-laptop">
+              <span class="td-cam"></span>
+              <div class="td-screen"><iframe src="{% url 'template_preview_raw' tpl.pk %}" title="{{ tpl.name }} on desktop" tabindex="-1" aria-hidden="true" data-drift="70"></iframe><div class="td-glare"></div></div>
+            </div>
+            <div class="td-phone"><div class="td-phone-in"><iframe src="{% url 'template_preview_raw' tpl.pk %}" title="{{ tpl.name }} on mobile" tabindex="-1" aria-hidden="true" data-drift="55"></iframe></div></div>
           </div>
-          <div class="td-phone"><div class="td-phone-in"><iframe data-src="{% url 'template_preview_raw' tpl.pk %}" title="{{ tpl.name }} on mobile" tabindex="-1" loading="lazy"></iframe></div></div>
-          <a class="td-live" href="{% url 'template_preview' tpl.pk %}" target="_blank" rel="noopener">Live demo</a>
+          <span class="td-chip a"><i>📱</i>Perfect on every phone</span>
+          <span class="td-chip b"><i>💬</i>WhatsApp built in</span>
         </div>
       </div>
     </div>
   </section>
+
+  <section class="mk-in td-studio" id="studio">
+    <div class="st-head">
+      <div>
+        <span class="td-kick">Live studio</span>
+        <h2>Explore {{ tpl.name }} like it’s already yours</h2>
+        <p class="td-sub">This is the real, working template — scroll it, click it, switch between laptop, tablet and phone, or let the tour walk you through every section.</p>
+      </div>
+      <a class="mk-btn s" href="{% url 'template_preview' tpl.pk %}" target="_blank" rel="noopener">↗ Open full screen demo</a>
+    </div>
+    <div class="st-wrap{% if not anatomy.sections %} solo{% endif %}">
+      {% if anatomy.sections %}
+      <aside class="st-rail">
+        <h3>Inside this template</h3>
+        <p>{{ anatomy.section_count }} sections — tap one to jump there</p>
+        <ol>{% for i, label in anatomy.sections %}<li><button type="button" data-i="{{ i }}">{{ label }}</button></li>{% endfor %}</ol>
+      </aside>
+      {% endif %}
+      <div class="st-main">
+        <div class="st-bar">
+          <div class="st-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="st-url">{{ tpl.slug }}.jamiitek.com</div>
+          <div class="st-seg" role="group" aria-label="Screen size">
+            <button type="button" class="on" data-w="1280" aria-label="Laptop" title="Laptop"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg></button>
+            <button type="button" data-w="820" aria-label="Tablet" title="Tablet"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M11 18h2"/></svg></button>
+            <button type="button" data-w="390" aria-label="Phone" title="Phone"><svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></button>
+          </div>
+          <button type="button" class="st-tool" data-tour><svg viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg><span>Auto tour</span></button>
+          <button type="button" class="st-tool" data-full aria-label="Full screen" title="Full screen"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+        </div>
+        <div class="st-view">
+          <div class="st-dev">
+            <iframe data-src="{% url 'template_preview_raw' tpl.pk %}" title="{{ tpl.name }} — interactive demo"></iframe>
+            <div class="st-load">Loading {{ tpl.name }}…</div>
+          </div>
+          <div class="st-hint">Scroll inside · click anything · it’s live</div>
+          <div class="st-prog"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {% if anatomy.palette or anatomy.fonts %}
+  <section class="mk-in td-sec">
+    <span class="td-kick">Design DNA</span>
+    <h2>Crafted detail, not a quick layout</h2>
+    <p class="td-sub">Every JamiiTek template is designed by hand — its own colour system, typography and motion. Here’s what {{ tpl.name }} is made of.</p>
+    <div class="td-dna">
+      {% if anatomy.palette %}
+      <div class="td-box"><h3>Colour palette</h3>
+        <div class="td-sw">{% for c in anatomy.palette %}<button type="button" data-copy="{{ c }}" title="Copy {{ c }}"><i style="background:{{ c }}"></i>{{ c }}</button>{% endfor %}</div>
+      </div>
+      {% endif %}
+      {% if anatomy.fonts %}
+      <div class="td-box"><h3>Typography</h3>
+        <div class="td-type">{% for f in anatomy.fonts %}<div><b style="font-family:'{{ f }}',serif">Aa</b><span>{{ f }}<small>{% if forloop.first %}Headings{% else %}Text &amp; details{% endif %}</small></span></div>{% endfor %}</div>
+      </div>
+      {% endif %}
+      <div class="td-box"><h3>By the numbers</h3>
+        <div class="td-nums">
+          <div><b>{{ anatomy.section_count|default:"—" }}</b><span>sections</span></div>
+          <div><b>{{ anatomy.images|default:"—" }}</b><span>image spots</span></div>
+          <div><b>{% if anatomy.breakpoints %}{{ anatomy.breakpoints }}{% else %}3{% endif %}</b><span>responsive breakpoints</span></div>
+          <div><b>{% if anatomy.animated %}Yes{% else %}—{% endif %}</b><span>smooth animations</span></div>
+        </div>
+        <div class="td-stack"><span>HTML5</span><span>CSS3</span><span>JavaScript</span><span>SEO-ready</span></div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
 
   <section class="mk-in td-sec">
     <span class="td-kick">What’s inside</span>
@@ -215,23 +403,160 @@ ni HTML halisi — Google na AI zinaisoma; iframe ni onyesho tu.
     </div>
   </section>
   {% endif %}
+
+  <div class="td-dock" aria-hidden="true">
+    <i></i>
+    <div><b>{{ tpl.name }}</b><small>Free to customize · live in minutes</small></div>
+    <a class="mk-btn s" href="#studio" tabindex="-1">Live demo</a>
+    <a class="mk-btn p" href="{% url 'builder:from_template' tpl.pk %}" tabindex="-1">✨ Customize free</a>
+  </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 (function(){
-  // Onyesho la laptop na simu: iframe ya 1280/390px inapunguzwa kutoshea fremu
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const doc = f => { try { return f.contentDocument; } catch(e){ return null; } };
+  const win = f => { try { return f.contentWindow; } catch(e){ return null; } };
+  // iframe inaweza kuwa imeshapakia kabla script hii haijaanza
+  const ready = (f, fn) => { const d = doc(f);
+    if (d && d.readyState === 'complete' && d.URL !== 'about:blank') fn(); else f.addEventListener('load', fn, {once: true}); };
+  const jump = (w, y) => { try { w.scrollTo({top: y, behavior: 'instant'}); } catch(e){ w.scrollTo(0, y); } };
+
+  // Laptop na simu ya juu: iframe ya 1280/390px inapunguzwa kutoshea fremu
   const fit = () => document.querySelectorAll('.td-screen iframe,.td-phone-in iframe').forEach(f => {
     f.style.transform = 'scale(' + (f.parentElement.clientWidth / parseInt(getComputedStyle(f).width)) + ')';
   });
   fit(); addEventListener('resize', fit);
-  const frames = [...document.querySelectorAll('iframe[data-src]')];
-  const load = f => { if (!f.src){ f.addEventListener('load', () => f.classList.add('ok'), {once: true}); f.src = f.dataset.src; } };
+
+  // Demo za juu zinajisogeza taratibu (kama mtu anaisoma) zikionekana kwenye skrini
+  document.querySelectorAll('iframe[data-drift]').forEach(f => {
+    let on = false, y = 0, wait = 1600, last = 0;
+    const speed = +f.dataset.drift;
+    const tick = t => {
+      const w = win(f), d = doc(f);
+      if (on && w && d && d.documentElement){
+        const dt = Math.min(64, t - (last || t)); last = t;
+        const max = d.documentElement.scrollHeight - w.innerHeight;
+        if (wait > 0) wait -= dt;
+        else if (y >= max){ y = 0; wait = 2200; w.scrollTo({top: 0, behavior: 'smooth'}); }
+        else { y = Math.min(max, y + speed * dt / 1000); jump(w, y); }
+      } else last = 0;
+      requestAnimationFrame(tick);
+    };
+    ready(f, () => { f.classList.add('ok'); if (!calm) requestAnimationFrame(tick); });
+    if ('IntersectionObserver' in window) new IntersectionObserver(es => es.forEach(e => on = e.isIntersecting)).observe(f);
+    else on = true;
+  });
+
+  // Laptop inageuka kidogo kufuata kipanya
+  const stage = document.querySelector('.td-stage'), rig = document.querySelector('.td-rig');
+  if (stage && rig && !calm && matchMedia('(hover: hover)').matches){
+    stage.addEventListener('pointermove', e => {
+      const r = stage.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, yy = (e.clientY - r.top) / r.height - .5;
+      rig.style.setProperty('--ry', (-11 + x * 12) + 'deg'); rig.style.setProperty('--rx', (5 - yy * 8) + 'deg');
+    });
+    stage.addEventListener('pointerleave', () => { rig.style.removeProperty('--ry'); rig.style.removeProperty('--rx'); });
+  }
+
+  // ── Studio: demo kamili inayotumika ──
+  const main = document.querySelector('.st-main');
+  if (main){
+    const view = main.querySelector('.st-view'), dev = main.querySelector('.st-dev'), frame = dev.querySelector('iframe');
+    const prog = main.querySelector('.st-prog'), hint = main.querySelector('.st-hint'), tourBtn = main.querySelector('[data-tour]');
+    const rail = [...document.querySelectorAll('.st-rail button')];
+    let width = 1280, touring = false, tourY = 0, lastT = 0;
+    // Kwenye simu demo inaanza kwa ukubwa wa simu — laptop iliyopunguzwa haisomeki
+    if (view.clientWidth < 700){ width = 390; main.querySelectorAll('.st-seg button').forEach(x => x.classList.toggle('on', x.dataset.w === '390')); }
+
+    const layout = () => {
+      const vw = view.clientWidth - (width < 1280 ? 48 : 0), w = Math.min(width, vw), s = w / width;
+      dev.classList.toggle('framed', width < 1280);
+      dev.style.width = w + 'px';
+      const h = (dev.classList.contains('framed') ? view.clientHeight - 36 : view.clientHeight);
+      frame.style.width = width + 'px'; frame.style.height = (h / s) + 'px'; frame.style.transform = 'scale(' + s + ')';
+    };
+    layout(); addEventListener('resize', layout);
+    document.addEventListener('fullscreenchange', () => setTimeout(layout, 60));
+
+    main.querySelectorAll('.st-seg button').forEach(b => b.addEventListener('click', () => {
+      main.querySelectorAll('.st-seg button').forEach(x => x.classList.toggle('on', x === b));
+      width = +b.dataset.w; layout();
+    }));
+    main.querySelector('[data-full]').addEventListener('click', () => {
+      if (document.fullscreenElement) document.exitFullscreen(); else if (main.requestFullscreen) main.requestFullscreen();
+    });
+
+    const sections = () => { const d = doc(frame); return d ? [...d.querySelectorAll('section')] : []; };
+    const sync = () => {
+      const w = win(frame), d = doc(frame);
+      if (!w || !d || !d.documentElement) return;
+      const max = d.documentElement.scrollHeight - w.innerHeight;
+      prog.style.width = (max > 0 ? Math.min(100, w.scrollY / max * 100) : 0) + '%';
+      if (!rail.length) return;
+      const all = sections(); let cur = rail[0];
+      rail.forEach(b => { const el = all[+b.dataset.i]; if (el && el.getBoundingClientRect().top < w.innerHeight * .4) cur = b; });
+      rail.forEach(b => b.classList.toggle('on', b === cur));
+    };
+    const stopTour = () => { touring = false; tourBtn.classList.remove('on'); };
+    const tour = t => {
+      if (!touring) return;
+      const w = win(frame), d = doc(frame);
+      const dt = Math.min(64, t - (lastT || t)); lastT = t;
+      const max = d.documentElement.scrollHeight - w.innerHeight;
+      tourY = Math.min(max, tourY + 140 * dt / 1000); jump(w, tourY);
+      if (tourY >= max) return stopTour();
+      requestAnimationFrame(tour);
+    };
+    tourBtn.addEventListener('click', () => {
+      if (touring) return stopTour();
+      const w = win(frame); if (!w) return;
+      touring = true; tourBtn.classList.add('on'); hint.classList.add('off');
+      const d = doc(frame);
+      tourY = w.scrollY >= d.documentElement.scrollHeight - w.innerHeight - 4 ? 0 : w.scrollY;
+      lastT = 0; requestAnimationFrame(tour);
+    });
+    rail.forEach(b => b.addEventListener('click', () => {
+      const el = sections()[+b.dataset.i]; if (!el) return;
+      stopTour(); hint.classList.add('off');
+      const w = win(frame);
+      w.scrollTo({top: el.getBoundingClientRect().top + w.scrollY, behavior: calm ? 'auto' : 'smooth'});
+    }));
+
+    frame.addEventListener('load', () => {
+      dev.classList.add('ok');
+      const w = win(frame), d = doc(frame);
+      if (!w || !d) return;
+      w.addEventListener('scroll', sync, {passive: true});
+      ['wheel', 'touchstart', 'pointerdown', 'keydown'].forEach(ev => d.addEventListener(ev, () => { stopTour(); hint.classList.add('off'); }, {passive: true}));
+      sync();
+    });
+    const load = () => { if (!frame.src) frame.src = frame.dataset.src; };
+    if ('IntersectionObserver' in window){
+      const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)){ load(); io.disconnect(); } }, {rootMargin: '400px 0px'});
+      io.observe(main);
+    } else load();
+  }
+
+  // Rangi: bonyeza kunakili
+  document.querySelectorAll('[data-copy]').forEach(b => b.addEventListener('click', () => {
+    const v = b.dataset.copy, txt = b.lastChild;
+    if (navigator.clipboard) navigator.clipboard.writeText(v).then(() => { txt.nodeValue = 'Copied!'; setTimeout(() => txt.nodeValue = v, 1200); });
+  }));
+
+  // Utepe wa chini unaonekana baada ya kupita juu
+  const dock = document.querySelector('.td-dock'), hero = document.getElementById('td-hero');
+  if (dock && hero && 'IntersectionObserver' in window)
+    new IntersectionObserver(es => es.forEach(e => dock.classList.toggle('on', !e.isIntersecting && e.boundingClientRect.top < 0))).observe(hero);
+
+  // Templates nyingine: zinapakiwa zikikaribia
+  const frames = [...document.querySelectorAll('.td-rel iframe[data-src]')];
+  const loadCard = f => { if (!f.src){ f.addEventListener('load', () => f.classList.add('ok'), {once: true}); f.src = f.dataset.src; } };
   if ('IntersectionObserver' in window){
-    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting){ load(e.target); io.unobserve(e.target); } }), {rootMargin: '300px 0px'});
+    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting){ loadCard(e.target); io.unobserve(e.target); } }), {rootMargin: '300px 0px'});
     frames.forEach(f => io.observe(f));
-  } else frames.forEach(load);
+  } else frames.forEach(loadCard);
 })();
 </script>
 {% endblock %}
