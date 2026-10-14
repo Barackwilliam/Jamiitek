@@ -582,7 +582,25 @@ def site_dashboard(request, site_id):
         'imported_pages': site.pages.exclude(raw_document='').count(),
         'last_change': _ago(timesince(site.updated_at)),
         'blockers': publish_blockers(site),
+        **_billing_ctx(request, site),
     })
+
+
+def _billing_ctx(request, site):
+    """Kadi ya malipo kwenye dashboard: lipia template, ondoa logo, au hali ya premium."""
+    from django.utils import timezone
+    from . import billing
+    price = billing.pricing()
+    start = price.badge_old_sites_from
+    return {
+        'pay_template': billing.needs_payment(site),
+        'logo_price': billing.logo_price(site),
+        'shows_badge': billing.show_badge(site),
+        # Taarifa kwa website za zamani: alama itaanza kuonekana tarehe hii
+        'badge_from': start if (site.legacy_free and not site.is_premium and start
+                                and start > timezone.localdate()) else None,
+        'just_paid': request.GET.get('paid') == '1' and site.is_premium,
+    }
 
 
 @login_required
@@ -653,11 +671,31 @@ def toggle_publish(request, site_id):
             messages.error(request, 'Save every step in the Website Studio before publishing — still missing: '
                            + ', '.join(t for _, t in missing) + '.')
             return redirect('builder:studio_step', site_id=site.id, step=missing[0][0])
+        # Template inayouzwa: analipa kwanza (Pesapal), malipo yakithibitishwa inakwenda hewani yenyewe
+        from .billing import needs_payment
+        if needs_payment(site):
+            return redirect('builder:checkout', site_id=site.id, kind='template')
     site.is_published = not site.is_published
     site.save(update_fields=['is_published'])
     state = 'is now live' if site.is_published else 'has been unpublished'
     messages.success(request, f'Your website {state}.')
     return redirect('builder:site_dashboard', site_id=site.id)
+
+
+@login_required
+def checkout(request, site_id, kind):
+    """Ukurasa wa malipo (Pesapal): kununua template inayouzwa, au kuondoa logo ya JamiiTek."""
+    from . import billing
+    site = _my_site(request, site_id)
+    if kind not in ('template', 'logo'):
+        raise Http404
+    tpl = billing.needs_payment(site) if kind == 'template' else billing.source_template(site)
+    price = tpl.price if (kind == 'template' and tpl) else (billing.logo_price(site) if kind == 'logo' else 0)
+    if not price:
+        return redirect('builder:site_dashboard', site_id=site.id)
+    if request.method == 'POST':
+        return billing.start(request, site, kind)
+    return render(request, 'builder/checkout.html', {'site': site, 'kind': kind, 'tpl': tpl, 'price': price})
 
 
 # ── Pages + Editor ──────────────────────────────────────

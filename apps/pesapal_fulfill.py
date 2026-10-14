@@ -44,6 +44,8 @@ def fulfill(tx):
             'chatbot_subscription': _fulfill_subscription,
             'hosting_renewal':      _fulfill_hosting,
             'invoice':              _fulfill_invoice,
+            'builder_template':     _fulfill_builder,
+            'builder_logo':         _fulfill_builder,
         }.get(locked.purpose)
 
         if not handler:
@@ -85,6 +87,11 @@ def fulfill(tx):
                 logger.exception('Pesapal: issue_receipt imeshindikana')
         transaction.on_commit(_issue)
         return True
+
+
+def _fulfill_builder(tx):
+    from builder.billing import fulfill
+    return fulfill(tx)
 
 
 # ─────────────────────────────────────────────

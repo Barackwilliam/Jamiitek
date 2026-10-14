@@ -94,8 +94,19 @@ class ClientWebsite(models.Model):
     content_version = models.PositiveIntegerField(default=1)
 
     # ── Premium: custom domain (mfano dukalangu.co.tz) ──
+    # Inawashwa na malipo (builder/billing.py): kununua template inayouzwa, au
+    # "Remove JamiiTek logo". Premium = hakuna "Made with JamiiTek" + domain yake.
     is_premium = models.BooleanField(
         default=False, help_text='Premium sites can connect a custom domain.')
+
+    # ── Malipo (builder/billing.py) ──
+    # Template ya marketplace iliyolipiwa — kuchapisha template inayouzwa kunahitaji hii
+    paid_template_id = models.PositiveIntegerField(null=True, blank=True)
+    hosting_until = models.DateField(null=True, blank=True,
+                                     help_text='Hosting iliyolipiwa inaisha lini (mwaka 1 baada ya kulipa).')
+    # Site zilizokuwepo kabla ya malipo: alama ya "Made with JamiiTek" inaanza tarehe
+    # iliyowekwa kwenye BuilderPricing (baada ya kuwapa taarifa), si siku ya deploy.
+    legacy_free = models.BooleanField(default=False)
     custom_domain = models.CharField(
         max_length=120, unique=True, null=True, blank=True,
         help_text='e.g. www.mybusiness.co.tz — bila http://')
@@ -377,3 +388,29 @@ class SiteImport(models.Model):
 
     def __str__(self):
         return f'{self.website.subdomain if self.website else "(site imefutwa)"} import {self.token[:8]}'
+
+
+class BuilderPricing(models.Model):
+    """Bei za jumla za Builder — rekodi MOJA tu (pk=1), inahaririwa kwenye admin."""
+    remove_logo_price = models.PositiveIntegerField(
+        default=0, verbose_name='Remove JamiiTek logo — price (TSh)',
+        help_text='Malipo ya mara moja kwa website ya template ya bure: inaondoa "Made with JamiiTek" '
+                  'na inaruhusu domain yake. 0 = kitufe hakionyeshwi.')
+    badge_old_sites_from = models.DateField(
+        null=True, blank=True, verbose_name='Old free sites show the logo from',
+        help_text='Website za bure zilizokuwepo kabla ya mfumo wa malipo zinaanza kuonyesha '
+                  '"Made with JamiiTek" tarehe hii. Tupu = bado. Wape taarifa kwanza '
+                  '(python manage.py badge_notice).')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Builder pricing'
+        verbose_name_plural = 'Builder pricing'
+
+    def __str__(self):
+        return 'Builder pricing'
+
+    @classmethod
+    def get(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj

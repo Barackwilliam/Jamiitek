@@ -1,12 +1,13 @@
 from django.contrib import admin
-from .models import ClientWebsite, SitePage, SiteCollection, SiteItem, SiteAsset, AiUsageLog, SiteInquiry
+from .models import (ClientWebsite, SitePage, SiteCollection, SiteItem, SiteAsset, AiUsageLog, SiteInquiry,
+                     BuilderPricing)
 
 
 @admin.register(ClientWebsite)
 class ClientWebsiteAdmin(admin.ModelAdmin):
     list_display = ('site_name', 'subdomain', 'website_type', 'owner',
-                    'is_published', 'is_suspended', 'created_at')
-    list_filter = ('website_type', 'is_published', 'is_suspended')
+                    'is_published', 'is_premium', 'hosting_until', 'is_suspended', 'created_at')
+    list_filter = ('website_type', 'is_published', 'is_premium', 'legacy_free', 'is_suspended')
     search_fields = ('site_name', 'subdomain', 'owner__username')
     actions = ['suspend_sites', 'unsuspend_sites']
 
@@ -17,6 +18,18 @@ class ClientWebsiteAdmin(admin.ModelAdmin):
     @admin.action(description='Rudisha websites (unsuspend)')
     def unsuspend_sites(self, request, queryset):
         queryset.update(is_suspended=False)
+
+
+@admin.register(BuilderPricing)
+class BuilderPricingAdmin(admin.ModelAdmin):
+    """Bei za jumla za Builder — rekodi moja tu."""
+    fields = ('remove_logo_price', 'badge_old_sites_from')
+
+    def has_add_permission(self, request):
+        return not BuilderPricing.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(SitePage)

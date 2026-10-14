@@ -232,6 +232,15 @@ def studio(request, site_id, step=None):
                 'edit': reverse('builder:page_editor', args=[site.id, page.id]),
                 'delete': reverse('builder:page_delete', args=[site.id, page.id])}})
 
+        if step == 'publish' and not site.is_published:
+            from .billing import needs_payment
+            tpl = needs_payment(site)
+            if tpl:
+                pay = reverse('builder:checkout', args=[site.id, 'template'])
+                if _wants_json(request):
+                    return JsonResponse({'ok': False, 'pay_url': pay,
+                                         'error': f'This design costs TSh {tpl.price:,}. Pay once to put it online.'}, status=402)
+                return redirect(pay)
         error = _save_step(request, site, step)
         if _wants_json(request):
             if error:
@@ -253,9 +262,12 @@ def studio(request, site_id, step=None):
     ts = site.theme_settings or {}
     from .insights import get_insights
     from .site_templates import all_templates
+    from .billing import logo_price, needs_payment
     return render(request, 'builder/studio.html', {
         'site': site,
         'step': step,
+        'pay_template': needs_payment(site),
+        'logo_price': logo_price(site),
         'steps': [{'key': k, 'title': t, 'sub': s, 'num': i + 1, 'done': k in done}
                   for i, (k, t, s) in enumerate(STEPS)],
         'steps_json': [{'key': k, 'title': t} for k, t, _ in STEPS],
