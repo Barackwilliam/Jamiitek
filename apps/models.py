@@ -1027,9 +1027,16 @@ class WebsiteTemplate(models.Model):
     badge       = models.CharField(max_length=10, choices=BADGE_CHOICES, blank=True, verbose_name='Badge')
     rating      = models.DecimalField(max_digits=2, decimal_places=1, default=4.9, verbose_name='Rating')
 
-    # Pricing
-    price_hosted_monthly = models.IntegerField(default=30000, verbose_name='Hosted Monthly Price (TSh)')
-    price_source_code    = models.IntegerField(default=150000, verbose_name='Source Code Price (TSh)')
+    # Bei: template ni ya BURE, au INAUZWA kwa bei moja (malipo ya mara moja, Pesapal).
+    # Mmiliki anaweka bei kulingana na ubora wa template.
+    is_free = models.BooleanField(default=False, verbose_name='Free template (Bure)',
+                                  help_text='Tiki = template ya bure. Website zake zinaonyesha "Made with JamiiTek".')
+    price = models.PositiveIntegerField(default=0, verbose_name='Price (TSh, one-time)',
+                                        help_text='Bei ya kununua template hii mara moja. Haitumiki kama ni ya bure.')
+
+    # ZA ZAMANI — hazionyeshwi tena popote (hosted kwa mwezi / source code zimeondolewa)
+    price_hosted_monthly = models.IntegerField(default=30000, verbose_name='(old) Hosted Monthly Price (TSh)')
+    price_source_code    = models.IntegerField(default=150000, verbose_name='(old) Source Code Price (TSh)')
 
     # The full HTML code of the template — admin anaweka hapa
     preview_html = models.TextField(
@@ -1073,6 +1080,15 @@ class WebsiteTemplate(models.Model):
 
     def gradient_css(self):
         return f'linear-gradient(135deg, {self.gradient_start}, {self.gradient_end})'
+
+    @property
+    def for_sale(self):
+        return not self.is_free and self.price > 0
+
+    @property
+    def price_label(self):
+        """Maneno ya badge: "Bure" au "Inauzwa · TSh 80,000"."""
+        return f'Inauzwa · TSh {self.price:,}' if self.for_sale else 'Bure'
 
     def price_hosted_formatted(self):
         return f"{self.price_hosted_monthly:,}"

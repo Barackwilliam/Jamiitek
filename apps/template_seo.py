@@ -154,7 +154,7 @@ def article(tpl):
         f'most important action — contacting you — one tap away.',
         f'Open it in the free JamiiTek Website Builder to make it yours: change the text, photos and colors, '
         f'add pages, connect WhatsApp and publish on your own address in minutes. Prefer not to do it yourself? '
-        f'Choose the hosted plan and the JamiiTek team sets everything up for you, or buy the source code.',
+        f'The JamiiTek team can build it for you.',
         f'Kwa Kiswahili: {tpl.name} ni template ya website ya {info["sw"]}. Unaweza kuibadilisha bure kwenye '
         f'JamiiTek Builder — maandishi, picha na rangi — na kuiweka hewani kwa jina lako, au ukatuachia sisi tukutengenezee.',
     ]
@@ -168,9 +168,11 @@ def faq(tpl):
          f'Yes. Click “Customize in Builder”, create a free account and the {tpl.name} design opens in the JamiiTek '
          f'Website Builder. You can change every text, image and color with drag & drop, code or AI, then publish.'),
         ('How much does it cost?',
-         f'Customizing in the Builder is free. The hosted plan — we set it up, host it and keep it updated — is '
-         f'TSh {tpl.price_hosted_monthly:,} per month plus your domain. The full source code costs '
-         f'TSh {tpl.price_source_code:,} once. A fully custom build is quoted after a short brief.'),
+         (f'{tpl.name} costs TSh {tpl.price:,}, paid one time. You can try it free in the Builder first. '
+          f'The price includes 1 year of hosting, connecting your own domain and no JamiiTek logo on your website.')
+         if tpl.for_sale else
+         (f'{tpl.name} is free. Build your website and put it online free on yourname.jamiitek.com. '
+          f'Free websites show "Made with JamiiTek" at the bottom.')),
         ('Does it work on mobile phones?',
          f'Yes. Every JamiiTek template, including {tpl.name}, is mobile-first and tested on phones, tablets and laptops.'),
         ('Can I use my own domain name?',
@@ -183,13 +185,9 @@ def faq(tpl):
     ]
 
 
-def _offer(name, price, url, monthly=False):
-    o = {'@type': 'Offer', 'name': name, 'price': str(price), 'priceCurrency': 'TZS',
-         'availability': 'https://schema.org/InStock', 'url': url}
-    if monthly:
-        o['priceSpecification'] = {'@type': 'UnitPriceSpecification', 'price': str(price), 'priceCurrency': 'TZS',
-                                   'unitCode': 'MON', 'referenceQuantity': {'@type': 'QuantitativeValue', 'value': 1, 'unitCode': 'MON'}}
-    return o
+def _offer(name, price, url):
+    return {'@type': 'Offer', 'name': name, 'price': str(price), 'priceCurrency': 'TZS',
+            'availability': 'https://schema.org/InStock', 'url': url}
 
 
 def json_ld(tpl):
@@ -202,11 +200,7 @@ def json_ld(tpl):
         'category': f'Website templates > {cat}',
         'brand': {'@type': 'Brand', 'name': 'JamiiTek'},
         'image': f'{BASE_URL}/static/images/og-image.jpg',
-        'offers': [
-            _offer('Customize free in the JamiiTek Builder', 0, BASE_URL + f'/builder/templates/{tpl.pk}/use/'),
-            _offer('Hosted plan (monthly)', tpl.price_hosted_monthly, url, monthly=True),
-            _offer('Source code (one-time)', tpl.price_source_code, url),
-        ],
+        'offers': [_offer(f'{tpl.name} website template', tpl.price if tpl.for_sale else 0, url)],
     }
     crumbs = {
         '@context': 'https://schema.org', '@type': 'BreadcrumbList', 'itemListElement': [

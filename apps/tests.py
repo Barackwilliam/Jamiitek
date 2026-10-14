@@ -143,6 +143,30 @@ class TemplateSeoTest(NoPingMixin, TestCase):
         bump()
         self.assertNotIn('jtp', Template('{% load template_promo %}{% template_promo %}').render(Context()))
 
+    def test_price_badge_bure_or_inauzwa_and_no_old_plans(self):
+        paid = _tpl(name='Paid One', price=80000)
+        free = _tpl(name='Free One', is_free=True, price=50000)
+        self.assertEqual(paid.price_label, 'Inauzwa · TSh 80,000')
+        self.assertEqual(free.price_label, 'Bure')               # tiki ya Free inashinda bei
+        self.assertEqual(_tpl(name='No Price').price_label, 'Bure')
+        market = self.client.get('/templates/').content.decode()
+        self.assertIn('Inauzwa · TSh 80,000', market)
+        self.assertIn('>Bure<', market)
+        for url in (paid.get_absolute_url(), '/templates/preview/%d/' % paid.pk, '/templates/'):
+            page = self.client.get(url).content.decode()
+            self.assertNotIn('Source code', page)
+            self.assertNotIn('Hosted plan', page)
+            self.assertNotIn('Hosted —', page)
+            for old in ('Get it on WhatsApp', 'Buy on WhatsApp', 'Choose Hosted', 'orderNow'):   # hakuna kununua kupitia WhatsApp
+                self.assertNotIn(old, page)
+            self.assertIn('Try it free', page)
+        detail = self.client.get(paid.get_absolute_url()).content.decode()
+        self.assertIn('Unahitaji tukutengenezee?', detail)
+        self.assertIn('TSh 80,000<small>one time</small>', detail)
+        blocks = [json.loads(b) for b in re.findall(r'<script type="application/ld\+json">(.*?)</script>', detail, re.S)]
+        product = next(b for b in blocks if b.get('@type') == 'Product')
+        self.assertEqual([o['price'] for o in product['offers']], ['80000'])
+
     def test_inactive_or_unknown_template_is_404(self):
         _tpl(name='Hidden', is_active=False)
         self.assertEqual(self.client.get('/templates/hidden/').status_code, 404)

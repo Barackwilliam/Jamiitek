@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% load jt_contact %}
 {% block title %}{% if seo %}{{ seo.title }}{% else %}Website Templates Tanzania — {{ total_count }} Premium Designs | JamiiTek{% endif %}{% endblock %}
 {% block meta_desc %}{% if seo %}{{ seo.description }}{% else %}{{ total_count }} premium website templates for Tanzanian businesses: restaurants, hotels, salons, safari, shops and more. Customize free or let JamiiTek build it.{% endif %}{% endblock %}
 {% block meta_keywords %}{% if seo %}{{ seo.keywords }}{% else %}website templates Tanzania, website template Tanzania, business website template, restaurant website template, hotel website template, safari website template, salon website template, website builder Tanzania, template za website, kutengeneza website Tanzania, JamiiTek templates{% endif %}{% endblock %}
@@ -11,10 +10,11 @@
 
 {% block extra_css %}
 {% comment %}
-Templates Marketplace. Kila template ina njia tatu:
-  ✨ Customize in Builder — builder:from_template (builder/template_bridge.py)
-  👁 Live preview        — template_preview
-  🛒 Buy / hire us        — modal ya plans → WhatsApp
+Templates Marketplace. Kila template ina badge ya bei ("Bure" au "Inauzwa · TSh …")
+na njia mbili:
+  ✨ Try it free   — builder:from_template (builder/template_bridge.py)
+  👁 Live preview  — template_preview
+Hakuna malipo kupitia WhatsApp — malipo yote ni Pesapal (Builder).
 CSS yote iko ndani ya .mk ili isiguse base.html.
 {% endcomment %}
 {% include 'includes/mk_style.html' %}
@@ -29,9 +29,9 @@ CSS yote iko ndani ya .mk ili isiguse base.html.
       <h1><em>{{ seo.h1|capfirst }}</em></h1>
       <p>{{ seo.intro }}</p>
       {% else %}
-      <span class="mk-pill"><b>NEW</b> Customize any template free in the JamiiTek Builder</span>
+      <span class="mk-pill"><b>NEW</b> Try any design free before you pay</span>
       <h1>Websites that look like a <em>million shillings</em> — ready today.</h1>
-      <p>Premium designs made for Tanzanian businesses. Make one yours in minutes with drag &amp; drop, code or AI — then publish on <b style="color:#fff">yourname.jamiitek.com</b>.</p>
+      <p>Beautiful designs made for businesses in Tanzania. Pick one, add your name, photos and WhatsApp number, and put it online in minutes.</p>
       {% endif %}
       <div class="mk-search">
         <svg viewBox="0 0 24 24" fill="none" stroke="#94a0b4" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
@@ -41,16 +41,16 @@ CSS yote iko ndani ya .mk ili isiguse base.html.
         <a class="mk-btn p" href="#mk-grid">Browse {{ total_count }} template{{ total_count|pluralize }} ↓</a>
         <a class="mk-btn s" href="{% url 'builder:signup' %}">Start from a blank page</a>
       </div>
-      <div class="mk-stats"><span><b>{{ total_count }}</b>premium designs</span><span><b>28+</b>ready sections</span>
-        <span><b>Free</b>jamiitek.com address</span><span><b>100%</b>mobile-perfect</span></div>
+      <div class="mk-stats"><span><b>{{ total_count }}</b>designs</span><span><b>Free</b>to try</span>
+        <span><b>One</b>payment, no monthly fee</span><span><b>100%</b>works on phones</span></div>
     </div>
   </section>
 
   <section class="mk-in">
     <div class="mk-steps">
-      <div class="mk-step"><i>01</i><span>🎨</span><b>Pick a design you love</b><p>Open a live preview on desktop, tablet and phone before you choose.</p></div>
-      <div class="mk-step"><i>02</i><span>✨</span><b>Customize it in the Builder</b><p>Change every text, photo and color. Add pages, WhatsApp buttons and forms.</p></div>
-      <div class="mk-step"><i>03</i><span>🚀</span><b>Publish &amp; share</b><p>Go live on yourname.jamiitek.com — or connect your own domain.</p></div>
+      <div class="mk-step"><i>01</i><span>🎨</span><b>Pick a design</b><p>See how it looks on a phone, tablet and computer before you choose.</p></div>
+      <div class="mk-step"><i>02</i><span>✨</span><b>Try it free</b><p>Add your business name, photos, prices and WhatsApp number. It costs nothing to try.</p></div>
+      <div class="mk-step"><i>03</i><span>🚀</span><b>Put it online</b><p>Free designs go online for free. For designs with a price, you pay once with M-Pesa, Tigo Pesa, Airtel Money or card.</p></div>
     </div>
   </section>
 
@@ -75,25 +75,19 @@ CSS yote iko ndani ya .mk ili isiguse base.html.
           <div class="mk-chrome"><i></i><i></i><i></i><span>{{ tpl.name|slugify }}.jamiitek.com</span></div>
           <div class="mk-frame"><iframe data-src="{% url 'template_preview_raw' tpl.pk %}" title="{{ tpl.name }}" tabindex="-1" aria-hidden="true" loading="lazy"></iframe><div class="mk-shine"></div></div>
           <div class="mk-hover">
-            <a class="mk-btn s" href="{{ tpl.get_absolute_url }}">👁 View details</a>
-            <a class="mk-btn p" href="{% url 'builder:from_template' tpl.pk %}">✨ Customize</a>
+            <a class="mk-btn s" href="{{ tpl.get_absolute_url }}">👁 See details</a>
+            <a class="mk-btn p" href="{% url 'builder:from_template' tpl.pk %}">✨ Try it free</a>
           </div>
           {% if tpl.badge %}<span class="mk-badge {{ tpl.badge }}">{{ tpl.get_badge_display }}</span>{% endif %}
         </div>
         <div class="mk-body">
-          <div class="mk-meta"><span class="mk-cat">{{ tpl.get_category_display }}</span><span class="mk-rate">★ {{ tpl.rating }}</span></div>
+          <div class="mk-meta"><span class="mk-cat">{{ tpl.get_category_display }}</span><span class="tp-tag {% if tpl.for_sale %}sale{% else %}free{% endif %}">{{ tpl.price_label }}</span></div>
           <h3><a href="{{ tpl.get_absolute_url }}">{{ tpl.name }}</a></h3>
           <p>{{ tpl.description }}</p>
-          <div class="mk-price"><span class="free">✨ Customize free</span><span>🌐 Hosted {{ tpl.price_hosted_formatted }}/mo</span><span>💻 Code {{ tpl.price_source_formatted }}</span></div>
           <div class="mk-acts">
-            <a class="mk-btn p" href="{% url 'builder:from_template' tpl.pk %}">✨ Customize in Builder</a>
+            <a class="mk-btn p" href="{% url 'builder:from_template' tpl.pk %}">✨ Try it free</a>
             <a class="mk-btn s mk-ic" href="{% url 'template_preview' tpl.pk %}" target="_blank" rel="noopener" title="Live preview" aria-label="Live preview of {{ tpl.name }}">
               <svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></a>
-            <button class="mk-btn s mk-ic" type="button" title="Buy or let us build it" aria-label="Plans for {{ tpl.name }}"
-              data-name="{{ tpl.name }}" data-cat="{{ tpl.get_category_display }}" data-desc="{{ tpl.description }}"
-              data-hosted="{{ tpl.price_hosted_formatted }}" data-source="{{ tpl.price_source_formatted }}" data-rating="{{ tpl.rating }}"
-              data-builder="{% url 'builder:from_template' tpl.pk %}" onclick="openModalFrom(this)">
-              <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></button>
           </div>
         </div>
       </article>
@@ -104,40 +98,16 @@ CSS yote iko ndani ya .mk ili isiguse base.html.
     </div>
 
     <div class="mk-final">
-      <div><h2>Can’t find the one? We’ll design it for you.</h2>
-        <p>Tell us about your business and we build a custom website — or start right now in the free Builder with 28+ pro sections and AI.</p></div>
+      <div><h2>No time to do it yourself?</h2>
+        <p>Tell us about your business and send your photos. Our team will build your website for you.</p></div>
       <div class="mk-ctas">
-        <a class="mk-btn p" href="{% url 'select_website' %}">Request a custom design</a>
-        <a class="mk-btn s" href="{% url 'builder:signup' %}">Open the Builder</a>
+        <a class="mk-btn p" href="{% url 'select_website' %}">Unahitaji tukutengenezee?</a>
+        <a class="mk-btn s" href="{% url 'builder:signup' %}">Start from a blank page</a>
       </div>
     </div>
   </section>
 </div>
 
-<!-- Plans: Customize free / Hosted / Full build / Source code -->
-<div class="mk-modal" id="planModal" onclick="if(event.target===this)closeModal()" aria-hidden="true">
-  <div class="mk-sheet" role="dialog" aria-modal="true" aria-labelledby="mModalName">
-    <div class="mk-sh-top">
-      <small>Template</small><h3 id="mModalName">—</h3><span id="mModalCat">—</span> · ★ <span id="mModalRating">—</span>
-      <button class="mk-x" onclick="closeModal()" aria-label="Close">✕</button>
-    </div>
-    <div class="mk-sh-body">
-      <p id="mModalDesc"></p>
-      <div id="modalPlans">
-        <div class="mk-plan free" onclick="selectPlan(this,'builder')"><span>✨</span>
-          <div><b>Customize it yourself</b><small>Open it in the JamiiTek Builder now — free to design, publish on yourname.jamiitek.com</small></div><em>Free</em></div>
-        <div class="mk-plan" onclick="selectPlan(this,'hosted')"><span>🌐</span>
-          <div><b>Hosted plan</b><small>We set it up with your content, domain, hosting &amp; updates</small></div><em><span id="mPriceHosted">30,000</span> TSh<small>/mo</small></em></div>
-        <div class="mk-plan" onclick="selectPlan(this,'build')"><span>🛠️</span>
-          <div><b>Full custom build</b><small>We design and build everything around your brand</small></div><em>Quote</em></div>
-        <div class="mk-plan" onclick="selectPlan(this,'source')"><span>💻</span>
-          <div><b>Source code</b><small>Get the full code (the JamiiTek footer credit stays)</small></div><em><span id="mPriceSource">150,000</span> TSh</em></div>
-      </div>
-      <button class="mk-wa" id="mk-go" onclick="goWhatsApp()">Continue →</button>
-      <div class="mk-hint" id="planHint">Please pick an option first</div>
-    </div>
-  </div>
-</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -176,48 +146,5 @@ CSS yote iko ndani ya .mk ili isiguse base.html.
   apply();
 })();
 
-// ── Plans ──
-var _plan = null, _tplName = '', _builderUrl = '';
-function openModalFrom(b){
-  const d = b.dataset;
-  _builderUrl = d.builder;
-  openModal(d.name, d.cat, d.desc, d.hosted, d.source, d.rating);
-}
-function openModal(name, cat, desc, priceHosted, priceSource, rating){
-  _tplName = name; _plan = null;
-  document.getElementById('mModalName').textContent = name;
-  document.getElementById('mModalCat').textContent = cat;
-  document.getElementById('mModalDesc').textContent = desc;
-  document.getElementById('mPriceHosted').textContent = priceHosted;
-  document.getElementById('mPriceSource').textContent = priceSource;
-  document.getElementById('mModalRating').textContent = rating || '5.0';
-  document.querySelectorAll('.mk-plan').forEach(c => c.classList.remove('selected'));
-  document.getElementById('planHint').classList.remove('show');
-  document.getElementById('mk-go').textContent = 'Continue →';
-  const m = document.getElementById('planModal'); m.classList.add('open'); m.setAttribute('aria-hidden', 'false');
-  document.body.style.overflow = 'hidden';
-}
-function closeModal(){
-  const m = document.getElementById('planModal'); m.classList.remove('open'); m.setAttribute('aria-hidden', 'true');
-  document.body.style.overflow = '';
-}
-function selectPlan(el, plan){
-  document.querySelectorAll('.mk-plan').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected'); _plan = plan;
-  document.getElementById('planHint').classList.remove('show');
-  document.getElementById('mk-go').textContent = plan === 'builder' ? '✨ Open in the Builder →' : 'Continue on WhatsApp →';
-}
-function goWhatsApp(){
-  if (!_plan){
-    const p = document.getElementById('modalPlans'); p.classList.add('shake'); setTimeout(() => p.classList.remove('shake'), 400);
-    document.getElementById('planHint').classList.add('show'); return;
-  }
-  if (_plan === 'builder'){ location.href = _builderUrl; return; }
-  const names = {hosted: 'Hosted Plan (' + document.getElementById('mPriceHosted').textContent + ' TSh/month + domain)',
-                 build: 'Full Build (Custom Quote)', source: 'Source Code (One-Time Payment)'};
-  const msg = 'Hello JamiiTek! 👋\n\nI am interested in the *' + _tplName + '* template.\n\nSelected plan: *' + names[_plan] + '*\n\nPlease share more details on how to proceed. Thank you! 🙏';
-  window.open('https://wa.me/{% contact "wa" %}?text=' + encodeURIComponent(msg), '_blank');
-}
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 </script>
 {% endblock %}

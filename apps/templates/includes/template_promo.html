@@ -48,10 +48,10 @@
   </a>
   <div class="jtp-bub">
     <a class="jtp-card jtp-txt" href="/templates/?utm_source=jamiitek&amp;utm_medium=promo-phone">
-      <span class="jtp-tag">🔥 For sale</span>
+      <span class="jtp-tag">{% if promo.for_sale %}🔥 Inauzwa{% else %}🎁 Bure{% endif %}</span>
       <b>This website can be yours</b>
-      <small>{{ promo.name }} · from TSh {{ promo.price_hosted_monthly|intcomma }}/mo</small>
-      <span class="jtp-cta">See all templates →</span>
+      <small>{{ promo.name }} · {% if promo.for_sale %}TSh {{ promo.price|intcomma }}, pay one time{% else %}free to use{% endif %}</small>
+      <span class="jtp-cta">Try it free →</span>
     </a>
     <button type="button" class="jtp-x" aria-label="Close">&times;</button>
   </div>

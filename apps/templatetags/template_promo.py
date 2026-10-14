@@ -20,8 +20,9 @@ def _featured():
 
     rows = (WebsiteTemplate.objects.filter(is_active=True).exclude(preview_html='')
             .order_by('order', '-created_at')
-            .values('pk', 'name', 'price_hosted_monthly', 'gradient_start', 'gradient_end')[:POOL])
-    return [dict(r, raw=reverse('template_preview_raw', args=[r['pk']])) for r in rows]
+            .values('pk', 'name', 'is_free', 'price', 'gradient_start', 'gradient_end')[:POOL])
+    return [dict(r, raw=reverse('template_preview_raw', args=[r['pk']]),
+                 for_sale=not r['is_free'] and r['price'] > 0) for r in rows]
 
 
 @register.inclusion_tag('includes/template_promo.html')

@@ -438,24 +438,25 @@ from .models import WebsiteTemplate
 
 @admin.register(WebsiteTemplate)
 class WebsiteTemplateAdmin(admin.ModelAdmin):
-    list_display  = ('name', 'category', 'badge', 'rating', 'price_hosted_monthly', 'price_source_code', 'is_active', 'order')
-    list_editable = ('is_active', 'order', 'badge')
-    list_filter   = ('category', 'is_active', 'badge')
+    list_display  = ('name', 'category', 'badge', 'is_free', 'price', 'is_active', 'order')
+    list_editable = ('is_active', 'order', 'badge', 'is_free', 'price')
+    list_filter   = ('category', 'is_active', 'is_free', 'badge')
     search_fields = ('name', 'description')
     ordering      = ('order', '-created_at')
     prepopulated_fields = {'slug': ('name',)}
 
     fieldsets = (
         ('📋 Basic Info', {
-            'fields': ('name', 'slug', 'category', 'description', 'badge', 'rating')
+            'fields': ('name', 'slug', 'category', 'description', 'badge')
         }),
         ('🔎 SEO — Google & AI', {
             'fields': ('seo_title', 'seo_description', 'long_description'),
             'description': 'Si lazima: ukurasa /templates/<slug>/ unajitengenezea maandishi. Maelezo marefu yako hapa yanasaidia template ipatikane Google.'
         }),
         ('💰 Pricing', {
-            'fields': ('price_hosted_monthly', 'price_source_code'),
-            'description': 'Bei za plan 1 (hosted) na plan 3 (source code). Plan 2 (Full Build) ni Custom Quote daima.'
+            'fields': ('is_free', 'price'),
+            'description': 'Weka tiki "Free" kwa template ya bure (badge: Bure), AU andika bei ya kununua mara moja '
+                           '(badge: Inauzwa · TSh …). Malipo yote ni kupitia Pesapal.'
         }),
         ('🎨 Card Appearance', {
             'fields': ('gradient_start', 'gradient_end'),

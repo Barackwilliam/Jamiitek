@@ -1,4 +1,4 @@
-{% load jt_contact humanize %}
+{% load humanize %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,7 +7,7 @@
 <title>Preview: {{ template.name }} — JamiiTek</title>
 <meta name="theme-color" content="#05060c">
 <meta property="og:title" content="{{ template.name }} — JamiiTek Templates">
-<meta property="og:description" content="Tazama template ya {{ template.name }} kutoka JamiiTek. Bei kuanzia TSh {{ template.price_hosted_monthly|floatformat:0 }}/mo.">
+<meta property="og:description" content="See the {{ template.name }} website design by JamiiTek. {% if template.for_sale %}TSh {{ template.price|intcomma }}, pay one time.{% else %}Free to use.{% endif %} Try it free.">
 <link rel="canonical" href="{{ canonical }}">
 <meta property="og:url" content="{{ canonical }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -213,6 +213,14 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke
 .price b{color:#fff;font-size:.95rem}
 .price b.free{color:#7ef0b4}
 .ctas{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.bigprice{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:10px}
+.bigprice b{font:800 1.7rem 'Syne',sans-serif;letter-spacing:-.5px;flex-basis:100%}
+.bigprice small{font-size:.74rem;color:var(--mut)}
+.tag-top{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;font-size:.74rem;font-weight:800;white-space:nowrap}
+.tag-top::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.tag-top.free{color:#5df59a;background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.4)}
+.tag-top.sale{color:#ffb547;background:rgba(255,160,40,.12);border:1px solid rgba(255,160,40,.42)}
+.paynote{margin-top:10px;font-size:.7rem;line-height:1.5;color:var(--mut);text-align:center}
 .ctas .btn{width:100%;height:44px}
 /* Bei na vitufe vinabaki chini ya paneli hata skrini ikiwa fupi */
 .info .buy{position:sticky;bottom:0;z-index:2;background:linear-gradient(180deg,rgba(12,13,22,.97),#0a0b13);box-shadow:0 -24px 30px rgba(9,10,17,.85)}
@@ -285,8 +293,8 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke
   </div>
   <div class="acts">
     <button type="button" class="btn share" onclick="openShare()" aria-label="Share"><svg class="i" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></button>
-    <a class="btn hide-md" href="/proposals/?template={{ template.pk }}">📝 Order this</a>
-    <a class="btn go" href="{% url 'builder:from_template' template.pk %}">✨ Customize free</a>
+    <span class="tag-top hide-md {% if template.for_sale %}sale{% else %}free{% endif %}">{{ template.price_label }}</span>
+    <a class="btn go" href="{% url 'builder:from_template' template.pk %}">✨ Try it free</a>
   </div>
 </header>
 
@@ -336,15 +344,14 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke
         <div><b>{% if anatomy.animated %}Yes{% else %}—{% endif %}</b><span>animations</span></div>
       </div>
     </div>
-    <div class="blk buy"><div class="kick">Pricing</div>
-      <div class="price"><span>Customize yourself</span><b class="free">Free</b></div>
-      <div class="price"><span>Hosted — we set it up</span><b>TSh {{ template.price_hosted_monthly|intcomma }}<small style="color:var(--mut);font-weight:500">/mo</small></b></div>
-      <div class="price"><span>Source code</span><b>TSh {{ template.price_source_code|intcomma }}</b></div>
+    <div class="blk buy"><div class="kick">Price</div>
+      <div class="bigprice"><span class="tag-top {% if template.for_sale %}sale{% else %}free{% endif %}">{% if template.for_sale %}Inauzwa{% else %}Bure{% endif %}</span>
+        <b>{% if template.for_sale %}TSh {{ template.price|intcomma }}{% else %}TSh 0{% endif %}</b><small>{% if template.for_sale %}pay one time · no monthly fee{% else %}free to use{% endif %}</small></div>
       <div class="ctas">
-        <a class="btn go" href="{% url 'builder:from_template' template.pk %}">✨ Customize free in Builder</a>
-        <button type="button" class="btn vio" onclick="orderNow()">💬 Get it on WhatsApp</button>
-        <a class="btn" href="/proposals/?template={{ template.pk }}">📝 Order a custom version</a>
+        <a class="btn go" href="{% url 'builder:from_template' template.pk %}">✨ Try it free</a>
+        <a class="btn" href="/proposals/?template={{ template.pk }}">Unahitaji tukutengenezee?</a>
       </div>
+      <div class="paynote">{% if template.for_sale %}You pay only when you put it online · M-Pesa · Tigo Pesa · Airtel Money · Card{% else %}Free websites show "Made with JamiiTek" at the bottom{% endif %}</div>
       <a class="more" href="{{ template.get_absolute_url }}">Full details, FAQ &amp; features →</a>
     </div>
   </aside>
@@ -352,7 +359,7 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke
 
 <div class="dock">
   <button type="button" class="btn tbtn" data-tour aria-label="Auto tour"><svg class="i" viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg></button>
-  <div class="pr"><b>Free to customize</b><small>Hosted from TSh {{ template.price_hosted_monthly|intcomma }}/mo</small></div>
+  <div class="pr"><b>{{ template.price_label }}</b><small>Try it free first</small></div>
   <a class="btn go" href="{% url 'builder:from_template' template.pk %}">✨ Customize</a>
 </div>
 
@@ -565,10 +572,6 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke
     const ok = () => { b.textContent = 'Copied!'; toast('Link copied'); setTimeout(() => b.textContent = 'Copy', 2000); };
     if (navigator.clipboard) navigator.clipboard.writeText(i.value).then(ok).catch(() => { i.select(); document.execCommand('copy'); ok(); });
     else { i.select(); document.execCommand('copy'); ok(); }
-  };
-  window.orderNow = function(){
-    const m = 'Habari JamiiTek! 👋\n\nNimetazama preview ya template *' + NAME + '* (' + CAT + ') na ninaipenda sana!\n\n🔗 ' + location.href + '\n\nNaomba tuongee kuhusu jinsi ya kuipata. Asante!';
-    window.open('https://wa.me/{% contact "wa" %}?text=' + encodeURIComponent(m), '_blank');
   };
 })();
 </script>
