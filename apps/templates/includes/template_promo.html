@@ -60,8 +60,10 @@
 (function(){
   var el = document.getElementById('jtp'), KEY = 'jt_promo_seen';
   if (!el || window.self !== window.top) return;
+  // ?promo=1 kwenye link inaionyesha tena (kwa kujaribu baada ya kuiona)
+  var force = /[?&]promo=1\b/.test(location.search);
   // Mara moja tu kwa kila browser. Bila localStorage hatuwezi kuhakikisha hilo — basi haionyeshwi.
-  try { if (localStorage.getItem(KEY)) return; } catch (e) { return; }
+  try { if (localStorage.getItem(KEY) && !force) return; } catch (e) { return; }
   var frame = el.querySelector('iframe'), alive = true;
 
   function drift(){
@@ -81,6 +83,15 @@
   }
 
   function show(){
+    // Inahesabiwa "imeonekana" tu tab ikiwa mbele ya mtu — si ikiwa nyuma ya tab nyingine
+    if (document.visibilityState !== 'visible'){
+      document.addEventListener('visibilitychange', function again(){
+        if (document.visibilityState !== 'visible') return;
+        document.removeEventListener('visibilitychange', again);
+        setTimeout(show, 1500);
+      });
+      return;
+    }
     try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {}
     frame.addEventListener('load', function(){ frame.classList.add('ok'); drift(); }, {once: true});
     frame.src = el.dataset.raw;
