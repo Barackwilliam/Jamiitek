@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Your website request | JamiiTek{% endblock %}
+{% block extra_css %}
+<meta name="robots" content="noindex">
+{% comment %}Hali ya ombi la "Unahitaji tukutengenezee?" — builder/build_request.py{% endcomment %}
+{% include 'includes/mk_style.html' %}
+<style>
+.bs{padding:clamp(110px,13vw,140px) 0 90px;display:flex;justify-content:center}
+.bs-card{width:min(520px,100%);border-radius:24px;border:1px solid var(--line);background:linear-gradient(170deg,#0e1526,#090d18);padding:30px;text-align:center}
+.bs-ic{font-size:52px}
+.bs h1{font-size:clamp(24px,4vw,32px);line-height:1.15;letter-spacing:-.03em;margin:12px 0 8px;font-weight:800}
+.bs p{color:var(--mut);line-height:1.65;margin:0 0 6px}
+.bs-meta{margin:22px 0 0;border-top:1px solid var(--line);padding-top:14px;display:grid;gap:8px;text-align:left;font-size:14px}
+.bs-meta div{display:flex;justify-content:space-between;gap:12px}.bs-meta span:first-child{color:var(--mut)}
+</style>
+{% endblock %}
+{% block content %}
+<div class="mk"><section class="mk-in bs"><div class="bs-card">
+  {% if br.status == 'new' %}
+    <div class="bs-ic">⏳</div><h1>Waiting for your payment</h1>
+    <p>We have your request, but the payment is not done yet. If you paid, wait a few minutes and open this page again.</p>
+    <a class="mk-btn p" style="margin-top:18px" href="{% if br.template %}{% url 'build_for_me' br.template.slug %}{% else %}{% url 'templates_marketplace' %}{% endif %}">Try again</a>
+  {% elif br.status == 'done' %}
+    <div class="bs-ic">🎉</div><h1>Your website is ready</h1>
+    <p>Thank you for choosing JamiiTek. If you need any change, call or WhatsApp us.</p>
+  {% else %}
+    <div class="bs-ic">✅</div><h1>Payment received — we are on it!</h1>
+    <p>Thank you, {{ br.name }}. Our team will call you on <b style="color:#fff">{{ br.phone }}</b> within one working day to start building your website.</p>
+  {% endif %}
+  <div class="bs-meta">
+    <div><span>Business</span><span>{{ br.business_name }}</span></div>
+    <div><span>Design</span><span>{{ br.template_name }}</span></div>
+    <div><span>Total</span><span>TSh {{ br.amount|intcomma }}</span></div>
+    <div><span>Status</span><span>{% if br.status == 'new' %}Not paid yet{% elif br.status == 'paid' %}Paid{% elif br.status == 'working' %}We are building it{% else %}Ready{% endif %}</span></div>
+  </div>
+</div></section></div>
+{% endblock %}

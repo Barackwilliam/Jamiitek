@@ -400,6 +400,10 @@ class BuilderPricing(models.Model):
         default=0, verbose_name='Next year hosting — price (TSh)',
         help_text='Ada ya kila mwaka baada ya mwaka wa kwanza (template iliyonunuliwa au Remove logo). '
                   '0 = hosting haiishi.')
+    build_fee = models.PositiveIntegerField(
+        default=0, verbose_name='"Unahitaji tukutengenezee?" — work fee (TSh)',
+        help_text='Ada ya kazi ya timu kujenga website kwa mteja (inaongezwa juu ya bei ya template). '
+                  '0 = fomu ya kulipia haipo; kitufe kinaelekeza kwenye proposal kama zamani.')
     badge_old_sites_from = models.DateField(
         null=True, blank=True, verbose_name='Old free sites show the logo from',
         help_text='Website za bure zilizokuwepo kabla ya mfumo wa malipo zinaanza kuonyesha '
@@ -418,3 +422,47 @@ class BuilderPricing(models.Model):
     def get(cls):
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
+
+
+class BuildRequest(models.Model):
+    """Ombi la "Unahitaji tukutengenezee?" — mteja analipa (Pesapal), timu inamjengea website."""
+    STATUS = [
+        ('new', 'Not paid yet'),
+        ('paid', 'Paid — start work'),
+        ('working', 'Team is working'),
+        ('done', 'Done'),
+    ]
+    token = models.CharField(max_length=32, unique=True, editable=False)
+    template = models.ForeignKey('apps.WebsiteTemplate', null=True, blank=True, on_delete=models.SET_NULL)
+    template_name = models.CharField(max_length=200, blank=True)
+
+    name = models.CharField('Your name', max_length=120)
+    business_name = models.CharField('Business name', max_length=160)
+    phone = models.CharField('Phone (WhatsApp)', max_length=30)
+    email = models.EmailField(blank=True)
+    about = models.TextField('About your business')
+    photos = models.JSONField(default=list, blank=True)
+
+    template_price = models.PositiveIntegerField(default=0)
+    build_fee = models.PositiveIntegerField(default=0)
+    amount = models.PositiveIntegerField(default=0)
+
+    status = models.CharField(max_length=10, choices=STATUS, default='new')
+    notes = models.TextField(blank=True, help_text='Maelezo ya ndani ya timu.')
+    paid_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Build request (Tukutengenezee)'
+        verbose_name_plural = 'Build requests (Tukutengenezee)'
+
+    def __str__(self):
+        return f'{self.business_name} — {self.template_name or "template"} [{self.get_status_display()}]'
+
+    def save(self, *args, **kwargs):
+        if not self.token:
+            import secrets
+            self.token = secrets.token_urlsafe(16)[:24]
+        super().save(*args, **kwargs)
+

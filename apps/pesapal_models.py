@@ -23,6 +23,7 @@ class PesapalTransaction(models.Model):
         ('builder_template',     'Website Template'),      # plan_id = WebsiteTemplate.pk
         ('builder_logo',         'Remove JamiiTek Logo'),
         ('builder_renew',        'Website Hosting (1 year)'),
+        ('build_request',        'We Build Your Website'),   # target_id = BuildRequest.token
     ]
 
     # ── Hali ya malipo (inafuata Pesapal status_code) ─────
@@ -91,6 +92,7 @@ class PesapalTransaction(models.Model):
                 'builder_template': 'TPL',
                 'builder_logo': 'LOGO',
                 'builder_renew': 'RNW',
+                'build_request': 'BLD',
             }.get(self.purpose, 'PAY')
             self.merchant_reference = f'JT-{short}-{secrets.token_hex(6).upper()}'
         super().save(*args, **kwargs)

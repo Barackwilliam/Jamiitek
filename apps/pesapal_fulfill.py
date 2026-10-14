@@ -47,6 +47,7 @@ def fulfill(tx):
             'builder_template':     _fulfill_builder,
             'builder_logo':         _fulfill_builder,
             'builder_renew':        _fulfill_builder,
+            'build_request':        _fulfill_build_request,
         }.get(locked.purpose)
 
         if not handler:
@@ -88,6 +89,11 @@ def fulfill(tx):
                 logger.exception('Pesapal: issue_receipt imeshindikana')
         transaction.on_commit(_issue)
         return True
+
+
+def _fulfill_build_request(tx):
+    from builder.build_request import fulfill
+    return fulfill(tx)
 
 
 def _fulfill_builder(tx):

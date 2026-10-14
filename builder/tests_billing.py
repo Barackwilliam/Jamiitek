@@ -238,3 +238,74 @@ class HostingRenewalTest(BillingBase):
         site = self.bought_site(-30)
         self.assertEqual(Client().get('/', HTTP_HOST=HOST).status_code, 200)
         self.assertEqual(self.c.get(f'/builder/site/{site.id}/pay/renew/').status_code, 302)
+
+
+class BuildForMeTest(TestCase):
+    """ "Unahitaji tukutengenezee?" — builder/build_request.py """
+    def setUp(self):
+        ping = mock.patch('apps.indexnow.ping')
+        ping.start()
+        self.addCleanup(ping.stop)
+        from django.core.cache import cache
+        cache.clear()
+        self.tpl = WebsiteTemplate.objects.create(name='Duka Glass', category='shop', description='Shop.',
+                                                  preview_html=DOC, price=80000)
+        self.url = f'/templates/{self.tpl.slug}/build-for-me/'
+        self.data = {'business_name': 'Duka Letu', 'name': 'Asha Juma', 'phone': '0712 345 678',
+                     'email': 'asha@example.com', 'about': 'We sell phones in Kariakoo.'}
+
+    def test_without_a_fee_the_button_still_goes_to_the_proposal(self):
+        r = self.client.get(self.url)
+        self.assertRedirects(r, f'/proposals/?template={self.tpl.pk}', fetch_redirect_response=False)
+        self.assertContains(self.client.get(self.tpl.get_absolute_url()), f'/proposals/?template={self.tpl.pk}')
+
+    def test_pay_template_price_plus_fee_then_team_is_told(self):
+        from django.core import mail
+        from builder.models import BuildRequest
+        BuilderPricing.objects.update_or_create(pk=1, defaults={'build_fee': 100000})
+        self.assertContains(self.client.get(self.tpl.get_absolute_url()), self.url)
+        page = self.client.get(self.url)
+        self.assertContains(page, 'Unahitaji tukutengenezee?')
+        self.assertContains(page, 'TSh 180,000')
+
+        with _pesapal():
+            r = self.client.post(self.url, self.data)
+        self.assertEqual(r['Location'], 'https://pay.pesapal.test/x')
+        br = BuildRequest.objects.get()
+        tx = PesapalTransaction.objects.get()
+        self.assertEqual((br.status, br.amount, br.template_price, br.build_fee), ('new', 180000, 80000, 100000))
+        self.assertEqual((tx.purpose, tx.target_id, tx.amount), ('build_request', br.token, 180000))
+        self.assertTrue(tx.merchant_reference.startswith('JT-BLD-'))
+        self.assertContains(self.client.get(f'/build/{br.token}/'), 'Waiting for your payment')
+
+        tx.status = 'completed'
+        tx.save()
+        with mock.patch('apps.pesapal_receipt.issue_receipt'), mock.patch('apps.notify.notify') as notify:
+            with self.captureOnCommitCallbacks(execute=True):
+                fulfill(tx)
+        br.refresh_from_db()
+        self.assertEqual(br.status, 'paid')
+        self.assertIn('Duka Letu', notify.call_args[0][0])
+        self.assertIn('0712 345 678', notify.call_args[0][0])
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertContains(self.client.get(f'/build/{br.token}/'), 'Payment received')
+
+    def test_free_design_pays_only_the_fee(self):
+        BuilderPricing.objects.update_or_create(pk=1, defaults={'build_fee': 100000})
+        WebsiteTemplate.objects.filter(pk=self.tpl.pk).update(is_free=True)
+        with _pesapal():
+            self.client.post(self.url, self.data)
+        self.assertEqual(PesapalTransaction.objects.get().amount, 100000)
+
+    def test_bad_phone_and_too_many_requests(self):
+        from builder.models import BuildRequest
+        BuilderPricing.objects.update_or_create(pk=1, defaults={'build_fee': 100000})
+        r = self.client.post(self.url, dict(self.data, phone='12'))
+        self.assertContains(r, 'phone number')
+        self.assertFalse(BuildRequest.objects.exists())
+        with _pesapal():
+            for _ in range(5):
+                self.client.post(self.url, self.data)
+            r = self.client.post(self.url, self.data)
+        self.assertContains(r, 'Too many requests')
+        self.assertEqual(BuildRequest.objects.count(), 4)        # ya kwanza (simu mbaya) ilihesabiwa pia
