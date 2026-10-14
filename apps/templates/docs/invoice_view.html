@@ -127,7 +127,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
 .btn.pay::after{content:"";position:absolute;top:0;bottom:0;width:45%;left:-60%;transform:skewX(-20deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);animation:sw 3.2s 1.2s infinite}
 @keyframes sw{0%{left:-60%}40%,100%{left:130%}}
 .btn.pay:hover{background:linear-gradient(135deg,#22c55e,#16a34a 60%,#15803d);box-shadow:0 18px 44px rgba(22,163,74,.42)}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.two .wide{grid-column:1/-1}.two .wide em{font-style:normal}
 .ways{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
 .ways span{padding:4px 9px;border-radius:7px;border:1px solid var(--ln);background:#fff;font-size:11px;font-weight:700;color:var(--mut)}
 .verify{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;background:var(--glass);border:1px dashed #cbd5e8}
@@ -212,7 +212,54 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
   .it .c{text-align:left}
   .foot{padding:16px 18px}
 }
-@media(max-width:420px){.parties{grid-template-columns:1fr}.two{grid-template-columns:1fr}}
+/* Simu: ukurasa mfupi (karibu skrini 2) — kila kitu kimebanwa, hakuna kinachorudiwa */
+@media(max-width:700px){
+  .cmd{gap:10px;margin-bottom:12px}.panel{border-radius:18px}
+  .main{padding:16px 16px 14px}.side{padding:14px 16px;gap:10px}
+  .chip{padding:4px 9px;font-size:10.5px}
+  .amt-l{margin-top:12px;font-size:10.5px}.amt{margin-top:2px}.amt small{font-size:14px}.amt b{font-size:38px}
+  .meta{margin-top:8px;gap:2px 12px;font-size:12px}
+  .clock-l{margin-top:12px;font-size:10.5px}
+  .clock{gap:6px;margin-top:6px}.clock div{max-width:none;padding:6px 2px;border-radius:10px}.clock b{font-size:16px}.clock span{font-size:9px}
+  .track{margin-top:14px}.track::before,.track .bar{top:10px}
+  .st{font-size:9.5px;line-height:1.25}.st .d{width:22px;height:22px;margin-bottom:5px}
+  .st.done .d::after{width:5px;height:9px;border-width:0 2px 2px 0}
+  .ring-row{gap:12px}.ring{width:58px;height:58px}.ring circle{stroke-width:11}.ring b{font-size:13.5px}
+  .ring-t b{font-size:14px}.ring-t small{font-size:11px}.ring-t small[style]{margin-top:0!important}
+  .btn{padding:10px 12px;font-size:13.5px;border-radius:12px}.btn.pay{padding:14px 12px;font-size:15px}
+  .ways span{padding:3px 7px;font-size:10px}
+  .verify{display:none}
+  .two{gap:8px;grid-template-columns:1.5fr 1fr 1fr}.two .wide{grid-column:auto;padding:10px 8px}
+  .two .wide span{font-size:0}.two .wide em{font-size:13px}
+  .ph{padding:22px 16px 12px;gap:6px}.ph .logo{max-height:34px;margin-bottom:8px}.ph h1{font-size:19px;margin-top:4px}.ph .sub{font-size:12.5px;margin-top:2px}
+  .ph-r{display:none}
+  .parties{grid-template-columns:1fr 1fr;margin:0 12px;border-radius:12px}
+  .parties div{padding:9px 11px;font-size:12px;line-height:1.4}.parties small{font-size:9.5px;margin-bottom:2px}
+  .sec,.items,.paylist,.payref,.hist,.terms,.note,.stamp{margin-left:12px;margin-right:12px}
+  .sec{margin-top:18px;margin-bottom:8px;font-size:10.5px}
+  .items{border-radius:12px}
+  .it{grid-template-columns:repeat(3,1fr);gap:4px 10px;padding:10px 12px;font-size:13px}
+  .it .d2{font-size:11.5px;margin-top:1px}
+  .it .num::before{font-size:9px}
+  .it .num.r{text-align:right}
+  .tot{margin:8px 12px 0}.tot div{padding:6px 10px;font-size:13px}.tot .grand{padding:10px 12px;margin-top:4px}.tot .grand b{font-size:17px}.tot .bal b{font-size:15px}
+  .paylist{gap:8px}.pm{padding:9px 11px;border-radius:12px}.pm span{font-size:13px}
+  .payref{font-size:12px;margin-top:8px}
+  .hist div{padding:8px 12px;font-size:12.5px}
+  .terms{margin-top:12px;font-size:12px}.note{margin-top:10px;padding:10px 12px;font-size:12.5px}
+  .stamp{margin-top:14px;padding:12px}.stamp b{font-size:16px}
+  .foot{margin-top:20px;padding:12px 14px;font-size:11px;gap:4px}
+  .help{margin-top:10px;font-size:12.5px}
+}
+@media screen and (max-width:700px){
+  /* Tarehe tayari ziko juu (meta) — kwenye simu hazirudiwi */
+  .parties div:nth-child(n+3){display:none}
+  .foot i{display:none}
+  .sec{margin-top:14px;margin-bottom:6px}
+  .ph{padding-top:18px}
+  .main .meta span:first-child{display:none}
+}
+@media(max-width:360px){.parties{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media print{
   body{background:#fff;color:#000}
@@ -311,13 +358,13 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
         </form>
         <div class="ways"><span>M-Pesa</span><span>Tigo Pesa</span><span>Airtel Money</span><span>{% if lang == 'sw' %}Kadi{% else %}Card{% endif %}</span></div>
         {% endif %}
-        {% if invoice.shows_manual or not PESAPAL_ENABLED %}
-        <a class="btn" href="#how-to-pay">
-          <svg class="i" viewBox="0 0 24 24"><path d="M3 10h18M5 10v8M19 10v8M9 10v8M15 10v8M3 20h18M12 3 3 8h18z"/></svg>
-          {% if lang == 'sw' %}Lipa kwa M-Pesa / Benki{% else %}Pay by M-Pesa / Bank{% endif %}</a>
-        {% endif %}
       {% endif %}
       <div class="two">
+        {% if not invoice.is_paid and not preview %}{% if invoice.shows_manual or not PESAPAL_ENABLED %}
+        <a class="btn wide" href="#how-to-pay">
+          <svg class="i" viewBox="0 0 24 24"><path d="M3 10h18M5 10v8M19 10v8M9 10v8M15 10v8M3 20h18M12 3 3 8h18z"/></svg>
+          <span>{% if lang == 'sw' %}Lipa kwa <em>M-Pesa / Benki</em>{% else %}Pay by <em>M-Pesa / Bank</em>{% endif %}</span></a>
+        {% endif %}{% endif %}
         <a class="btn" href="{% url 'invoice_pdf' invoice.token %}?lang={{ lang }}">
           <svg class="i" viewBox="0 0 24 24"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 19h16"/></svg>PDF</a>
         <button type="button" class="btn" onclick="window.print()">
