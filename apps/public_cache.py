@@ -14,7 +14,7 @@ UPYA WA MAUDHUI
 
   - Kila kitu kinaisha muda baada ya sekunde PUBLIC_TTL (60).
   - Admin akihifadhi au kufuta Service, HeroSlide, PortfolioItem, Testimonial,
-    Team, Question, BlogPost au CompanyProfile, toleo linapanda na cache ya process hiyo
+    Team, Question, BlogPost, CompanyProfile au WebsiteTemplate, toleo linapanda na cache ya process hiyo
     inafutika papo hapo. Process nyingine (kama gunicorn ina workers
     kadhaa) zinaona badiliko ndani ya dakika moja.
 
@@ -61,10 +61,10 @@ def bump(*_args, **_kwargs):
 
 def connect_signals():
     """Inaitwa kutoka AppConfig.ready()."""
-    from .models import BlogPost, CompanyProfile, Question, Service, Team
+    from .models import BlogPost, CompanyProfile, Question, Service, Team, WebsiteTemplate
     from .site_content import HeroSlide, PortfolioItem, Testimonial
 
     for model in (Service, Team, Question, BlogPost, CompanyProfile,
-                  HeroSlide, PortfolioItem, Testimonial):
+                  HeroSlide, PortfolioItem, Testimonial, WebsiteTemplate):
         post_save.connect(bump, sender=model, dispatch_uid=f'public_cache_save_{model.__name__}')
         post_delete.connect(bump, sender=model, dispatch_uid=f'public_cache_del_{model.__name__}')

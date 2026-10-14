@@ -291,9 +291,14 @@ def _fonts(html, limit=3):
 
 
 def anatomy(tpl):
-    """Sehemu, rangi, fonti na idadi ya vitu vya demo — inahifadhiwa kwenye cache hadi template ibadilike."""
-    from django.core.cache import cache
+    """Sehemu, rangi, fonti na idadi ya vitu vya demo — inahifadhiwa kwenye RAM hadi template ibadilike.
 
+    Si cache ya 'default': bila Redis hiyo ni DatabaseCache (safari ya Supabase),
+    na preview_html haisomwi kabisa kama anatomia ipo tayari (view inaiahirisha).
+    """
+    from django.core.cache import caches
+
+    cache = caches['local']
     stamp = int(tpl.updated_at.timestamp()) if tpl.updated_at else 0
     key = f'tpl-anatomy:{tpl.pk}:{stamp}'
     data = cache.get(key)
