@@ -23,7 +23,7 @@ class SubdomainMiddleware:
         if getattr(request, 'client_site', None) is not None:
             # "Developed by JamiiTek" kwenye kila ukurasa wa mteja (builder/branding.py)
             from .branding import add_badge_to_response
-            response = add_badge_to_response(response)
+            response = add_badge_to_response(response, request.client_site)
         return response
 
     def _dispatch(self, request):

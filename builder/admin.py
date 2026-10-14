@@ -7,7 +7,7 @@ from .models import (ClientWebsite, SitePage, SiteCollection, SiteItem, SiteAsse
 class ClientWebsiteAdmin(admin.ModelAdmin):
     list_display = ('site_name', 'subdomain', 'website_type', 'owner',
                     'is_published', 'is_premium', 'hosting_until', 'is_suspended', 'created_at')
-    list_filter = ('website_type', 'is_published', 'is_premium', 'legacy_free', 'is_suspended')
+    list_filter = ('website_type', 'is_published', 'is_premium', 'is_suspended')
     search_fields = ('site_name', 'subdomain', 'owner__username')
     actions = ['suspend_sites', 'unsuspend_sites']
 
@@ -23,7 +23,7 @@ class ClientWebsiteAdmin(admin.ModelAdmin):
 @admin.register(BuilderPricing)
 class BuilderPricingAdmin(admin.ModelAdmin):
     """Bei za jumla za Builder — rekodi moja tu."""
-    fields = ('remove_logo_price', 'yearly_hosting_price', 'build_fee', 'badge_old_sites_from')
+    fields = ('remove_logo_price', 'yearly_hosting_price', 'build_fee')
 
     def has_add_permission(self, request):
         return not BuilderPricing.objects.exists()

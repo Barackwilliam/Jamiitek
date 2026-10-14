@@ -172,7 +172,7 @@ def faq(tpl):
           f'The price includes 1 year of hosting, connecting your own domain and no JamiiTek logo on your website.')
          if tpl.for_sale else
          (f'{tpl.name} is free. Build your website and put it online free on yourname.jamiitek.com. '
-          f'Free websites show "Made with JamiiTek" at the bottom.')),
+          f'Free websites show "Developed by JamiiTek" at the bottom.')),
         ('Does it work on mobile phones?',
          f'Yes. Every JamiiTek template, including {tpl.name}, is mobile-first and tested on phones, tablets and laptops.'),
         ('Can I use my own domain name?',

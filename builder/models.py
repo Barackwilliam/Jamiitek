@@ -95,7 +95,7 @@ class ClientWebsite(models.Model):
 
     # ── Premium: custom domain (mfano dukalangu.co.tz) ──
     # Inawashwa na malipo (builder/billing.py): kununua template inayouzwa, au
-    # "Remove JamiiTek logo". Premium = hakuna "Made with JamiiTek" + domain yake.
+    # "Remove JamiiTek logo". Premium = hakuna "Developed by JamiiTek" + domain yake.
     is_premium = models.BooleanField(
         default=False, help_text='Premium sites can connect a custom domain.')
 
@@ -104,9 +104,7 @@ class ClientWebsite(models.Model):
     paid_template_id = models.PositiveIntegerField(null=True, blank=True)
     hosting_until = models.DateField(null=True, blank=True,
                                      help_text='Hosting iliyolipiwa inaisha lini (mwaka 1 baada ya kulipa).')
-    # Site zilizokuwepo kabla ya malipo: alama ya "Made with JamiiTek" inaanza tarehe
-    # iliyowekwa kwenye BuilderPricing (baada ya kuwapa taarifa), si siku ya deploy.
-    legacy_free = models.BooleanField(default=False)
+
     custom_domain = models.CharField(
         max_length=120, unique=True, null=True, blank=True,
         help_text='e.g. www.mybusiness.co.tz — bila http://')
@@ -394,7 +392,7 @@ class BuilderPricing(models.Model):
     """Bei za jumla za Builder — rekodi MOJA tu (pk=1), inahaririwa kwenye admin."""
     remove_logo_price = models.PositiveIntegerField(
         default=0, verbose_name='Remove JamiiTek logo — price (TSh)',
-        help_text='Malipo ya mara moja kwa website ya template ya bure: inaondoa "Made with JamiiTek" '
+        help_text='Malipo ya mara moja kwa website ya template ya bure: inaondoa "Developed by JamiiTek" '
                   'na inaruhusu domain yake. 0 = kitufe hakionyeshwi.')
     yearly_hosting_price = models.PositiveIntegerField(
         default=0, verbose_name='Next year hosting — price (TSh)',
@@ -404,11 +402,6 @@ class BuilderPricing(models.Model):
         default=0, verbose_name='"Unahitaji tukutengenezee?" — work fee (TSh)',
         help_text='Ada ya kazi ya timu kujenga website kwa mteja (inaongezwa juu ya bei ya template). '
                   '0 = fomu ya kulipia haipo; kitufe kinaelekeza kwenye proposal kama zamani.')
-    badge_old_sites_from = models.DateField(
-        null=True, blank=True, verbose_name='Old free sites show the logo from',
-        help_text='Website za bure zilizokuwepo kabla ya mfumo wa malipo zinaanza kuonyesha '
-                  '"Made with JamiiTek" tarehe hii. Tupu = bado. Wape taarifa kwanza '
-                  '(python manage.py badge_notice).')
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

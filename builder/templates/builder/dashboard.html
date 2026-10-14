@@ -96,13 +96,8 @@ inquiries, kupakia ZIP na JamiiBot. Kila kitu kingine kiko ndani ya Studio.
 {% elif logo_price %}
 <section class="db-pay"><span class="db-pay-ic">✨</span>
   <div><b>Remove JamiiTek logo</b>
-    <p>{% if badge_from %}From {{ badge_from|date:"j F Y" }}, free websites show "Made with JamiiTek" at the bottom. {% endif %}Pay once (TSh {{ logo_price|intcomma }}), remove the logo and use your own name.</p></div>
+    <p>Pay once (TSh {{ logo_price|intcomma }}), remove "Developed by JamiiTek" from your site and use your own name.</p></div>
   <a class="btn sm amber" href="{% url 'builder:checkout' site.id 'logo' %}">Remove logo</a>
-</section>
-{% elif badge_from %}
-<section class="db-pay"><span class="db-pay-ic">ℹ️</span>
-  <div><b>Coming soon: "Made with JamiiTek"</b>
-    <p>From {{ badge_from|date:"j F Y" }}, free websites show "Made with JamiiTek" at the bottom.</p></div>
 </section>
 {% elif site.is_premium and site.hosting_until %}
 <section class="db-pay ok"><span class="db-pay-ic">⭐</span>

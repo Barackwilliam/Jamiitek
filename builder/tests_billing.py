@@ -1,4 +1,4 @@
-"""Malipo ya Builder (builder/billing.py): template inayouzwa, Remove logo, "Made with JamiiTek"."""
+"""Malipo ya Builder (builder/billing.py): template inayouzwa, Remove logo, "Developed by JamiiTek"."""
 from datetime import timedelta
 from unittest import mock
 
@@ -81,7 +81,7 @@ class PaidTemplateTest(BillingBase):
         # Imelipiwa: hakuna alama, na Publish haitaki malipo tena
         html = Client().get('/', HTTP_HOST=HOST).content.decode()
         self.assertIn('Karibu Duka', html)
-        self.assertNotIn('jt-made-with', html)
+        self.assertNotIn('jamiitek-badge', html)                    # imelipiwa: hakuna "Developed by JamiiTek"
         self.assertNotContains(self.c.get(f'/builder/site/{site.id}/'), 'Pay now')
 
     def test_amount_comes_from_the_server_not_the_form(self):
@@ -118,14 +118,14 @@ class PaidTemplateTest(BillingBase):
 
 
 class FreeTemplateTest(BillingBase):
-    def test_free_site_publishes_free_and_shows_made_with_jamiitek(self):
+    def test_free_site_publishes_free_and_shows_developed_by_jamiitek(self):
         site = self.make_site(is_free=True)
         self.c.post(f'/builder/site/{site.id}/publish/')
         site.refresh_from_db()
         self.assertTrue(site.is_published)
         html = Client().get('/', HTTP_HOST=HOST).content.decode()
-        self.assertIn('id="jt-made-with"', html)
-        self.assertLess(html.index('jt-made-with'), html.lower().rindex('</body>'))
+        self.assertEqual(html.count('<jamiitek-badge'), 1)          # alama MOJA tu
+        self.assertLess(html.index('<jamiitek-badge'), html.lower().rindex('</body>'))
         # Bei ya "Remove logo" haijawekwa → hakuna kitufe wala ukurasa wa malipo
         self.assertNotContains(self.c.get(f'/builder/site/{site.id}/'), 'Remove logo')
         self.assertEqual(self.c.get(f'/builder/site/{site.id}/pay/logo/').status_code, 302)
@@ -138,34 +138,15 @@ class FreeTemplateTest(BillingBase):
         tx = self.pay(site, 'logo')
         self.assertEqual((tx.purpose, tx.amount), ('builder_logo', 30000))
         self.assertTrue(site.is_premium)
-        self.assertNotIn('jt-made-with', Client().get('/', HTTP_HOST=HOST).content.decode())
+        self.assertNotIn('jamiitek-badge', Client().get('/', HTTP_HOST=HOST).content.decode())
         r = self.c.get(f'/builder/site/{site.id}/?paid=1')
         self.assertContains(r, 'Your website is online!')
 
-    def test_old_free_sites_get_the_logo_only_from_the_chosen_date(self):
+    def test_studio_preview_matches_the_live_site(self):
         site = self.make_site(is_free=True)
-        ClientWebsite.objects.filter(pk=site.pk).update(legacy_free=True, is_published=True)
-        html = lambda: Client().get('/', HTTP_HOST=HOST).content.decode()
-        self.assertNotIn('jt-made-with', html())                        # tarehe haijawekwa
-        soon = timezone.localdate() + timedelta(days=7)
-        BuilderPricing.objects.update_or_create(pk=1, defaults={'badge_old_sites_from': soon})
-        self.assertNotIn('jt-made-with', html())
-        self.assertContains(self.c.get(f'/builder/site/{site.id}/'), 'free websites show')
-        BuilderPricing.objects.filter(pk=1).update(badge_old_sites_from=timezone.localdate())
-        self.assertIn('jt-made-with', html())
-
-    def test_badge_notice_emails_each_owner_once(self):
-        from django.core import mail
-        from django.core.management import call_command
-        site = self.make_site(is_free=True)
-        ClientWebsite.objects.filter(pk=site.pk).update(legacy_free=True, is_published=True)
-        BuilderPricing.objects.update_or_create(pk=1, defaults={
-            'badge_old_sites_from': timezone.localdate() + timedelta(days=7), 'remove_logo_price': 30000})
-        call_command('badge_notice', stdout=mock.MagicMock())
-        call_command('badge_notice', stdout=mock.MagicMock())
-        self.assertEqual(len(mail.outbox), 1)
-        self.assertIn('dukaletu.jamiitek.com', mail.outbox[0].body)
-        self.assertIn('TSh 30,000', mail.outbox[0].body)
+        self.assertContains(self.c.get(f'/builder/site/{site.id}/studio/preview/'), '<jamiitek-badge')
+        ClientWebsite.objects.filter(pk=site.pk).update(is_premium=True)
+        self.assertNotContains(self.c.get(f'/builder/site/{site.id}/studio/preview/'), '<jamiitek-badge')
 
 
 class HostingRenewalTest(BillingBase):
@@ -231,7 +212,7 @@ class HostingRenewalTest(BillingBase):
         self.assertFalse(site.is_premium)
         html = Client().get('/', HTTP_HOST=HOST)
         self.assertEqual(html.status_code, 200)                       # haisimami — logo inarudi tu
-        self.assertContains(html, 'jt-made-with')
+        self.assertContains(html, '<jamiitek-badge')
 
     def test_no_yearly_price_means_hosting_never_ends(self):
         BuilderPricing.objects.filter(pk=1).update(yearly_hosting_price=0)
