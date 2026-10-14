@@ -84,6 +84,35 @@ class TemplateSeoTest(NoPingMixin, TestCase):
         self.assertIn('st-wrap solo', page)
         self.assertNotIn('Design DNA', page)
 
+    def test_raw_demo_is_cached_lazy_and_light(self):
+        from django.core.cache import caches
+        from django.test.utils import CaptureQueriesContext
+        from django.db import connection
+        caches['local'].clear()
+        tpl = _tpl(name='Fast', preview_html='<html><body><img src="a.jpg"><img loading="eager" src="b.jpg"></body></html>')
+        url = '/templates/preview/%d/raw/' % tpl.pk
+        r = self.client.get(url)
+        self.assertEqual(r['Cache-Control'], 'public, max-age=300')
+        body = r.content.decode()
+        self.assertIn('<img loading="lazy" decoding="async" src="a.jpg">', body)
+        self.assertIn('<img loading="eager" src="b.jpg">', body)   # chaguo la mwandishi linaheshimiwa
+        with CaptureQueriesContext(connection) as q:
+            self.client.get(url)
+        self.assertEqual(len(q), 0)                                  # mara ya pili: RAM, si Supabase
+        # Template ikihifadhiwa demo mpya inaonekana mara moja
+        tpl.preview_html = '<html><body>New</body></html>'
+        tpl.save()
+        self.assertIn('New', self.client.get(url).content.decode())
+        # Ukurasa wa template hausafirishi HTML nzima ya demo (ziara ya kwanza tu inasoma
+        # anatomia yake; baada ya hapo iko kwenye RAM)
+        self.client.get(tpl.get_absolute_url())
+        with CaptureQueriesContext(connection) as q:
+            self.client.get(tpl.get_absolute_url())
+        self.assertFalse(any('preview_html' in x['sql'] for x in q.captured_queries))
+        tpl.is_active = False
+        tpl.save()
+        self.assertEqual(self.client.get(url).status_code, 404)
+
     def test_inactive_or_unknown_template_is_404(self):
         _tpl(name='Hidden', is_active=False)
         self.assertEqual(self.client.get('/templates/hidden/').status_code, 404)

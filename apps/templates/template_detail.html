@@ -59,6 +59,9 @@ ukurasa una hisia ya template yake.
 .td-screen iframe,.td-phone-in iframe{position:absolute;top:0;left:0;border:0;transform-origin:0 0;background:#fff;pointer-events:none;opacity:0;transition:opacity .6s}
 .td-screen iframe.ok,.td-phone-in iframe.ok{opacity:1}
 .td-screen iframe{width:1280px;height:800px}
+.td-screen::after,.td-phone-in::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;transition:opacity .5s;
+  background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.16) 50%,transparent 70%) 0 0/200% 100%;animation:mkShine 1.4s infinite}
+.td-screen:has(iframe.ok)::after,.td-phone-in:has(iframe.ok)::after{opacity:0;animation:none}
 .td-glare{position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.14),transparent 32%,transparent 70%,rgba(255,255,255,.05))}
 .td-phone{position:absolute;right:-4%;bottom:-6px;width:clamp(112px,23%,168px);padding:7px;border-radius:28px;background:#05070d;border:1px solid rgba(255,255,255,.16);
   box-shadow:0 30px 70px rgba(0,0,0,.65);transform:translateZ(60px)}
@@ -135,7 +138,7 @@ ukurasa una hisia ya template yake.
 .td-stack span{padding:5px 10px;border-radius:999px;border:1px solid var(--line);font-size:12px;font-weight:700;color:#cfd8e8}
 
 /* Sehemu za chini */
-.td-sec{padding-top:clamp(50px,7vw,80px)}
+.td-sec{padding-top:clamp(50px,7vw,80px);content-visibility:auto;contain-intrinsic-size:auto 700px}
 .td-kick{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--c)}
 .td-sec h2,.td-studio h2{font-size:clamp(26px,3.4vw,40px);letter-spacing:-.03em;line-height:1.1;margin:10px 0 12px;font-weight:800}
 .td-sub{color:var(--mut);font-size:16px;line-height:1.65;max-width:680px;margin:0 0 28px}
@@ -227,7 +230,7 @@ ukurasa una hisia ya template yake.
               <span class="td-cam"></span>
               <div class="td-screen"><iframe src="{% url 'template_preview_raw' tpl.pk %}" title="{{ tpl.name }} on desktop" tabindex="-1" aria-hidden="true" data-drift="70"></iframe><div class="td-glare"></div></div>
             </div>
-            <div class="td-phone"><div class="td-phone-in"><iframe src="{% url 'template_preview_raw' tpl.pk %}" title="{{ tpl.name }} on mobile" tabindex="-1" aria-hidden="true" data-drift="55"></iframe></div></div>
+            <div class="td-phone"><div class="td-phone-in"><iframe data-src="{% url 'template_preview_raw' tpl.pk %}" title="{{ tpl.name }} on mobile" tabindex="-1" aria-hidden="true" data-drift="55"></iframe></div></div>
           </div>
           <span class="td-chip a"><i>📱</i>Perfect on every phone</span>
           <span class="td-chip b"><i>💬</i>WhatsApp built in</span>
@@ -430,6 +433,11 @@ ukurasa una hisia ya template yake.
   });
   fit(); addEventListener('resize', fit);
 
+  // Demo inapakuliwa MARA MOJA (laptop); simu na studio zinaisubiri, kisha zinaipata
+  // kutoka cache ya browser (Cache-Control kwenye template_preview_raw) — si ombi jipya.
+  const lap = document.querySelector('.td-screen iframe');
+  const heroReady = new Promise(res => { if (!lap) return res(); ready(lap, res); setTimeout(res, 4000); });
+
   // Demo za juu zinajisogeza taratibu (kama mtu anaisoma) zikionekana kwenye skrini
   document.querySelectorAll('iframe[data-drift]').forEach(f => {
     let on = false, y = 0, wait = 1600, last = 0;
@@ -446,6 +454,7 @@ ukurasa una hisia ya template yake.
       requestAnimationFrame(tick);
     };
     ready(f, () => { f.classList.add('ok'); if (!calm) requestAnimationFrame(tick); });
+    if (!f.src) heroReady.then(() => { f.src = f.dataset.src; });
     if ('IntersectionObserver' in window) new IntersectionObserver(es => es.forEach(e => on = e.isIntersecting)).observe(f);
     else on = true;
   });
@@ -532,9 +541,9 @@ ukurasa una hisia ya template yake.
       ['wheel', 'touchstart', 'pointerdown', 'keydown'].forEach(ev => d.addEventListener(ev, () => { stopTour(); hint.classList.add('off'); }, {passive: true}));
       sync();
     });
-    const load = () => { if (!frame.src) frame.src = frame.dataset.src; };
+    const load = () => heroReady.then(() => { if (!frame.src) frame.src = frame.dataset.src; });
     if ('IntersectionObserver' in window){
-      const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)){ load(); io.disconnect(); } }, {rootMargin: '400px 0px'});
+      const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)){ load(); io.disconnect(); } }, {rootMargin: '200px 0px'});
       io.observe(main);
     } else load();
   }
@@ -552,7 +561,7 @@ ukurasa una hisia ya template yake.
 
   // Templates nyingine: zinapakiwa zikikaribia
   const frames = [...document.querySelectorAll('.td-rel iframe[data-src]')];
-  const loadCard = f => { if (!f.src){ f.addEventListener('load', () => f.classList.add('ok'), {once: true}); f.src = f.dataset.src; } };
+  const loadCard = f => heroReady.then(() => { if (!f.src){ f.addEventListener('load', () => f.classList.add('ok'), {once: true}); f.src = f.dataset.src; } });
   if ('IntersectionObserver' in window){
     const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting){ loadCard(e.target); io.unobserve(e.target); } }), {rootMargin: '300px 0px'});
     frames.forEach(f => io.observe(f));

@@ -764,11 +764,14 @@ def template_detail(request, slug):
     """Ukurasa kamili wa template moja — ndio unaopatikana Google na kwenye AI."""
     import json
     from . import template_seo
-    tpl = get_object_or_404(WebsiteTemplate, slug=slug, is_active=True)
-    related = list(WebsiteTemplate.objects.filter(is_active=True, category=tpl.category)
+    # preview_html (HTML nzima ya demo, mara nyingi mamia ya KB) haisafirishwi kutoka
+    # Supabase hapa — demo zinapakiwa na iframe, na anatomia iko kwenye cache ya RAM.
+    heavy = ('preview_html', 'long_description')
+    tpl = get_object_or_404(WebsiteTemplate.objects.defer('preview_html'), slug=slug, is_active=True)
+    related = list(WebsiteTemplate.objects.defer(*heavy).filter(is_active=True, category=tpl.category)
                    .exclude(pk=tpl.pk).order_by('order', '-created_at')[:3])
     if len(related) < 3:
-        related += list(WebsiteTemplate.objects.filter(is_active=True).exclude(pk=tpl.pk)
+        related += list(WebsiteTemplate.objects.defer(*heavy).filter(is_active=True).exclude(pk=tpl.pk)
                         .exclude(pk__in=[r.pk for r in related]).order_by('order', '-created_at')[:3 - len(related)])
     return render(request, 'template_detail.html', {
         'tpl': tpl,
@@ -803,13 +806,26 @@ from django.views.decorators.clickjacking import xframe_options_exempt
 @xframe_options_exempt
 def template_preview_raw(request, pk):
     """Serves the raw template HTML inside the iframe — exempt from X-Frame-Options"""
-    from django.shortcuts import get_object_or_404
-    from django.http import HttpResponse
-    tpl = get_object_or_404(WebsiteTemplate, pk=pk, is_active=True)
-    if not tpl.preview_html or not tpl.preview_html.strip():
+    from django.http import Http404, HttpResponse
+    from .public_cache import get_or_build
+
+    # Ukurasa mmoja wa template unaomba demo hii mara kadhaa (laptop, simu, studio,
+    # templates zinazohusiana). HTML inakaa kwenye RAM (inafutika template ikihifadhiwa)
+    # na kwenye browser kwa dakika 5 — si safari ya Supabase kila mara.
+    def build():
+        import re
+        row = WebsiteTemplate.objects.filter(pk=pk, is_active=True).values_list('preview_html', flat=True).first()
+        # Picha zisizoonekana bado (chini ya ukurasa wa demo) zisubiri hadi zifikiwe
+        html = re.sub(r'(?i)<img\b(?![^>]*\bloading=)', '<img loading="lazy" decoding="async"', row or '')
+        return (row is not None, html)
+    found, html = get_or_build(f'tplraw:{pk}', build, ttl=600)
+    if not found:
+        raise Http404
+    if not html.strip():
         resp = HttpResponse('<p style="font-family:sans-serif;padding:2rem;color:#999">Hakuna HTML iliyowekwa kwa template hii.</p>', content_type='text/html; charset=utf-8')
     else:
-        resp = HttpResponse(tpl.preview_html, content_type='text/html; charset=utf-8')
+        resp = HttpResponse(html, content_type='text/html; charset=utf-8')
+        resp['Cache-Control'] = 'public, max-age=300'
     # HTML ghafi ya demo isiingie Google kama ukurasa wake (maudhui ya mfano,
     # nakala); ukurasa wa template ndio unaoorodheshwa.
     resp['X-Robots-Tag'] = 'noindex, follow'
