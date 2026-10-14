@@ -231,3 +231,87 @@ def item_list_ld(templates, name, url):
             for i, t in enumerate(templates)
         ],
     }
+
+
+# ── Anatomia ya template (ukurasa wa template: "Inside this template") ──────
+# Inasomwa kutoka preview_html yenyewe — sehemu, rangi na fonti halisi za demo,
+# kwa hiyo kila ukurasa unaonyesha kilichopo kweli, si maneno ya jumla.
+
+_GENERIC_FONTS = {'serif', 'sans-serif', 'monospace', 'cursive', 'fantasy', 'system-ui', 'inherit', 'initial',
+                  'arial', 'helvetica', 'helvetica neue', 'times new roman', 'georgia', 'segoe ui', 'roboto mono',
+                  '-apple-system', 'blinkmacsystemfont', 'ui-sans-serif', 'ui-serif', 'ui-monospace', 'var'}
+
+
+def _text(fragment):
+    return re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', fragment or '')).strip()
+
+
+def _sections(html):
+    """[(namba, jina)] — namba ni nafasi ya <section> kwenye ukurasa (JS inaitumia kusogeza demo)."""
+    out = []
+    parts = re.split(r'(?i)<section\b', html)[1:]
+    for i, part in enumerate(parts):
+        head = re.search(r'(?is)<h[1-3][^>]*>(.*?)</h[1-3]>', part)
+        label = _text(head.group(1)) if head else ''
+        if not label:
+            sid = re.match(r'(?is)[^>]*\bid=["\']([^"\']+)', part)
+            label = sid.group(1).replace('-', ' ').replace('_', ' ').title() if sid else ''
+        if label:
+            out.append((i, label[:48]))
+    return out
+
+
+def _palette(html, limit=6):
+    """Rangi zinazotumika zaidi kwenye CSS ya demo (hex), bila marudio."""
+    counts = {}
+    for raw in re.findall(r'#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b', ' '.join(re.findall(r'(?is)<style[^>]*>(.*?)</style>', html))
+                          + ' ' + ' '.join(re.findall(r'(?i)style="([^"]*)"', html))):
+        h = raw.lower() if len(raw) == 6 else ''.join(c * 2 for c in raw.lower())
+        counts[h] = counts.get(h, 0) + 1
+    return ['#' + h for h, _ in sorted(counts.items(), key=lambda kv: -kv[1])[:limit]]
+
+
+def _google_fonts(html):
+    names = []
+    for fam in re.findall(r'(?i)fonts\.googleapis\.com/css2?\?[^"\'>]*', html):
+        names += [f.split(':')[0].replace('+', ' ').strip() for f in re.findall(r'family=([^&"\']+)', fam)]
+    return [n for i, n in enumerate(names) if re.fullmatch(r'[A-Za-z0-9 ]{2,40}', n) and n not in names[:i]]
+
+
+def _fonts(html, limit=3):
+    names = _google_fonts(html)
+    for decl in re.findall(r'(?i)font-family\s*:\s*((?:"[^"<>]*"|\'[^\'<>]*\'|[^;}"\'<>])+)', html):
+        names += [n.strip().strip('\'"') for n in decl.split(',')]
+    out = []
+    for n in names:
+        n = n.strip()
+        if re.fullmatch(r'[A-Za-z0-9 ]{2,40}', n) and n.lower() not in _GENERIC_FONTS and n not in out:
+            out.append(n)
+    return out[:limit]
+
+
+def anatomy(tpl):
+    """Sehemu, rangi, fonti na idadi ya vitu vya demo — inahifadhiwa kwenye cache hadi template ibadilike."""
+    from django.core.cache import cache
+
+    stamp = int(tpl.updated_at.timestamp()) if tpl.updated_at else 0
+    key = f'tpl-anatomy:{tpl.pk}:{stamp}'
+    data = cache.get(key)
+    if data is None:
+        html = tpl.preview_html or ''
+        sections = _sections(html)
+        data = {
+            'sections': sections,
+            'section_count': len(re.findall(r'(?i)<section\b', html)),
+            'images': len(re.findall(r'(?i)<img\b', html)) + len(re.findall(r'(?i)background(?:-image)?\s*:[^;]*url\(', html)),
+            'palette': _palette(html),
+            'fonts': _fonts(html),
+            'breakpoints': len(set(re.findall(r'(?i)@media[^{]*?(\d{3,4})px', html))),
+            'animated': bool(re.search(r'(?i)@keyframes|IntersectionObserver|transition\s*:', html)),
+        }
+        # Fonti za Google za demo zinapakiwa pia kwenye ukurasa ili sampuli "Aa" ionekane kwa fonti halisi
+        google = [f for f in data['fonts'] if f in _google_fonts(html)]
+        data['font_url'] = ('https://fonts.googleapis.com/css2?' + '&'.join(
+            'family=' + f.replace(' ', '+') for f in google) + '&display=swap') if google else ''
+        cache.set(key, data, 60 * 60 * 24)
+    return data

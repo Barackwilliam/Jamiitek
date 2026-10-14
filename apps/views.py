@@ -783,6 +783,7 @@ def template_detail(request, slug):
         'article': template_seo.article(tpl),
         'faq': template_seo.faq(tpl),
         'related': related,
+        'anatomy': template_seo.anatomy(tpl),
         'json_ld': [json.dumps(block, ensure_ascii=False) for block in template_seo.json_ld(tpl)],
     })
 

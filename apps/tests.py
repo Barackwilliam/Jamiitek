@@ -53,6 +53,37 @@ class TemplateSeoTest(NoPingMixin, TestCase):
         self.assertEqual(product['offers'][0]['price'], '0')
         self.assertNotIn('aggregateRating', product)       # hakuna rating za kubuni
 
+    def test_detail_page_shows_the_templates_own_sections_colours_and_fonts(self):
+        html = ('<html><head><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&display=swap">'
+                '<style>body{color:#2b2118;background:#F3E9D6;font-family:"Jost",sans-serif}h1{color:#2b2118}'
+                '@media(max-width:900px){a{b:1}}@media(max-width:600px){a{b:1}}</style></head><body>'
+                '<section class="hero"><h1>Where the <em>Ancestors</em> Speak</h1></section>'
+                '<section id="our-tours"><div>no heading</div></section><section><p>nothing</p></section>'
+                '<section><h2>Plan Your Trip</h2><img src="a.jpg"></section></body></html>')
+        tpl = _tpl(name='Heritage', preview_html=html)
+        r = self.client.get(tpl.get_absolute_url())
+        page = r.content.decode()
+        # Sehemu: jina la kichwa, au id, na nafasi yake halisi (ya 3 haina jina, inarukwa)
+        self.assertIn('data-i="0">Where the Ancestors Speak</button>', page)
+        self.assertIn('data-i="1">Our Tours</button>', page)
+        self.assertIn('data-i="3">Plan Your Trip</button>', page)
+        self.assertNotIn('data-i="2"', page)
+        self.assertIn('<b>4</b><span>designed sections</span>', page)
+        a = r.context['anatomy']
+        self.assertEqual(a['palette'][:2], ['#2b2118', '#f3e9d6'])
+        self.assertEqual(a['fonts'], ['Playfair Display', 'Jost'])
+        self.assertEqual(a['font_url'], 'https://fonts.googleapis.com/css2?family=Playfair+Display&display=swap')
+        self.assertEqual((a['images'], a['breakpoints']), (1, 2))
+        self.assertIn('id="studio"', page)
+        # Maelezo kamili bado yapo kwenye maandishi ya ukurasa kwa Google
+        self.assertIn(tpl.description, page)
+
+    def test_detail_page_without_sections_still_has_the_studio(self):
+        r = self.client.get('/templates/savanna-luxe/')
+        page = r.content.decode()
+        self.assertIn('st-wrap solo', page)
+        self.assertNotIn('Design DNA', page)
+
     def test_inactive_or_unknown_template_is_404(self):
         _tpl(name='Hidden', is_active=False)
         self.assertEqual(self.client.get('/templates/hidden/').status_code, 404)
