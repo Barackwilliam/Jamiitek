@@ -55,8 +55,9 @@ def _template(day):
         link = site('/templates/')
     return f'template:{t.pk}:{day}', f'Template: {t.name}', (
         f"Template ya tovuti '{t.name}' ({t.get_category_display()}) kwenye marketplace ya "
-        f"JamiiTek. {t.description} Bei: hosted TSh {t.price_hosted_monthly:,}/mwezi, au "
-        f"source code TSh {t.price_source_code:,}."
+        f"JamiiTek. {t.description} "
+        + (f"Bei: TSh {t.price:,} (mara moja), unaijaribu bure kwanza." if t.for_sale
+           else "Ni ya bure — unaijenga na kuiweka hewani bure.")
     ), link
 
 

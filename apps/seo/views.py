@@ -166,8 +166,8 @@ def llms_txt(request):
         ]
         for t in tpls:
             lines.append(f'- [{t.name} — {ts.cat_info(t)["noun"]} website template]({base}{t.get_absolute_url()}): '
-                         f'{ts.plain(t.description, 180)} Customize free; hosted TSh {t.price_hosted_monthly:,}/month; '
-                         f'source code TSh {t.price_source_code:,}.')
+                         f'{ts.plain(t.description, 180)} '
+                         + (f'Price: TSh {t.price:,} one time.' if t.for_sale else 'Free.'))
         cats = sorted({ts.cat_key(t) for t in tpls})
         if cats:
             lines += ['', '## Template categories']
