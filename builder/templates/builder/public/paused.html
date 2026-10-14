@@ -1,0 +1,18 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>{{ site.site_name }}</title>
+{% comment %}Website ya template iliyonunuliwa ambayo hosting yake imeisha (builder/billing.py → is_paused).{% endcomment %}
+<style>body{display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;font-family:system-ui,-apple-system,Arial,sans-serif;background:#f8fafc}
+.c{text-align:center;background:#fff;padding:clamp(28px,7vw,56px) clamp(22px,6vw,46px);border-radius:16px;box-shadow:0 4px 30px rgba(0,0,0,.1);max-width:480px;margin:20px;box-sizing:border-box}
+h1{font-size:clamp(20px,5.5vw,26px);margin:12px 0}p{color:#6b7280;line-height:1.7}
+a.b{display:inline-block;margin-top:18px;padding:13px 22px;border-radius:12px;background:#16a34a;color:#fff;font-weight:700;text-decoration:none}</style>
+</head><body><div class="c"><div style="font-size:56px">⏸️</div>
+<h1>{{ site.site_name }}</h1>
+{% if is_owner %}
+<p>Your website is paused because the hosting ended on {{ site.hosting_until|date:"j F Y" }}.
+  Pay for next year and it comes back online right away.</p>
+<a class="b" href="https://www.jamiitek.com/builder/site/{{ site.id }}/pay/renew/">Pay for next year</a>
+{% else %}
+<p>This website is resting for a short time. Please come back later.</p>
+{% endif %}
+<p style="margin-top:28px;color:#d1d5db;font-size:12px">JamiiTek</p></div></body></html>

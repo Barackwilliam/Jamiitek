@@ -71,6 +71,11 @@ def _check_published(request, site):
     # Subdomain inaonyesha website iliyopublishiwa TU — hata kwa mmiliki.
     # Mmiliki anaangalia draft kwenye preview ya Studio; hapa anaelezwa hilo.
     if site.is_published:
+        # Template iliyonunuliwa, hosting imeisha na haijalipiwa: website imesimama
+        from .billing import is_paused
+        if is_paused(site) and not (request.user.is_authenticated and request.user.is_staff):
+            is_owner = request.user.is_authenticated and request.user == site.owner
+            return render(request, 'builder/public/paused.html', {'site': site, 'is_owner': is_owner}, status=503)
         return None
     if request.user.is_authenticated and request.user.is_staff:
         return None

@@ -396,6 +396,10 @@ class BuilderPricing(models.Model):
         default=0, verbose_name='Remove JamiiTek logo — price (TSh)',
         help_text='Malipo ya mara moja kwa website ya template ya bure: inaondoa "Made with JamiiTek" '
                   'na inaruhusu domain yake. 0 = kitufe hakionyeshwi.')
+    yearly_hosting_price = models.PositiveIntegerField(
+        default=0, verbose_name='Next year hosting — price (TSh)',
+        help_text='Ada ya kila mwaka baada ya mwaka wa kwanza (template iliyonunuliwa au Remove logo). '
+                  '0 = hosting haiishi.')
     badge_old_sites_from = models.DateField(
         null=True, blank=True, verbose_name='Old free sites show the logo from',
         help_text='Website za bure zilizokuwepo kabla ya mfumo wa malipo zinaanza kuonyesha '

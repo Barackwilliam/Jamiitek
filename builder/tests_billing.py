@@ -166,3 +166,75 @@ class FreeTemplateTest(BillingBase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn('dukaletu.jamiitek.com', mail.outbox[0].body)
         self.assertIn('TSh 30,000', mail.outbox[0].body)
+
+
+class HostingRenewalTest(BillingBase):
+    def setUp(self):
+        super().setUp()
+        BuilderPricing.objects.update_or_create(pk=1, defaults={'yearly_hosting_price': 40000})
+
+    def bought_site(self, days_left):
+        site = self.make_site(price=80000)
+        self.pay(site, 'template')
+        ClientWebsite.objects.filter(pk=site.pk).update(
+            hosting_until=timezone.localdate() + timedelta(days=days_left))
+        site.refresh_from_db()
+        return site
+
+    def test_reminders_are_sent_once_on_the_right_days(self):
+        from django.core import mail
+        from django.core.management import call_command
+        site = self.bought_site(7)
+        call_command('builder_hosting', stdout=mock.MagicMock())
+        call_command('builder_hosting', stdout=mock.MagicMock())
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn('in 7 days', mail.outbox[0].subject)
+        self.assertIn(f'/builder/site/{site.id}/pay/renew/', mail.outbox[0].body)
+        self.assertIn('TSh 40,000', mail.outbox[0].body)
+        ClientWebsite.objects.filter(pk=site.pk).update(hosting_until=timezone.localdate() + timedelta(days=12))
+        call_command('builder_hosting', stdout=mock.MagicMock())   # siku 12 — si siku ya ukumbusho
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_unpaid_bought_site_pauses_after_grace_and_renewal_brings_it_back(self):
+        site = self.bought_site(-3)                    # ndani ya siku 7 za ziada — bado iko hewani
+        self.assertContains(Client().get('/', HTTP_HOST=HOST), 'Karibu Duka')
+        self.assertContains(self.c.get(f'/builder/site/{site.id}/'), 'Your hosting has ended')
+        ClientWebsite.objects.filter(pk=site.pk).update(hosting_until=timezone.localdate() - timedelta(days=8))
+        r = Client().get('/', HTTP_HOST=HOST)
+        self.assertEqual(r.status_code, 503)
+        self.assertNotContains(r, 'Karibu Duka', status_code=503)
+        self.assertContains(self.c.get(f'/builder/site/{site.id}/'), 'Your website is paused')
+
+        PesapalTransaction.objects.all().delete()
+        tx = self.pay(site, 'renew')
+        self.assertEqual((tx.purpose, tx.amount), ('builder_renew', 40000))
+        self.assertTrue(tx.merchant_reference.startswith('JT-RNW-'))
+        self.assertEqual(site.hosting_until, timezone.localdate() + timedelta(days=365))
+        self.assertContains(Client().get('/', HTTP_HOST=HOST), 'Karibu Duka')
+
+    def test_early_renewal_adds_a_year_to_the_end_date(self):
+        site = self.bought_site(20)
+        end = site.hosting_until
+        PesapalTransaction.objects.all().delete()
+        self.pay(site, 'renew')
+        self.assertEqual(site.hosting_until, end + timedelta(days=365))
+
+    def test_unpaid_remove_logo_goes_back_to_free(self):
+        from django.core.management import call_command
+        BuilderPricing.objects.filter(pk=1).update(remove_logo_price=30000)
+        site = self.make_site(is_free=True)
+        self.c.post(f'/builder/site/{site.id}/publish/')
+        self.pay(site, 'logo')
+        ClientWebsite.objects.filter(pk=site.pk).update(hosting_until=timezone.localdate() - timedelta(days=8))
+        call_command('builder_hosting', stdout=mock.MagicMock())
+        site.refresh_from_db()
+        self.assertFalse(site.is_premium)
+        html = Client().get('/', HTTP_HOST=HOST)
+        self.assertEqual(html.status_code, 200)                       # haisimami — logo inarudi tu
+        self.assertContains(html, 'jt-made-with')
+
+    def test_no_yearly_price_means_hosting_never_ends(self):
+        BuilderPricing.objects.filter(pk=1).update(yearly_hosting_price=0)
+        site = self.bought_site(-30)
+        self.assertEqual(Client().get('/', HTTP_HOST=HOST).status_code, 200)
+        self.assertEqual(self.c.get(f'/builder/site/{site.id}/pay/renew/').status_code, 302)

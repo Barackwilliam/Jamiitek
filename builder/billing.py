@@ -10,6 +10,11 @@ Mambo mawili yanalipiwa, kila moja mara MOJA:
   2. "Remove JamiiTek logo" — kwa website ya template ya BURE. Bei moja iliyowekwa
      na mmiliki (BuilderPricing.remove_logo_price).
 
+  3. Hosting ya mwaka unaofuata (BuilderPricing.yearly_hosting_price) — email za
+     ukumbusho siku 30/7/1/0 kabla (manage.py builder_hosting, kila siku). Baada ya
+     siku GRACE_DAYS bila kulipa: website ya template iliyonunuliwa inasimama
+     (is_paused), na ya "Remove logo" inarudi kuwa ya bure (logo inarudi).
+
 Website za bure zinaonyesha kibandiko kidogo "Made with JamiiTek" (with_badge).
 Website zilizokuwepo kabla ya mfumo huu (legacy_free) haziguswi hadi tarehe ya
 BuilderPricing.badge_old_sites_from — baada ya kupewa taarifa.
@@ -24,6 +29,7 @@ from django.utils import timezone
 from django.utils.html import escape
 
 HOSTING_DAYS = 365
+GRACE_DAYS = 7
 
 
 def pricing():
@@ -54,6 +60,26 @@ def logo_price(site):
     if site.is_premium or needs_payment(site):
         return 0
     return pricing().remove_logo_price
+
+
+def renew_price(site):
+    """Ada ya mwaka unaofuata kwa website hii, au 0 kama haihusiki."""
+    if not site.hosting_until:
+        return 0
+    return pricing().yearly_hosting_price
+
+
+def days_left(site):
+    """Siku zilizobaki za hosting iliyolipiwa (hasi = imeisha), au None."""
+    if not site.hosting_until or not renew_price(site):
+        return None
+    return (site.hosting_until - timezone.localdate()).days
+
+
+def is_paused(site):
+    """Template iliyonunuliwa, hosting imeisha zaidi ya GRACE_DAYS na haijalipiwa."""
+    left = days_left(site)
+    return bool(site.paid_template_id and left is not None and left < -GRACE_DAYS)
 
 
 def show_badge(site):
@@ -106,7 +132,7 @@ def with_badge(view):
 # ── Malipo ────────────────────────────────────────────────
 
 def start(request, site, kind):
-    """Anzisha malipo ya Pesapal. kind = 'template' au 'logo'. Inarudisha HttpResponse."""
+    """Anzisha malipo ya Pesapal. kind = 'template', 'logo' au 'renew'. Inarudisha HttpResponse."""
     from django.contrib import messages
     from django.shortcuts import redirect
 
@@ -119,6 +145,12 @@ def start(request, site, kind):
             return redirect('builder:site_dashboard', site_id=site.id)
         purpose, amount, plan_id = 'builder_template', tpl.price, tpl.pk
         description = f'Website template: {tpl.name}'
+    elif kind == 'renew':
+        amount = renew_price(site)
+        if not amount:
+            return redirect('builder:site_dashboard', site_id=site.id)
+        purpose, plan_id = 'builder_renew', None
+        description = f'Website hosting, 1 year: {site.subdomain}.jamiitek.com'
     else:
         amount = logo_price(site)
         if not amount:

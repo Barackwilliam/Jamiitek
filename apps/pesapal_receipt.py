@@ -46,6 +46,7 @@ def _title_for(tx):
         'invoice':              'Invoice Payment',
         'builder_template':     'Website Template',
         'builder_logo':         'Remove JamiiTek Logo',
+        'builder_renew':        'Website Hosting (1 year)',
     }.get(tx.purpose, 'Payment')
 
 

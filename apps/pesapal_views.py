@@ -342,6 +342,6 @@ def _continue_url(tx):
             return reverse('invoice_view', kwargs={'token': tx.target_id})
         except Exception:
             return '/'
-    if tx.purpose in ('builder_template', 'builder_logo'):
+    if tx.purpose in ('builder_template', 'builder_logo', 'builder_renew'):
         return reverse('builder:site_dashboard', args=[tx.target_id]) + '?paid=1'
     return '/'
