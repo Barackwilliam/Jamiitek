@@ -29,6 +29,7 @@ class StaticPageSitemap(Sitemap):
         ('home',            1.0,  'daily'),
         ('service',         0.9,  'weekly'),
         ('About',           0.7,  'monthly'),
+        ('portfolio',       0.8,  'weekly'),
         ('contact',         0.7,  'monthly'),
         ('select_website',  0.8,  'weekly'),
         ('get_started',     0.9,  'weekly'),    # vitufe vyote vya "Start a project"
@@ -167,8 +168,23 @@ class TemplateCategorySitemap(Sitemap):
 
 
 # Combine all sitemaps
+class PortfolioSitemap(Sitemap):
+    """Kurasa za kazi (case studies) — /portfolio/<slug>/."""
+    changefreq = 'monthly'
+    priority = 0.75
+
+    def items(self):
+        from apps.site_content import PortfolioItem
+        return (PortfolioItem.objects.filter(is_featured=True)
+                .exclude(slug__isnull=True).exclude(slug='').order_by('order', 'pk'))
+
+    def location(self, item):
+        return item.get_absolute_url()
+
+
 sitemaps = {
     'static':     StaticPageSitemap(),
+    'portfolio':  PortfolioSitemap(),
     'blog_index': BlogIndexSitemap(),
     'blog':       BlogSitemap(),
     'blog-authors': BlogAuthorSitemap(),

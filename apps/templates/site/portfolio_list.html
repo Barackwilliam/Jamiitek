@@ -1,0 +1,31 @@
+{% extends 'site/base.html' %}
+{% load static %}
+{% block head %}{% include 'site/_portfolio_css.html' %}{% endblock %}
+
+{% block content %}
+<section class="ph" data-live>
+  <div class="wrap">
+    <nav class="crumb up" style="--d:0s" aria-label="Breadcrumb"><a href="{% url 'home' %}">Home</a><i></i><span>Portfolio</span></nav>
+    <h1 class="up" style="--d:.15s">Real projects, <em>running in production.</em></h1>
+    <p class="ph__lead up" style="--d:.35s">Websites, dashboards and systems we designed and built for businesses and organisations across Tanzania. Every project here is live and used every day.</p>
+    <div class="acts up" style="--d:.5s">
+      <a class="btn btn--gold" href="{% url 'get_started' %}">Start your project <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 11h12.2l-4.6-4.6L13 5l7 7-7 7-1.4-1.4 4.6-4.6H4z"/></svg></a>
+      <a class="btn btn--line" href="{% url 'service' %}">Our services</a>
+    </div>
+  </div>
+</section>
+
+<section class="sec" style="padding-top:10px">
+  <div class="wrap">
+    {% if items %}
+    <div class="works">
+      {% for p in items %}{% include 'site/_portfolio_card.html' %}{% endfor %}
+    </div>
+    {% else %}
+    <p class="pf-empty">New case studies are on their way.</p>
+    {% endif %}
+  </div>
+</section>
+
+{% include 'site/_kili.html' with eyebrow="Tujenge pamoja" title="Want a website like these? Let's" em="talk." text="Tell us about your project. We reply within one business day with a plan, a timeline and a fixed price." %}
+{% endblock %}

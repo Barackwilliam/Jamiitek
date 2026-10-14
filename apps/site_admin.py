@@ -89,6 +89,7 @@ class PortfolioItemAdmin(PreviewMixin, admin.ModelAdmin):
     list_display_links = ('title',)
     list_filter = ('category', 'is_featured')
     search_fields = ('title', 'client', 'summary')
+    prepopulated_fields = {'slug': ('client',)}
     fieldsets = (
         ('Photo', {
             'fields': ('image',),
@@ -96,6 +97,11 @@ class PortfolioItemAdmin(PreviewMixin, admin.ModelAdmin):
                            'at least 1600&times;1200, landscape.',
         }),
         ('Details', {'fields': ('title', 'client', 'category', 'summary', 'live_url', 'year')}),
+        ('Case study page', {
+            'fields': ('slug', 'description', 'services', 'technologies'),
+            'description': 'Kila kazi ina ukurasa wake kwenye /portfolio/&lt;slug&gt;/ — maelezo kamili '
+                           'yanasaidia Google na wateja wapya kuona tulichojenga.',
+        }),
         ('Display', {'fields': ('is_featured', 'order')}),
     )
 

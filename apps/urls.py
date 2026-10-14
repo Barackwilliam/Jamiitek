@@ -3,6 +3,7 @@
 from django.urls import path
 from . import views
 from . import blog_views
+from . import portfolio_views
 from . import email_webhook
 from . import email_log_views
 from builder import domain_views as site_domain_views
@@ -135,6 +136,8 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('service/', views.service, name='service'),
     path('About/', views.About, name='About'),
+    path('portfolio/', portfolio_views.portfolio_list, name='portfolio'),
+    path('portfolio/<slug:slug>/', portfolio_views.portfolio_detail, name='portfolio_detail'),
     path('contact/', views.contact, name='contact'),
     path('newsletter/subscribe/', views.newsletter_subscribe, name='newsletter_subscribe'),
     path('domain-check/', domain_views.domain_check, name='domain_check'),

@@ -162,12 +162,61 @@ class PortfolioItem(ImageMixin):
     live_url = models.URLField(blank=True, help_text='Link to the live site')
     year = models.CharField(max_length=9, blank=True)
 
+    # Ukurasa wa kazi (case study) — /portfolio/<slug>/
+    slug = models.SlugField(
+        max_length=140, unique=True, null=True, blank=True,
+        help_text='Anwani ya ukurasa wa kazi, mfano wemasa-tanzania. Ukiacha wazi inajazwa kutoka kwenye title.',
+    )
+    description = models.TextField(
+        blank=True,
+        help_text='Maelezo kamili ya kazi: tatizo la mteja, tulichojenga, matokeo. Aya zitenganishwe kwa mstari mtupu.',
+    )
+    services = models.CharField(
+        max_length=240, blank=True,
+        help_text='Tulichofanya, tenganisha kwa koma — mfano: Website design, Content dashboard, SEO',
+    )
+    technologies = models.CharField(
+        max_length=240, blank=True,
+        help_text='Teknolojia, tenganisha kwa koma — mfano: Django, PostgreSQL, Supabase',
+    )
+
     is_featured = models.BooleanField(default=True, help_text='Show in the homepage slider')
     order = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f'{self.title} — {self.client}' if self.client else self.title
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            from django.utils.text import slugify
+            base = slugify(self.client or self.title)[:120] or 'project'
+            slug, n = base, 2
+            while PortfolioItem.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug, n = f'{base}-{n}', n + 1
+            self.slug = slug
+        return super().save(*args, **kwargs)
+
+    def get_absolute_url(self):
+        from django.urls import reverse
+        return reverse('portfolio_detail', args=[self.slug])
+
+    @property
+    def services_list(self):
+        return [s.strip() for s in self.services.split(',') if s.strip()]
+
+    @property
+    def technologies_list(self):
+        return [s.strip() for s in self.technologies.split(',') if s.strip()]
+
+    @property
+    def paragraphs(self):
+        return [p.strip() for p in self.description.split('\n\n') if p.strip()]
+
+    @property
+    def live_host(self):
+        from urllib.parse import urlsplit
+        return urlsplit(self.live_url).netloc.removeprefix('www.') if self.live_url else ''
 
     # Onyesho la tovuti (HTML/CSS) kwa kazi isiyo na screenshot — au picha ikivunjika.
     MOCKS = [
