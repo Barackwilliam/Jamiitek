@@ -45,6 +45,9 @@ def robots_txt(request):
         "Disallow: /builder/",
         "Allow: /builder/ai/",
         "Disallow: /sw.js",
+        # Fomu ya malipo ya "Unahitaji tukutengenezee?" na hali ya ombi — si kurasa za Google
+        "Disallow: /build/",
+        "Disallow: /templates/*/build-for-me/",
         "",
         "# Allow important public pages",
         "Allow: /chatbot/register/",
@@ -75,6 +78,9 @@ def robots_txt(request):
         "Disallow: /builder/",
         "Allow: /builder/ai/",
         "Disallow: /sw.js",
+        # Fomu ya malipo ya "Unahitaji tukutengenezee?" na hali ya ombi — si kurasa za Google
+        "Disallow: /build/",
+        "Disallow: /templates/*/build-for-me/",
         "",
         # Crawl-delay imeondolewa: Bing inaiheshimu na ingechelewesha
         # indexing ya habari mpya (makala ~10 kwa siku). Google inaipuuza.

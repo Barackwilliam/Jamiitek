@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import (ClientWebsite, SitePage, SiteCollection, SiteItem, SiteAsset, AiUsageLog, SiteInquiry,
-                     BuilderPricing)
+                     BuilderPricing, BuildRequest)
 
 
 @admin.register(ClientWebsite)
@@ -23,13 +23,32 @@ class ClientWebsiteAdmin(admin.ModelAdmin):
 @admin.register(BuilderPricing)
 class BuilderPricingAdmin(admin.ModelAdmin):
     """Bei za jumla za Builder — rekodi moja tu."""
-    fields = ('remove_logo_price', 'yearly_hosting_price', 'badge_old_sites_from')
+    fields = ('remove_logo_price', 'yearly_hosting_price', 'build_fee', 'badge_old_sites_from')
 
     def has_add_permission(self, request):
         return not BuilderPricing.objects.exists()
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(BuildRequest)
+class BuildRequestAdmin(admin.ModelAdmin):
+    """Maombi ya "Unahitaji tukutengenezee?" — 'Paid' = mteja amelipa, anza kazi."""
+    list_display = ('business_name', 'name', 'phone', 'template_name', 'amount', 'status', 'paid_at', 'created_at')
+    list_editable = ('status',)
+    list_filter = ('status',)
+    search_fields = ('business_name', 'name', 'phone', 'email', 'template_name')
+    readonly_fields = ('token', 'template', 'template_name', 'template_price', 'build_fee', 'amount',
+                       'paid_at', 'created_at', 'photo_links')
+    fields = ('status', 'notes', 'business_name', 'name', 'phone', 'email', 'about', 'photo_links',
+              'template', 'template_name', 'template_price', 'build_fee', 'amount', 'paid_at', 'created_at', 'token')
+
+    @admin.display(description='Photos')
+    def photo_links(self, obj):
+        from django.utils.html import format_html_join
+        return format_html_join(' ', '<a href="{}" target="_blank" rel="noopener">Photo {}</a>',
+                                ((u, i + 1) for i, u in enumerate(obj.photos or []))) or '—'
 
 
 @admin.register(SitePage)

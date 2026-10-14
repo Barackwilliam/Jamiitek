@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Unahitaji tukutengenezee? {{ tpl.name }} | JamiiTek{% endblock %}
+{% block meta_desc %}Tell us about your business and our team will build your {{ tpl.name }} website for you.{% endblock %}
+{% block extra_css %}
+<meta name="robots" content="noindex">
+{% comment %}"Unahitaji tukutengenezee?" — builder/build_request.py. Malipo yote ni Pesapal.{% endcomment %}
+{% include 'includes/mk_style.html' %}
+<style>
+.bf{padding:clamp(100px,12vw,130px) 0 80px}
+.bf-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.9fr);gap:28px;align-items:start}
+.bf h1{font-size:clamp(30px,4.4vw,48px);line-height:1.05;letter-spacing:-.04em;font-weight:800;margin:14px 0 10px}
+.bf-lead{color:var(--mut);font-size:16px;line-height:1.65;margin:0 0 26px;max-width:560px}
+.bf-card{border-radius:22px;border:1px solid var(--line);background:linear-gradient(170deg,#0e1526,#090d18);padding:clamp(20px,3vw,28px)}
+.bf-f{display:grid;gap:16px}
+.bf-f .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.bf-f label{display:block;font-size:13.5px;font-weight:700;margin-bottom:6px;color:#dbe3ef}
+.bf-f input,.bf-f textarea{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:#fff;font:500 15px var(--ff)}
+.bf-f input:focus,.bf-f textarea:focus{outline:none;border-color:var(--c);box-shadow:0 0 0 3px rgba(0,212,255,.15)}
+.bf-f small{color:var(--mut);font-size:12.5px}
+.bf-err{color:#ff8a8a;font-size:13px;margin-top:4px}
+.bf-alert{padding:12px 14px;border-radius:12px;background:rgba(255,84,112,.1);border:1px solid rgba(255,84,112,.35);color:#ffb3c0;font-size:14px}
+.bf-sum{position:sticky;top:100px}
+.bf-tpl{display:flex;align-items:center;gap:12px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.bf-tpl i{width:46px;height:46px;border-radius:13px;flex-shrink:0}
+.bf-tpl b{display:block;font-size:16px}.bf-tpl small{color:var(--mut);font-size:12.5px}
+.bf-row{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px dashed var(--line);font-size:14.5px;color:#cfd8e8}
+.bf-row.total{border:0;font-size:18px;font-weight:800;color:#fff}
+.bf-list{list-style:none;padding:0;margin:14px 0 0;font-size:14px;color:#cfd8e8}
+.bf-list li{padding:6px 0 6px 26px;position:relative}.bf-list li::before{content:"✓";position:absolute;left:0;color:var(--g);font-weight:800}
+.bf-pay{width:100%;justify-content:center;font-size:16px;padding:16px}
+.bf-ways{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:12px}
+.bf-ways span{padding:5px 10px;border-radius:8px;border:1px solid var(--line);font-size:12px;font-weight:700;color:var(--mut)}
+@media(max-width:900px){.bf-grid{grid-template-columns:1fr}.bf-sum{position:static}}
+@media(max-width:560px){.bf-f .two{grid-template-columns:1fr}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mk">
+  <section class="mk-in bf">
+    <nav class="mk-crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="{% url 'templates_marketplace' %}">Templates</a> ›
+      <a href="{{ tpl.get_absolute_url }}">{{ tpl.name }}</a> › <span>Unahitaji tukutengenezee?</span></nav>
+    <h1>Unahitaji tukutengenezee?</h1>
+    <p class="bf-lead">Tell us about your business. Our team will build your <b style="color:#fff">{{ tpl.name }}</b> website for you,
+      with your name, photos, prices and WhatsApp number.</p>
+
+    <form method="post" enctype="multipart/form-data" class="bf-grid">
+      {% csrf_token %}
+      <div class="bf-card bf-f">
+        {% if error %}<div class="bf-alert">{{ error }}</div>{% endif %}
+        <div><label for="id_business_name">Business name</label>{{ form.business_name }}{% for e in form.business_name.errors %}<div class="bf-err">{{ e }}</div>{% endfor %}</div>
+        <div class="two">
+          <div><label for="id_name">Your name</label>{{ form.name }}{% for e in form.name.errors %}<div class="bf-err">{{ e }}</div>{% endfor %}</div>
+          <div><label for="id_phone">Phone (WhatsApp)</label>{{ form.phone }}{% for e in form.phone.errors %}<div class="bf-err">{{ e }}</div>{% endfor %}</div>
+        </div>
+        <div><label for="id_email">Email <small>(optional — for your receipt)</small></label>{{ form.email }}{% for e in form.email.errors %}<div class="bf-err">{{ e }}</div>{% endfor %}</div>
+        <div><label for="id_about">About your business</label>{{ form.about }}{% for e in form.about.errors %}<div class="bf-err">{{ e }}</div>{% endfor %}</div>
+        <div><label for="photos">Photos <small>(optional — up to {{ max_photos }}: your logo, shop, products)</small></label>
+          <input type="file" id="photos" name="photos" accept="image/*" multiple></div>
+        {% if TURNSTILE_ENABLED %}<div class="cf-turnstile" data-sitekey="{{ TURNSTILE_SITEKEY }}" data-theme="dark"></div>{% endif %}
+      </div>
+
+      <aside class="bf-card bf-sum">
+        <div class="bf-tpl"><i style="background:{{ tpl.gradient_css }}"></i>
+          <div><b>{{ tpl.name }}</b><small>{{ tpl.category_plain }}</small></div></div>
+        <div class="bf-row"><span>Design {% if tpl_price %}<span class="tp-tag sale" style="margin-left:6px">Inauzwa</span>{% else %}<span class="tp-tag free" style="margin-left:6px">Bure</span>{% endif %}</span><b>TSh {{ tpl_price|intcomma }}</b></div>
+        <div class="bf-row"><span>Our team builds it for you</span><b>TSh {{ fee|intcomma }}</b></div>
+        <div class="bf-row total"><span>Total — pay one time</span><span>TSh {{ total|intcomma }}</span></div>
+        <ul class="bf-list">
+          <li>We call you within one working day</li>
+          <li>We add your name, photos, prices and WhatsApp</li>
+          <li>No JamiiTek logo on your site</li>
+          <li>Free hosting for 1 year</li>
+        </ul>
+        <button class="mk-btn p bf-pay" type="submit" style="margin-top:18px">Pay now →</button>
+        <div class="bf-ways"><span>M-Pesa</span><span>Tigo Pesa</span><span>Airtel Money</span><span>Card</span></div>
+      </aside>
+    </form>
+  </section>
+</div>
+{% endblock %}

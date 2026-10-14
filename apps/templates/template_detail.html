@@ -356,7 +356,7 @@ ukurasa una hisia ya template yake.
         <a class="mk-btn p" href="{% url 'builder:from_template' tpl.pk %}">✨ Try it free</a>
         <p>{% if tpl.for_sale %}Add your name, photos and WhatsApp number first. You pay only when you are ready to put it online.{% else %}Add your name, photos and WhatsApp number, then put it online.{% endif %}</p>
         {% if tpl.for_sale %}<div class="td-pay">M-Pesa · Tigo Pesa · Airtel Money · Card</div>{% endif %}
-        <a class="td-help" href="{% url 'select_website' %}?template={{ tpl.pk }}">Unahitaji tukutengenezee? →</a>
+        <a class="td-help" href="{% if build_fee %}{% url 'build_for_me' tpl.slug %}{% else %}{% url 'select_website' %}?template={{ tpl.pk }}{% endif %}">Unahitaji tukutengenezee? →</a>
       </div>
     </div>
   </section>
@@ -400,7 +400,7 @@ ukurasa una hisia ya template yake.
       <div><h2>No time to do it yourself?</h2>
         <p>Tell us about your business and send your photos. Our team will build your website for you{% if tpl %} with {{ tpl.name }}{% endif %}.</p></div>
       <div class="mk-ctas">
-        <a class="mk-btn p" href="{% url 'select_website' %}?template={{ tpl.pk }}">Unahitaji tukutengenezee?</a>
+        <a class="mk-btn p" href="{% if build_fee %}{% url 'build_for_me' tpl.slug %}{% else %}{% url 'select_website' %}?template={{ tpl.pk }}{% endif %}">Unahitaji tukutengenezee?</a>
         <a class="mk-btn s" href="{% url 'templates_marketplace' %}">Browse all templates</a>
       </div>
     </div>

@@ -47,6 +47,7 @@ def _title_for(tx):
         'builder_template':     'Website Template',
         'builder_logo':         'Remove JamiiTek Logo',
         'builder_renew':        'Website Hosting (1 year)',
+        'build_request':        'We Build Your Website',
     }.get(tx.purpose, 'Payment')
 
 

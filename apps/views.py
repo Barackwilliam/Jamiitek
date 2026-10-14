@@ -760,6 +760,12 @@ def templates_marketplace(request, cat_slug=None):
     })
 
 
+def _build_fee():
+    """Ada ya "Unahitaji tukutengenezee?" (0 = vitufe vinaelekeza kwenye proposal kama zamani)."""
+    from builder.build_request import build_fee
+    return build_fee()
+
+
 def template_detail(request, slug):
     """Ukurasa kamili wa template moja — ndio unaopatikana Google na kwenye AI."""
     import json
@@ -787,6 +793,7 @@ def template_detail(request, slug):
         'faq': template_seo.faq(tpl),
         'related': related,
         'anatomy': template_seo.anatomy(tpl),
+        'build_fee': _build_fee(),
         'json_ld': [json.dumps(block, ensure_ascii=False) for block in template_seo.json_ld(tpl)],
     })
 
@@ -799,7 +806,8 @@ def template_preview(request, pk):
     # Google ipe ukurasa kamili (/templates/<slug>/) sifa, si fremu hii
     return render(request, 'template_preview.html', {
         'template': tpl, 'canonical': template_seo.BASE_URL + tpl.get_absolute_url(),
-        'anatomy': template_seo.anatomy(tpl), 'cat_noun': template_seo.cat_info(tpl)['noun']})
+        'anatomy': template_seo.anatomy(tpl), 'cat_noun': template_seo.cat_info(tpl)['noun'],
+        'build_fee': _build_fee()})
 
 
 from django.views.decorators.clickjacking import xframe_options_exempt

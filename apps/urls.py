@@ -21,6 +21,7 @@ from . import bulk_actions
 from django.views.generic import TemplateView
 from . import sw_views
 from . import pesapal_views
+from builder import build_request
 from apps.seo.feeds import BlogFeed
 from . import password_reset
 from . import two_factor
@@ -145,6 +146,9 @@ urlpatterns = [
     # SEO: jamii (/templates/c/restaurant/) na ukurasa wa kila template (/templates/<slug>/)
     path('templates/c/<slug:cat_slug>/', templates_marketplace, name='templates_category'),
     path('templates/<slug:slug>/', template_detail, name='template_detail'),
+    # "Unahitaji tukutengenezee?" — fomu + malipo ya Pesapal (builder/build_request.py)
+    path('templates/<slug:slug>/build-for-me/', build_request.build_for_me, name='build_for_me'),
+    path('build/<str:token>/', build_request.build_status, name='build_status'),
 
     # Proposal System
     path('proposals/', select_website_type, name='select_website'),
