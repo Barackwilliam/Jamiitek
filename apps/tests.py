@@ -135,7 +135,10 @@ class TemplateSeoTest(NoPingMixin, TestCase):
         self.assertIn('id="jtp" hidden', html)                       # haionekani hadi JS iamue
         self.assertIn('data-raw="/templates/preview/%d/raw/"' % self.tpl.pk, html)
         self.assertIn("localStorage.getItem(KEY)", html)            # mara moja tu kwa browser
-        self.assertIn('/templates/?utm_source=jamiitek', html)
+        self.assertIn('href="/templates/%s/?utm_source=jamiitek' % self.tpl.slug, html)   # "Gusa kuitazama"
+        self.assertIn('Website hii inauzwa', html)
+        self.assertIn('Gusa kuitazama', html)
+        self.assertIn('setTimeout(show, 500)', html)                 # inatokea ~sekunde 1
         self.assertIn('class="jtp-x"', html)
         # Bila template yenye demo hakuna tangazo kabisa
         WebsiteTemplate.objects.update(preview_html='')

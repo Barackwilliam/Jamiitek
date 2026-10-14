@@ -1,4 +1,4 @@
-{% load humanize %}{% if promo %}
+{% if promo %}
 {% comment %}Tangazo dogo la templates — angalia apps/templatetags/template_promo.py{% endcomment %}
 <style>
 .jtp{position:fixed;left:20px;bottom:20px;z-index:9000;display:flex;align-items:flex-end;font-family:Inter,'DM Sans',system-ui,sans-serif;
@@ -6,10 +6,8 @@
   transition:opacity .45s ease,transform .7s cubic-bezier(.34,1.45,.64,1)}
 .jtp[hidden]{display:none}
 .jtp.on{opacity:1;transform:none;pointer-events:auto}
-.jtp{gap:12px}
-.jtp-card{position:relative;display:flex;text-decoration:none;color:#fff}
+.jtp-card{position:relative;display:flex;align-items:flex-end;gap:10px;text-decoration:none;color:#fff}
 .jtp:hover .jtp-phone{transform:translateY(-4px) rotate(-2deg)}
-.jtp-bub{position:relative;margin-bottom:14px}
 .jtp-phone{position:relative;flex-shrink:0;width:96px;height:198px;padding:4px;border-radius:20px;background:linear-gradient(145deg,#3a3d48,#0b0c10 45%,#25272e);
   box-shadow:0 0 0 1px rgba(255,255,255,.16),0 18px 40px rgba(0,0,0,.55),0 0 34px color-mix(in srgb,var(--a) 55%,transparent);
   transition:transform .35s cubic-bezier(.34,1.45,.64,1);animation:jtpWiggle 1.2s .9s ease-in-out}
@@ -19,14 +17,11 @@
 .jtp-scr iframe{position:absolute;top:0;left:0;width:390px;height:842px;border:0;background:#fff;transform:scale(.2257);transform-origin:0 0;pointer-events:none;opacity:0;transition:opacity .5s}
 .jtp-scr iframe.ok{opacity:1}
 .jtp-island{position:absolute;top:8px;left:50%;width:28px;height:7px;margin-left:-14px;border-radius:6px;background:#000;z-index:2}
-.jtp-txt{position:relative;display:flex;flex-direction:column;gap:3px;max-width:200px;padding:12px 14px;border-radius:16px 16px 16px 4px;
+.jtp-txt{position:relative;display:flex;flex-direction:column;gap:2px;margin-bottom:16px;padding:10px 13px;border-radius:14px 14px 14px 4px;white-space:nowrap;
   background:rgba(10,12,22,.92);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 16px 40px rgba(0,0,0,.45)}
-.jtp-tag{align-self:flex-start;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#fff;
-  background:linear-gradient(135deg,var(--a),var(--b))}
 .jtp-txt b{font-size:14px;line-height:1.25;font-weight:800}
-.jtp-txt small{font-size:11.5px;color:#9aa4bd;line-height:1.35}
-.jtp-cta{margin-top:4px;font-size:12px;font-weight:800;color:#3ee68a}
-.jtp-x{position:absolute;top:-10px;right:-10px;z-index:3;width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:#11131f;color:#cfd6e6;
+.jtp-txt small{font-size:12px;color:#3ee68a;font-weight:700;line-height:1.35}
+.jtp-x{position:absolute;top:-12px;left:58px;z-index:3;width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:#11131f;color:#cfd6e6;
   font:600 15px/1 system-ui,sans-serif;cursor:pointer;display:grid;place-items:center;box-shadow:0 6px 16px rgba(0,0,0,.4)}
 .jtp-x:hover{background:#ff5f57;color:#fff;border-color:#ff5f57}
 @keyframes jtpWiggle{0%,100%{rotate:0deg}20%{rotate:-6deg}40%{rotate:5deg}60%{rotate:-3deg}80%{rotate:2deg}}
@@ -37,24 +32,17 @@
   .jtp-scr{width:64px;height:140px;border-radius:13px}
   .jtp-scr iframe{transform:scale(.1641)}
   .jtp-island{top:6px;width:20px;height:5px;margin-left:-10px}
-  .jtp{gap:10px}.jtp-bub{margin-bottom:10px}.jtp-txt{max-width:170px;padding:10px 12px}
+  .jtp-txt{margin-bottom:12px;padding:9px 12px}.jtp-x{left:44px}
   .jtp-txt b{font-size:13px}
 }
 @media(prefers-reduced-motion:reduce){.jtp,.jtp-phone{transition:none;animation:none}.jtp-phone::before{display:none}}
 </style>
-<div class="jtp" id="jtp" hidden data-raw="{{ promo.raw }}" role="complementary" aria-label="JamiiTek website templates">
-  <a class="jtp-card" href="/templates/?utm_source=jamiitek&amp;utm_medium=promo-phone" tabindex="-1" aria-hidden="true">
-    <span class="jtp-phone"><span class="jtp-island"></span><span class="jtp-scr"><iframe tabindex="-1" title="{{ promo.name }}"></iframe></span></span>
+<div class="jtp" id="jtp" hidden data-raw="{{ promo.raw }}" role="complementary" aria-label="Website hii inauzwa">
+  <a class="jtp-card" href="{{ promo.url }}?utm_source=jamiitek&amp;utm_medium=promo-phone" aria-label="Website hii inauzwa — gusa kuitazama">
+    <span class="jtp-phone"><span class="jtp-island"></span><span class="jtp-scr"><iframe tabindex="-1" aria-hidden="true" title="{{ promo.name }}"></iframe></span></span>
+    <span class="jtp-txt"><b>Website hii inauzwa</b><small>Gusa kuitazama 👆</small></span>
   </a>
-  <div class="jtp-bub">
-    <a class="jtp-card jtp-txt" href="/templates/?utm_source=jamiitek&amp;utm_medium=promo-phone">
-      <span class="jtp-tag">{% if promo.for_sale %}🔥 Inauzwa{% else %}🎁 Bure{% endif %}</span>
-      <b>This website can be yours</b>
-      <small>{{ promo.name }} · {% if promo.for_sale %}TSh {{ promo.price|intcomma }}, pay one time{% else %}free to use{% endif %}</small>
-      <span class="jtp-cta">Try it free →</span>
-    </a>
-    <button type="button" class="jtp-x" aria-label="Close">&times;</button>
-  </div>
+  <button type="button" class="jtp-x" aria-label="Funga">&times;</button>
 </div>
 <script>
 (function(){
@@ -67,7 +55,7 @@
   var frame = el.querySelector('iframe'), alive = true;
 
   function drift(){
-    var y = 0, wait = 1500, last = 0;
+    var y = 0, wait = 600, last = 0;
     function step(t){
       if (!alive) return;
       var w, d;
@@ -76,7 +64,7 @@
       var dt = Math.min(64, t - (last || t)), max = d.documentElement.scrollHeight - w.innerHeight; last = t;
       if (wait > 0) wait -= dt;
       else if (y >= max){ y = 0; wait = 2000; w.scrollTo(0, 0); }
-      else { y = Math.min(max, y + 90 * dt / 1000); w.scrollTo(0, y); }
+      else { y = Math.min(max, y + 110 * dt / 1000); w.scrollTo(0, y); }
       requestAnimationFrame(step);
     }
     if (!matchMedia('(prefers-reduced-motion: reduce)').matches) requestAnimationFrame(step);
@@ -88,7 +76,7 @@
       document.addEventListener('visibilitychange', function again(){
         if (document.visibilityState !== 'visible') return;
         document.removeEventListener('visibilitychange', again);
-        setTimeout(show, 1500);
+        setTimeout(show, 600);
       });
       return;
     }
@@ -104,13 +92,13 @@
     setTimeout(function(){ el.remove(); }, 500);
   }
   el.querySelector('.jtp-x').addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); close(); });
-  el.querySelectorAll('.jtp-card').forEach(function(a){ a.addEventListener('click', function(){ alive = false; }); });
+  el.querySelector('.jtp-card').addEventListener('click', function(){ alive = false; });
 
-  // Inasubiri ukurasa umalize kufunguka, kisha sekunde 6 na browser ikiwa imetulia
-  function later(){
-    setTimeout(function(){ (window.requestIdleCallback || function(f){ setTimeout(f, 1); })(show, {timeout: 3000}); }, 6000);
-  }
-  if (document.readyState === 'complete') later(); else window.addEventListener('load', later, {once: true});
+  // Inatokea ~sekunde 1 baada ya ukurasa kuonekana — haisubiri picha zote wala JamiiBot
+  // (kwenye simu yenye mtandao wa polepole hiyo ilichukua muda mrefu, mtu akawa ameshaondoka).
+  // Demo inapakiwa ikishaonekana, kwa hiyo haichelewesha ukurasa wenyewe.
+  function later(){ setTimeout(show, 500); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', later, {once: true}); else later();
 })();
 </script>
 {% endif %}
