@@ -24,3 +24,4 @@ CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'
           'local': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache', 'LOCATION': 'jamiitek-public'}}
 EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
+PDF_PREWARM = False  # usiandae PDF kwenye thread wakati wa tests

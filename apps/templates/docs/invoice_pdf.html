@@ -123,11 +123,11 @@
   {% if invoice.discount_amount or invoice.tax_percent %}
   <tr class="sub"><td class="r" colspan="3">{% if lang == 'sw' %}Jumla ndogo{% else %}Subtotal{% endif %}</td><td class="r">{{ invoice.currency }} {{ invoice.subtotal|thousands }}</td></tr>
   {% endif %}
-  {% if invoice.discount_amount %}<tr class="sub"><td class="r" colspan="3">{% if lang == 'sw' %}Punguzo{% else %}Discount{% endif %}</td><td class="r">− {{ invoice.currency }} {{ invoice.discount_amount|thousands }}</td></tr>{% endif %}
+  {% if invoice.discount_amount %}<tr class="sub"><td class="r" colspan="3">{% if lang == 'sw' %}Punguzo{% else %}Discount{% endif %}</td><td class="r">- {{ invoice.currency }} {{ invoice.discount_amount|thousands }}</td></tr>{% endif %}
   {% if invoice.tax_percent %}<tr class="sub"><td class="r" colspan="3">{% if lang == 'sw' %}Kodi{% else %}VAT{% endif %} ({{ invoice.tax_percent|floatformat:"-2" }}%)</td><td class="r">{{ invoice.currency }} {{ invoice.tax_amount|thousands }}</td></tr>{% endif %}
   <tr class="grand"><td class="r" colspan="3">{% if lang == 'sw' %}JUMLA KUU{% else %}TOTAL{% endif %}</td><td class="r">{{ invoice.currency }} {{ invoice.grand_total|thousands }}</td></tr>
   {% if invoice.paid_total %}
-  <tr class="sub"><td class="r" colspan="3">{% if lang == 'sw' %}Imelipwa{% else %}Amount Paid{% endif %}</td><td class="r">− {{ invoice.currency }} {{ invoice.paid_total|thousands }}</td></tr>
+  <tr class="sub"><td class="r" colspan="3">{% if lang == 'sw' %}Imelipwa{% else %}Amount Paid{% endif %}</td><td class="r">- {{ invoice.currency }} {{ invoice.paid_total|thousands }}</td></tr>
   {% if not invoice.is_paid %}<tr class="bal"><td class="r" colspan="3">{% if lang == 'sw' %}SALIO{% else %}BALANCE DUE{% endif %}</td><td class="r">{{ invoice.currency }} {{ invoice.balance_due|thousands }}</td></tr>{% endif %}
   {% endif %}
 </table>
