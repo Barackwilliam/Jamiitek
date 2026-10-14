@@ -14,7 +14,8 @@ Ankara ya mteja (docs_views.invoice_view). Sehemu mbili:
      pete ya asilimia iliyolipwa, hatua za ankara, kulipa (Pesapal / M-Pesa / Benki),
      PDF na kuchapisha, na kitambulisho cha uthibitisho.
   2. Karatasi ya ankara (nyeupe) — ndiyo inayochapishwa.
-Lugha mbili (?lang=en|sw). PDF ni docs/invoice_pdf.html (haijaguswa).
+Lugha mbili (?lang=en|sw). PDF ni docs/invoice_pdf.html — inaandaliwa nyuma ukurasa ukifunguka
+(docs_views._warm_invoice_pdf), kwa hiyo kitufe cha PDF kinapakua papo hapo.
 {% endcomment %}
 <style>
 :root{
@@ -127,6 +128,10 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
 .btn.pay::after{content:"";position:absolute;top:0;bottom:0;width:45%;left:-60%;transform:skewX(-20deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);animation:sw 3.2s 1.2s infinite}
 @keyframes sw{0%{left:-60%}40%,100%{left:130%}}
 .btn.pay:hover{background:linear-gradient(135deg,#22c55e,#16a34a 60%,#15803d);box-shadow:0 18px 44px rgba(22,163,74,.42)}
+.btn.busy{pointer-events:none;opacity:.75}
+.btn.busy svg{display:none}
+.btn.busy::before{content:"";width:15px;height:15px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.two .wide{grid-column:1/-1}.two .wide em{font-style:normal}
 .ways{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
 .ways span{padding:4px 9px;border-radius:7px;border:1px solid var(--ln);background:#fff;font-size:11px;font-weight:700;color:var(--mut)}
@@ -365,8 +370,9 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
           <svg class="i" viewBox="0 0 24 24"><path d="M3 10h18M5 10v8M19 10v8M9 10v8M15 10v8M3 20h18M12 3 3 8h18z"/></svg>
           <span>{% if lang == 'sw' %}Lipa kwa <em>M-Pesa / Benki</em>{% else %}Pay by <em>M-Pesa / Bank</em>{% endif %}</span></a>
         {% endif %}{% endif %}
-        <a class="btn" href="{% url 'invoice_pdf' invoice.token %}?lang={{ lang }}">
-          <svg class="i" viewBox="0 0 24 24"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 19h16"/></svg>PDF</a>
+        <a class="btn" id="pdf-btn" href="{% url 'invoice_pdf' invoice.token %}?lang={{ lang }}"
+           data-file="{{ invoice.invoice_number|default:'invoice' }}-{{ lang }}.pdf" data-wait="{% if lang == 'sw' %}Inaandaa…{% else %}Preparing…{% endif %}">
+          <svg class="i" viewBox="0 0 24 24"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 19h16"/></svg><span>PDF</span></a>
         <button type="button" class="btn" onclick="window.print()">
           <svg class="i" viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 18H4v-6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v6h-2M7 14h10v7H7z"/></svg>{% if lang == 'sw' %}Chapisha{% else %}Print{% endif %}</button>
       </div>
@@ -474,6 +480,27 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
 
 <script>
 (function(){
+  // PDF: onyesha "Inaandaa…" mara moja, pakua kama blob (hakuna ukurasa mweupe wa kusubiri)
+  var pb = document.getElementById('pdf-btn');
+  if (pb && window.fetch && window.URL && URL.createObjectURL){
+    pb.addEventListener('click', function(e){
+      e.preventDefault();
+      if (pb.classList.contains('busy')) return;
+      var label = pb.querySelector('span'), old = label.textContent;
+      pb.classList.add('busy'); label.textContent = pb.dataset.wait;
+      var done = function(){ pb.classList.remove('busy'); label.textContent = old; };
+      fetch(pb.href, {credentials:'same-origin'}).then(function(r){
+        if (!r.ok || (r.headers.get('content-type') || '').indexOf('pdf') < 0) throw 0;
+        return r.blob();
+      }).then(function(b){
+        var u = URL.createObjectURL(b), x = document.createElement('a');
+        x.href = u; x.download = pb.dataset.file.replace(/\s+/g, '_');
+        document.body.appendChild(x); x.click(); x.remove();
+        setTimeout(function(){ URL.revokeObjectURL(u); }, 30000);
+        done();
+      }).catch(function(){ done(); location.href = pb.href; });
+    });
+  }
   var calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
   // Kiasi kinahesabika kutoka 0
   var a = document.querySelector('[data-count]');

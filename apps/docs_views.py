@@ -23,17 +23,43 @@ def _lang(request):
     return lang if lang in ('en', 'sw') else 'en'
 
 
-def _render_pdf(request, template, ctx, filename):
-    html = render(request, template, ctx).content.decode('utf-8')
+PDF_CACHE_SECONDS = 60 * 60 * 24
+
+
+def _pdf_bytes(html):
+    """
+    HTML → PDF (xhtml2pdf), ikihifadhiwa kwenye cache kwa hash ya HTML yenyewe.
+    Ankara ikibadilika (kiasi, malipo, lugha…) HTML inabadilika → hash mpya → PDF mpya;
+    isipobadilika, PDF ileile inatolewa papo hapo bila kuitengeneza tena.
+    """
+    import hashlib
+    from django.core.cache import cache
+    key = 'pdf:' + hashlib.sha1(html.encode('utf-8')).hexdigest()
     try:
-        from xhtml2pdf import pisa
-        from io import BytesIO
-        buf = BytesIO()
-        status = pisa.CreatePDF(html, dest=buf, encoding='utf-8')
-        if status.err:
-            raise Exception('PDF error')
-        buf.seek(0)
-        resp = HttpResponse(buf.getvalue(), content_type='application/pdf')
+        data = cache.get(key)
+    except Exception:
+        data = None
+    if data:
+        return data
+    from xhtml2pdf import pisa
+    from io import BytesIO
+    buf = BytesIO()
+    status = pisa.CreatePDF(html, dest=buf, encoding='utf-8')
+    if status.err:
+        raise Exception('PDF error')
+    data = buf.getvalue()
+    try:
+        cache.set(key, data, PDF_CACHE_SECONDS)
+    except Exception:
+        pass
+    return data
+
+
+def _render_pdf(request, template, ctx, filename):
+    from django.template.loader import render_to_string
+    html = render_to_string(template, ctx, request=request)
+    try:
+        resp = HttpResponse(_pdf_bytes(html), content_type='application/pdf')
         resp['Content-Disposition'] = f'attachment; filename="{filename}"'
         return resp
     except Exception:
@@ -176,6 +202,37 @@ def _invoice_qr_png(request, invoice):
         return ''
 
 
+def _invoice_pdf_ctx(request, invoice, base=None):
+    ctx = dict(base) if base is not None else _public_ctx(request, invoice)
+    ctx['flash'] = []          # PDF haionyeshi ujumbe — usiyale messages za ukurasa
+    ctx['qr'] = _invoice_qr_png(request, invoice)
+    return ctx
+
+
+def _warm_invoice_pdf(request, invoice, page_ctx):
+    """
+    Mteja akifungua ankara, PDF yake inaandaliwa nyuma (thread) na kuwekwa kwenye
+    cache — akibonyeza "PDF" inapakuliwa papo hapo badala ya kusubiri xhtml2pdf.
+    """
+    from django.conf import settings
+    if not getattr(settings, 'PDF_PREWARM', True):
+        return
+    import threading
+    from django.db import connection
+    from django.template.loader import render_to_string
+    ctx = _invoice_pdf_ctx(request, invoice, page_ctx)
+    ctx.pop('preview', None)
+
+    def work():
+        try:
+            _pdf_bytes(render_to_string('docs/invoice_pdf.html', ctx))
+        except Exception:
+            pass
+        finally:
+            connection.close()
+    threading.Thread(target=work, daemon=True).start()
+
+
 def _public_ctx(request, invoice):
     from apps.contact import contact
     from django.contrib.messages import get_messages
@@ -200,6 +257,7 @@ def invoice_view(request, token):
     ctx = _public_ctx(request, invoice)
     ctx['qr'] = _invoice_qr(request, invoice)
     ctx['preview'] = invoice.status in ('draft', 'cancelled')
+    _warm_invoice_pdf(request, invoice, ctx)
     return render(request, 'docs/invoice_view.html', ctx)
 
 
@@ -208,8 +266,7 @@ def invoice_pdf(request, token):
     is_staff = request.user.is_authenticated and request.user.is_staff
     if invoice.status in ('draft', 'cancelled') and not is_staff:
         return HttpResponse('Not available', status=404)
-    ctx = _public_ctx(request, invoice)
-    ctx['qr'] = _invoice_qr_png(request, invoice)
+    ctx = _invoice_pdf_ctx(request, invoice)
     fname = f'{invoice.invoice_number or "invoice"}-{ctx["lang"]}.pdf'.replace(' ', '_')
     return _render_pdf(request, 'docs/invoice_pdf.html', ctx, fname)
 
