@@ -168,23 +168,8 @@ class TemplateCategorySitemap(Sitemap):
 
 
 # Combine all sitemaps
-class PortfolioSitemap(Sitemap):
-    """Kurasa za kazi (case studies) — /portfolio/<slug>/."""
-    changefreq = 'monthly'
-    priority = 0.75
-
-    def items(self):
-        from apps.site_content import PortfolioItem
-        return (PortfolioItem.objects.filter(is_featured=True)
-                .exclude(slug__isnull=True).exclude(slug='').order_by('order', 'pk'))
-
-    def location(self, item):
-        return item.get_absolute_url()
-
-
 sitemaps = {
     'static':     StaticPageSitemap(),
-    'portfolio':  PortfolioSitemap(),
     'blog_index': BlogIndexSitemap(),
     'blog':       BlogSitemap(),
     'blog-authors': BlogAuthorSitemap(),

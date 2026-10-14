@@ -137,7 +137,6 @@ urlpatterns = [
     path('service/', views.service, name='service'),
     path('About/', views.About, name='About'),
     path('portfolio/', portfolio_views.portfolio_list, name='portfolio'),
-    path('portfolio/<slug:slug>/', portfolio_views.portfolio_detail, name='portfolio_detail'),
     path('contact/', views.contact, name='contact'),
     path('newsletter/subscribe/', views.newsletter_subscribe, name='newsletter_subscribe'),
     path('domain-check/', domain_views.domain_check, name='domain_check'),

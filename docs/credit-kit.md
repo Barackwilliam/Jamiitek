@@ -14,8 +14,9 @@ iliyoitengeneza. Kila website mpya ni backlink mpya kwa jamiitek.com.
 4. **HTML ya kawaida, si JavaScript.** Usiweke `<script src="jamiitek.com/...">` kwenye website ya mteja:
    Google inaipa link ya JavaScript uzito mdogo, na server yetu ikizima inaathiri wateja wote.
 5. **Usiweke `rel="nofollow"`** kwenye credit (ruhusa ya mteja ipo, ni link halisi).
-6. **Ongeza kazi kwenye portfolio.** Admin → Portfolio Items → mradi mpya, ukiwa na `live_url`,
-   maelezo kamili na screenshot. Ukurasa wake (`/portfolio/<slug>/`) unarudisha link kwa mteja.
+6. **Ongeza kazi kwenye portfolio.** Admin → Portfolio Items → mradi mpya, ukiwa na `live_url`
+   na screenshot. Inaonekana kwenye homepage na kwenye https://www.jamiitek.com/portfolio/, ambapo
+   kitufe cha "Visit site" kinarudisha link kwa mteja.
 
 ## 1. Credit kwenye footer (HTML)
 
@@ -82,5 +83,5 @@ JSON-LD ya sehemu ya 2 iweke kupitia plugin ya "Insert Headers and Footers" → 
 - [ ] Mradi umeongezwa kwenye Portfolio ya jamiitek.com ukiwa na `live_url`
 - [ ] Mteja ameombwa review kwenye Google Business Profile ya JamiiTek
 
-Mfano halisi: WEMASA Tanzania. Credit iko kwenye footer ya https://www.wemasatanzania.org/ na case study
-iko https://www.jamiitek.com/portfolio/wemasa-tanzania/.
+Mfano halisi: WEMASA Tanzania. Credit iko kwenye footer ya https://www.wemasatanzania.org/ na tovuti
+inaonekana kwenye https://www.jamiitek.com/portfolio/.

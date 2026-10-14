@@ -475,7 +475,7 @@
       <div class="sh rv" style="margin-bottom:0">
         <span class="eyebrow">Selected work</span>
         <h2>Real projects, running in production.</h2>
-        <p>Every project below is live and serving customers across Tanzania and East Africa. <a href="{% url 'portfolio' %}" style="color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:3px">See all projects</a></p>
+        <p>Every project below is live and serving customers across Tanzania and East Africa.</p>
       </div>
       <div class="wk__nav">
         <button class="arw" id="wkPrev" aria-label="Previous projects"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.8l4.6-4.6L11 5l-7 7 7 7 1.4-1.4L7.8 13H20z"/></svg></button>
@@ -485,7 +485,7 @@
     <div class="wk__track" id="wkTrack" tabindex="0" aria-label="Project gallery, scrollable">
       {% for p in portfolio %}
       <article class="wk__card">
-        {% if p.slug %}<a class="wk__link" href="{{ p.get_absolute_url }}" aria-label="{{ p.title }} — case study"></a>{% elif p.live_url %}<a class="wk__link" href="{{ p.live_url }}" target="_blank" rel="noopener" aria-label="Fungua {{ p.title }} (inafunguka dirisha jipya)"></a>{% endif %}
+        <a class="wk__link" href="{% url 'portfolio' %}#p-{{ p.pk }}" aria-label="{{ p.title }} — see it in our portfolio"></a>
         <div class="win__bar" aria-hidden="true"><i></i><i></i><i></i>
           <span class="win__url">{% if p.live_url %}<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 9h-1V7a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zm-7-2a2 2 0 0 1 4 0v2h-4z"/></svg><b>{{ p.live_url|cut:"https://"|cut:"http://"|cut:"www."|cut:"/" }}</b>{% else %}{{ p.title }} · preview{% endif %}</span></div>
         <div class="wk__media">
@@ -498,7 +498,7 @@
           {% if p.summary %}<p>{{ p.summary }}</p>{% endif %}
           {% if p.client or p.year or p.live_url %}<div class="wk__foot">
             <span>{% if p.client %}{{ p.client }}{% endif %}{% if p.client and p.year %} &middot; {% endif %}{% if p.year %}{{ p.year }}{% endif %}</span>
-            {% if p.slug %}<span class="wk__visit">Case study <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 11h12.2l-4.6-4.6L13 5l7 7-7 7-1.4-1.4 4.6-4.6H4z"/></svg></span>{% elif p.live_url %}<span class="wk__visit">Live site <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 3h7v7h-2V6.4l-9.3 9.3-1.4-1.4L17.6 5H14V3zM5 5h6v2H5v12h12v-6h2v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg></span>{% endif %}
+            {% if p.live_url %}<span class="wk__visit">Live site <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 3h7v7h-2V6.4l-9.3 9.3-1.4-1.4L17.6 5H14V3zM5 5h6v2H5v12h12v-6h2v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg></span>{% endif %}
           </div>{% endif %}
         </div>
       </article>
