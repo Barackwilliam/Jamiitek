@@ -794,11 +794,12 @@ def template_detail(request, slug):
 def template_preview(request, pk):
     """Wrapper page — preview bar + device toggle + iframe"""
     from django.shortcuts import get_object_or_404
-    tpl = get_object_or_404(WebsiteTemplate, pk=pk, is_active=True)
+    tpl = get_object_or_404(WebsiteTemplate.objects.defer('preview_html'), pk=pk, is_active=True)
     from . import template_seo
     # Google ipe ukurasa kamili (/templates/<slug>/) sifa, si fremu hii
     return render(request, 'template_preview.html', {
-        'template': tpl, 'canonical': template_seo.BASE_URL + tpl.get_absolute_url()})
+        'template': tpl, 'canonical': template_seo.BASE_URL + tpl.get_absolute_url(),
+        'anatomy': template_seo.anatomy(tpl), 'cat_noun': template_seo.cat_info(tpl)['noun']})
 
 
 from django.views.decorators.clickjacking import xframe_options_exempt

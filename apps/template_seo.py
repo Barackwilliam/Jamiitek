@@ -296,27 +296,26 @@ def anatomy(tpl):
     Si cache ya 'default': bila Redis hiyo ni DatabaseCache (safari ya Supabase),
     na preview_html haisomwi kabisa kama anatomia ipo tayari (view inaiahirisha).
     """
-    from django.core.cache import caches
+    from .public_cache import get_or_build
 
-    cache = caches['local']
+    # public_cache: toleo linapanda template yoyote ikihifadhiwa, kwa hiyo anatomia mpya mara moja
     stamp = int(tpl.updated_at.timestamp()) if tpl.updated_at else 0
-    key = f'tpl-anatomy:{tpl.pk}:{stamp}'
-    data = cache.get(key)
-    if data is None:
-        html = tpl.preview_html or ''
-        sections = _sections(html)
-        data = {
-            'sections': sections,
-            'section_count': len(re.findall(r'(?i)<section\b', html)),
-            'images': len(re.findall(r'(?i)<img\b', html)) + len(re.findall(r'(?i)background(?:-image)?\s*:[^;]*url\(', html)),
-            'palette': _palette(html),
-            'fonts': _fonts(html),
-            'breakpoints': len(set(re.findall(r'(?i)@media[^{]*?(\d{3,4})px', html))),
-            'animated': bool(re.search(r'(?i)@keyframes|IntersectionObserver|transition\s*:', html)),
-        }
-        # Fonti za Google za demo zinapakiwa pia kwenye ukurasa ili sampuli "Aa" ionekane kwa fonti halisi
-        google = [f for f in data['fonts'] if f in _google_fonts(html)]
-        data['font_url'] = ('https://fonts.googleapis.com/css2?' + '&'.join(
-            'family=' + f.replace(' ', '+') for f in google) + '&display=swap') if google else ''
-        cache.set(key, data, 60 * 60 * 24)
+    return get_or_build(f'tpl-anatomy:{tpl.pk}:{stamp}', lambda: _build_anatomy(tpl.preview_html or ''), ttl=60 * 60 * 24)
+
+
+def _build_anatomy(html):
+    sections = _sections(html)
+    data = {
+        'sections': sections,
+        'section_count': len(re.findall(r'(?i)<section\b', html)),
+        'images': len(re.findall(r'(?i)<img\b', html)) + len(re.findall(r'(?i)background(?:-image)?\s*:[^;]*url\(', html)),
+        'palette': _palette(html),
+        'fonts': _fonts(html),
+        'breakpoints': len(set(re.findall(r'(?i)@media[^{]*?(\d{3,4})px', html))),
+        'animated': bool(re.search(r'(?i)@keyframes|IntersectionObserver|transition\s*:', html)),
+    }
+    # Fonti za Google za demo zinapakiwa pia kwenye ukurasa ili sampuli "Aa" ionekane kwa fonti halisi
+    google = [f for f in data['fonts'] if f in _google_fonts(html)]
+    data['font_url'] = ('https://fonts.googleapis.com/css2?' + '&'.join(
+        'family=' + f.replace(' ', '+') for f in google) + '&display=swap') if google else ''
     return data
