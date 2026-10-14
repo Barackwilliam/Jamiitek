@@ -341,15 +341,15 @@ def studio_preview(request, site_id):
         # Bila kurasa bado onyesha header/footer — mteja aone design anayochagua
         from .models import SitePage
         page = SitePage(website=site, slug='home', title=site.site_name)
-        return add_badge_to_response(render(request, 'builder/public/page.html', public_views._ctx(site, {
+        return add_badge_to_response(site=site, response=render(request, 'builder/public/page.html', public_views._ctx(site, {
             'page': page, 'is_preview': True,
             'page_html': ('<section style="padding:90px 24px;text-align:center">'
                           f'<h1 style="font-size:40px;margin-bottom:12px">{html_lib.escape(site.site_name)}</h1>'
                           '<p style="opacity:.7">Your page content will appear here.</p></section>'),
         })))
     if page.raw_document:
-        return add_badge_to_response(HttpResponse(render_raw_document(site, page)))
-    return add_badge_to_response(render(request, 'builder/public/page.html', public_views._ctx(site, {
+        return add_badge_to_response(site=site, response=HttpResponse(render_raw_document(site, page)))
+    return add_badge_to_response(site=site, response=render(request, 'builder/public/page.html', public_views._ctx(site, {
         'page': page,
         'page_html': render_page_html(site, page),
         'is_preview': True,

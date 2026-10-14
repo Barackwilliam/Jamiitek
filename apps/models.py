@@ -1030,7 +1030,7 @@ class WebsiteTemplate(models.Model):
     # Bei: template ni ya BURE, au INAUZWA kwa bei moja (malipo ya mara moja, Pesapal).
     # Mmiliki anaweka bei kulingana na ubora wa template.
     is_free = models.BooleanField(default=False, verbose_name='Free template (Bure)',
-                                  help_text='Tiki = template ya bure. Website zake zinaonyesha "Made with JamiiTek".')
+                                  help_text='Tiki = template ya bure. Website zake zinaonyesha "Developed by JamiiTek".')
     price = models.PositiveIntegerField(default=0, verbose_name='Price (TSh, one-time)',
                                         help_text='Bei ya kununua template hii mara moja. Haitumiki kama ni ya bure.')
 

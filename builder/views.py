@@ -588,17 +588,11 @@ def site_dashboard(request, site_id):
 
 def _billing_ctx(request, site):
     """Kadi ya malipo kwenye dashboard: lipia template, ondoa logo, au hali ya premium."""
-    from django.utils import timezone
     from . import billing
-    price = billing.pricing()
-    start = price.badge_old_sites_from
     return {
         'pay_template': billing.needs_payment(site),
         'logo_price': billing.logo_price(site),
         'shows_badge': billing.show_badge(site),
-        # Taarifa kwa website za zamani: alama itaanza kuonekana tarehe hii
-        'badge_from': start if (site.legacy_free and not site.is_premium and start
-                                and start > timezone.localdate()) else None,
         'just_paid': request.GET.get('paid') == '1' and site.is_premium,
         # Hosting ya mwaka: kadi inaonekana siku 30 kabla ya kuisha, na baada ya kuisha
         'renew_price': billing.renew_price(site),

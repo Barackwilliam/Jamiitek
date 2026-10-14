@@ -5,7 +5,7 @@ Mambo mawili yanalipiwa, kila moja mara MOJA:
 
   1. Template INAYOUZWA (WebsiteTemplate.for_sale). Mteja anaijaribu bure kwenye
      Builder; anapobonyeza Publish analipa bei ya template. Malipo yakithibitishwa:
-     website inakwenda hewani, hakuna "Made with JamiiTek", anaweza kuweka domain
+     website inakwenda hewani, hakuna "Developed by JamiiTek", anaweza kuweka domain
      yake (is_premium), na hosting ya mwaka 1.
   2. "Remove JamiiTek logo" — kwa website ya template ya BURE. Bei moja iliyowekwa
      na mmiliki (BuilderPricing.remove_logo_price).
@@ -15,18 +15,15 @@ Mambo mawili yanalipiwa, kila moja mara MOJA:
      siku GRACE_DAYS bila kulipa: website ya template iliyonunuliwa inasimama
      (is_paused), na ya "Remove logo" inarudi kuwa ya bure (logo inarudi).
 
-Website za bure zinaonyesha kibandiko kidogo "Made with JamiiTek" (with_badge).
-Website zilizokuwepo kabla ya mfumo huu (legacy_free) haziguswi hadi tarehe ya
-BuilderPricing.badge_old_sites_from — baada ya kupewa taarifa.
+Website za bure zinaonyesha "Developed by JamiiTek" chini (builder/branding.py, kupitia
+SubdomainMiddleware); website iliyolipiwa (is_premium) haionyeshi alama hiyo.
 
 Malipo: apps.pesapal_views._start → Pesapal → callback/IPN → apps.pesapal_fulfill
 → fulfill() hapa chini (mara moja tu, ndani ya lock).
 """
 from datetime import timedelta
-from functools import wraps
 
 from django.utils import timezone
-from django.utils.html import escape
 
 HOSTING_DAYS = 365
 GRACE_DAYS = 7
@@ -83,50 +80,8 @@ def is_paused(site):
 
 
 def show_badge(site):
-    if site.is_premium:
-        return False
-    if site.legacy_free:
-        start = pricing().badge_old_sites_from
-        return bool(start and timezone.localdate() >= start)
-    return True
-
-
-def badge_html(site):
-    href = ('https://www.jamiitek.com/templates/?utm_source=madewith&amp;utm_medium=badge'
-            f'&amp;utm_campaign={escape(site.subdomain)}')
-    return (
-        '<a href="' + href + '" target="_blank" rel="noopener" id="jt-made-with" '
-        'style="all:initial;position:fixed;left:12px;bottom:12px;z-index:2147480000;display:inline-flex;'
-        'align-items:center;gap:6px;padding:7px 11px;border-radius:999px;background:rgba(10,12,20,.9);'
-        'color:#fff;font:600 12px/1 system-ui,-apple-system,sans-serif;cursor:pointer;'
-        'box-shadow:0 6px 18px rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.15)">'
-        '<span style="all:initial;width:8px;height:8px;border-radius:50%;background:#25d366"></span>'
-        '<span style="all:initial;color:#fff;font:600 12px/1 system-ui,-apple-system,sans-serif">'
-        'Made with <b style="all:initial;color:#fff;font:800 12px/1 system-ui,-apple-system,sans-serif">'
-        'JamiiTek</b></span></a>'
-    )
-
-
-def with_badge(view):
-    """Weka "Made with JamiiTek" kwenye kurasa za website za bure zilizochapishwa."""
-    @wraps(view)
-    def inner(request, *args, **kwargs):
-        response = view(request, *args, **kwargs)
-        site = getattr(request, 'client_site', None)
-        if (site is None or not site.is_published or response.status_code != 200
-                or response.streaming or 'text/html' not in response.get('Content-Type', '')):
-            return response
-        if not show_badge(site):
-            return response
-        body = response.content.decode(response.charset or 'utf-8', errors='replace')
-        i = body.lower().rfind('</body>')
-        snippet = badge_html(site)
-        body = body[:i] + snippet + body[i:] if i >= 0 else body + snippet
-        response.content = body.encode(response.charset or 'utf-8')
-        if response.has_header('Content-Length'):
-            response['Content-Length'] = str(len(response.content))
-        return response
-    return inner
+    """Website za bure zina "Developed by JamiiTek" (builder/branding.py); zilizolipiwa hazina."""
+    return not site.is_premium
 
 
 # ── Malipo ────────────────────────────────────────────────

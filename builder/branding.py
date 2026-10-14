@@ -37,6 +37,9 @@ _HOST_STYLE = ';'.join(f'{k}:{v}!important' for k, v in (
     ('clip', 'auto'), ('clip-path', 'none'), ('transform', 'none'), ('filter', 'none'),
     ('pointer-events', 'auto'), ('float', 'none'), ('left', 'auto'), ('top', 'auto'),
     ('background', '#07090d'), ('content-visibility', 'visible'),
+    # Ukurasa ukiwa flex/grid (body{display:flex}), alama isiwe safu ya pembeni
+    ('grid-column', '1 / -1'), ('order', '2147483647'),
+    ('align-self', 'stretch'), ('clear', 'both'), ('box-sizing', 'border-box'),
 ))
 
 # Link ya akiba kwa browser bila JavaScript
@@ -69,7 +72,16 @@ function build(){
   try{root=b.attachShadow({mode:'closed'});root.innerHTML=HTML;}
   catch(e){b.innerHTML=%(fallback)s;}
 }
-function home(){return document.querySelector('.jt-body')||document.body;}
+var onRoot=false;
+function home(){return onRoot?document.documentElement:(document.querySelector('.jt-body')||document.body);}
+// Template yenye body{display:flex} (au grid) iliifanya alama kuwa safu pembeni na
+// kuibana website (simu: website ilibaki nusu ya skrini). Hapo alama inahamia chini
+// ya <body> — ndani ya <html> — ambako inakaa chini ya ukurasa kwa upana wote.
+function check(){
+  if(onRoot||!b||!b.isConnected)return;
+  var d=getComputedStyle(b.parentNode).display||'';
+  if(/flex|grid/.test(d)){onRoot=true;fix();}
+}
 function fix(){
   if(!document.body)return;
   if(!b)build();
@@ -80,7 +92,8 @@ function fix(){
 }
 function start(){
   document.querySelectorAll('jamiitek-badge').forEach(function(n){n.remove();});
-  fix();
+  fix();check();
+  window.addEventListener('load',check);
   new MutationObserver(fix).observe(document.documentElement,{childList:true,subtree:true,attributes:true,
     attributeFilter:['style','hidden','class']});
   setInterval(fix,2500);
@@ -114,8 +127,14 @@ def inject_badge(html):
     return html[:i] + badge + html[i:]
 
 
-def add_badge_to_response(response):
-    """Kwa middleware/views: ongeza alama kwenye jibu la HTML (200) tu."""
+def add_badge_to_response(response, site=None):
+    """Kwa middleware/views: ongeza alama kwenye jibu la HTML (200) tu.
+
+    Website iliyolipiwa (premium — template iliyonunuliwa au "Remove JamiiTek
+    logo", builder/billing.py) haipati alama.
+    """
+    if site is not None and getattr(site, 'is_premium', False):
+        return response
     if getattr(response, 'streaming', False) or response.status_code != 200:
         return response
     if not response.get('Content-Type', '').startswith('text/html'):

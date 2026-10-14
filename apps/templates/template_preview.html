@@ -351,7 +351,7 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke
         <a class="btn go" href="{% url 'builder:from_template' template.pk %}">✨ Try it free</a>
         <a class="btn" href="{% if build_fee %}{% url 'build_for_me' template.slug %}{% else %}/proposals/?template={{ template.pk }}{% endif %}">Unahitaji tukutengenezee?</a>
       </div>
-      <div class="paynote">{% if template.for_sale %}You pay only when you put it online · M-Pesa · Tigo Pesa · Airtel Money · Card{% else %}Free websites show "Made with JamiiTek" at the bottom{% endif %}</div>
+      <div class="paynote">{% if template.for_sale %}You pay only when you put it online · M-Pesa · Tigo Pesa · Airtel Money · Card{% else %}Free websites show "Developed by JamiiTek" at the bottom{% endif %}</div>
       <a class="more" href="{{ template.get_absolute_url }}">Full details, FAQ &amp; features →</a>
     </div>
   </aside>
