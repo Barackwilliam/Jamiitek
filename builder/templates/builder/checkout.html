@@ -38,20 +38,27 @@ Airtel Money au kadi. Kiingereza rahisi; Kiswahili kwenye badge tu.
     <div class="co-top">
       <span class="co-dot" {% if tpl %}style="--grad:{{ tpl.gradient_css }}"{% endif %}></span>
       <div style="min-width:0">
-        <small>{% if kind == 'template' %}You are buying{% else %}Your website{% endif %}</small>
+        <small>{% if kind == 'template' %}You are buying{% elif kind == 'renew' %}Hosting for one more year{% else %}Your website{% endif %}</small>
         <b>{% if kind == 'template' %}{{ tpl.name }}{% else %}{{ site.subdomain }}.jamiitek.com{% endif %}</b>
       </div>
       {% if kind == 'template' %}<span class="co-tag">Inauzwa</span>{% endif %}
     </div>
     <div class="co-body">
-      <div class="co-price">TSh {{ price|intcomma }}<small>pay one time</small></div>
+      <div class="co-price">TSh {{ price|intcomma }}<small>{% if kind == 'renew' %}for 1 year{% else %}pay one time{% endif %}</small></div>
       <ul class="co-list">
+        {% if kind == 'renew' %}
+        <li>{% if paused %}Your website comes back online{% else %}Your website stays online{% endif %}</li>
+        <li>No JamiiTek logo on your site</li>
+        <li>Your own name keeps working</li>
+        <li>Paid until {{ site.hosting_until|date:"j F Y" }} + 1 year</li>
+        {% else %}
         {% if kind == 'template' %}
         <li>Your website goes online</li>
         {% endif %}
         <li>No JamiiTek logo on your site</li>
         <li>Use your own name (.co.tz / .com)</li>
         <li>Free hosting for 1 year</li>
+        {% endif %}
       </ul>
       <form method="post">
         {% csrf_token %}
@@ -59,7 +66,7 @@ Airtel Money au kadi. Kiingereza rahisi; Kiswahili kwenye badge tu.
       </form>
       <div class="co-ways"><span>M-Pesa</span><span>Tigo Pesa</span><span>Airtel Money</span><span>Card</span></div>
       <p class="co-note">You will pay on the secure Pesapal page. When the payment is done,
-        {% if kind == 'template' %}your website goes online by itself.{% else %}the JamiiTek logo is removed by itself.{% endif %}</p>
+        {% if kind == 'template' %}your website goes online by itself.{% elif kind == 'renew' %}your hosting is extended by itself.{% else %}the JamiiTek logo is removed by itself.{% endif %}</p>
     </div>
   </div>
   <a class="co-back" href="{% url 'builder:site_dashboard' site.id %}">← Back to my website</a>

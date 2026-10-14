@@ -600,6 +600,11 @@ def _billing_ctx(request, site):
         'badge_from': start if (site.legacy_free and not site.is_premium and start
                                 and start > timezone.localdate()) else None,
         'just_paid': request.GET.get('paid') == '1' and site.is_premium,
+        # Hosting ya mwaka: kadi inaonekana siku 30 kabla ya kuisha, na baada ya kuisha
+        'renew_price': billing.renew_price(site),
+        'days_left': billing.days_left(site),
+        'paused': billing.is_paused(site),
+        'grace_days': billing.GRACE_DAYS,
     }
 
 
@@ -687,15 +692,19 @@ def checkout(request, site_id, kind):
     """Ukurasa wa malipo (Pesapal): kununua template inayouzwa, au kuondoa logo ya JamiiTek."""
     from . import billing
     site = _my_site(request, site_id)
-    if kind not in ('template', 'logo'):
+    if kind not in ('template', 'logo', 'renew'):
         raise Http404
     tpl = billing.needs_payment(site) if kind == 'template' else billing.source_template(site)
-    price = tpl.price if (kind == 'template' and tpl) else (billing.logo_price(site) if kind == 'logo' else 0)
+    if kind == 'template':
+        price = tpl.price if tpl else 0
+    else:
+        price = billing.logo_price(site) if kind == 'logo' else billing.renew_price(site)
     if not price:
         return redirect('builder:site_dashboard', site_id=site.id)
     if request.method == 'POST':
         return billing.start(request, site, kind)
-    return render(request, 'builder/checkout.html', {'site': site, 'kind': kind, 'tpl': tpl, 'price': price})
+    return render(request, 'builder/checkout.html', {'site': site, 'kind': kind, 'tpl': tpl, 'price': price,
+                                                     'paused': billing.is_paused(site)})
 
 
 # ── Pages + Editor ──────────────────────────────────────

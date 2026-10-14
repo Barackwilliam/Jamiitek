@@ -46,6 +46,7 @@ def fulfill(tx):
             'invoice':              _fulfill_invoice,
             'builder_template':     _fulfill_builder,
             'builder_logo':         _fulfill_builder,
+            'builder_renew':        _fulfill_builder,
         }.get(locked.purpose)
 
         if not handler:

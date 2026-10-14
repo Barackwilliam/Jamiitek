@@ -23,7 +23,7 @@ class ClientWebsiteAdmin(admin.ModelAdmin):
 @admin.register(BuilderPricing)
 class BuilderPricingAdmin(admin.ModelAdmin):
     """Bei za jumla za Builder — rekodi moja tu."""
-    fields = ('remove_logo_price', 'badge_old_sites_from')
+    fields = ('remove_logo_price', 'yearly_hosting_price', 'badge_old_sites_from')
 
     def has_add_permission(self, request):
         return not BuilderPricing.objects.exists()
