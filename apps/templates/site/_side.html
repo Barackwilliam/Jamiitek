@@ -5,16 +5,38 @@
     site/_header.html   → Home, Services, About, Contact
     base.html           → Blog, Templates, na kurasa nyingine za zamani
     jamiibot_landing    → /bot/ (side_mode="bot" inaongeza "Kwenye ukurasa huu")
+    blog/*              → kurasa za blog (nav_categories ipo) zinaongeza juu: kutafuta,
+                          sections zote na "Most read" — wasomaji wa simu wanazipata kwa ☰
 
   Inafunguliwa na kitufe chochote chenye id="burger" (static/js/jt-nav.js).
   Mtindo uko static/css/jt-nav.css — usinakili CSS hii kwenye ukurasa.
 {% endcomment %}{% with u=request.resolver_match.url_name p=request.path %}
 <div class="scrim" id="scrim"></div>
-<aside class="side" id="side" aria-label="Menu" aria-hidden="true">
+{% if nav_categories is not None and p|slice:':6' == '/blog/' %}{% firstof "1" as blog_side %}{% endif %}
+<aside class="side{% if blog_side %} side--blog{% endif %}" id="side" aria-label="Menu" aria-hidden="true">
   <div class="side__top">
     <a class="brand" href="{% url 'home' %}"><img src="{% static 'images/logo.png' %}" alt="" width="40" height="35" loading="lazy"><span>Jamii<em>Tek</em></span></a>
     <button class="side__x" id="sideX" aria-label="Close menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </div>
+  {% if blog_side %}
+  <div class="side__blog">
+    <form class="side__q" action="{% url 'blog_list' %}" method="get" role="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" name="q" value="{{ q }}" placeholder="Search stories…" aria-label="Search stories">
+    </form>
+    <small class="side__lbl">Sections</small>
+    <div class="side__chips">
+      <a href="{% url 'blog_list' %}"{% if not active_cat and not q and not post %} class="is-on"{% endif %}>All stories</a>
+      {% for c in nav_categories %}<a href="{% url 'blog_list' %}?category={{ c.slug }}"{% if active_cat.pk == c.pk or post.category_id == c.pk %} class="is-on"{% endif %}>{{ c.name }}</a>{% endfor %}
+    </div>
+    {% if most_read %}
+    <small class="side__lbl">Most read</small>
+    <ol class="side__mr">
+      {% for m in most_read|slice:":5" %}<li><a href="{% url 'blog_detail' m.slug %}"><b>{{ forloop.counter }}</b><span>{{ m.title }}</span></a></li>{% endfor %}
+    </ol>
+    {% endif %}
+  </div>
+  {% endif %}
   <nav aria-label="Mobile">
     {% if side_mode == "bot" %}
     <small class="side__lbl">JamiiBot</small>

@@ -89,6 +89,10 @@ html,body{overflow-x:clip}
 .bz-search input::placeholder{color:rgba(255,255,255,.75)}
 .bz-search button{border:0;background:transparent;color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer}
 .bz-search:focus-within button{color:var(--blue)}
+.bz-search button svg,.bz-search-toggle svg,.bz-more svg{width:18px;height:18px;display:block;margin:auto}
+.bz-more{display:none;flex-shrink:0;width:30px;height:30px;margin-left:-14px;border:0;border-radius:50%;cursor:pointer;
+  background:#fff;color:var(--blue);box-shadow:0 2px 8px rgba(0,0,0,.25);position:relative;z-index:1}
+.bz-more[hidden]{display:none!important}
 .bz-search-toggle{display:none;border:0;background:rgba(255,255,255,.14);color:#fff;width:38px;height:38px;border-radius:50%;cursor:pointer;flex-shrink:0}
 
 /* ── Latest ticker ── */
@@ -129,6 +133,13 @@ a:hover .frame .img{transform:scale(1.035)}
 
 /* Rail (Most read + CTA) */
 .rail-box{background:var(--card);border-radius:6px;padding:20px;border:1px solid var(--line)}
+.sections-box nav{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.sections-box a{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;font-size:13px;font-weight:600;
+  color:var(--chip-t);background:var(--sky);border:1px solid var(--line);transition:background .15s,color .15s,border-color .15s}
+.sections-box a:hover{border-color:var(--blue);color:var(--blue)}
+.sections-box a.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.sections-box small{font-size:11px;font-weight:700;opacity:.65}
+.rail-box+.sections-box,.sections-box+.quote,.sections-box+.rail-box{margin-top:18px}
 .rail-box h3{font-size:12px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
 .mr{display:flex;gap:14px;padding:13px 0;border-bottom:1px solid var(--line)}
 .mr:last-child{border-bottom:0;padding-bottom:0}
@@ -175,7 +186,14 @@ a:hover .frame .img{transform:scale(1.035)}
 }
 @media(max-width:600px){
   .bz-wrap{padding:0 14px}
-  .bz-brand span{display:none}
-  .bz-bar .bz-wrap{gap:10px}
+  /* Simu: jina la blog linaonekana kwenye kichwa — nafasi yote ni ya sections */
+  .bz-brand{display:none}
+  .bz-bar .bz-wrap{gap:8px}
+  .bz-sections{gap:6px;-webkit-mask-image:linear-gradient(90deg,#000 80%,transparent);mask-image:linear-gradient(90deg,#000 80%,transparent)}
+  .bz-end .bz-sections{-webkit-mask-image:none;mask-image:none}
+  .bz-sections a{padding:7px 12px;border-radius:999px;font-size:12px;letter-spacing:.4px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.32)}
+  .bz-sections a.on{box-shadow:none}
+  .bz-more{display:inline-flex;align-items:center;justify-content:center}
+  .bz-search-toggle{background:#fff;color:var(--blue);width:36px;height:36px}
 }
 </style>
