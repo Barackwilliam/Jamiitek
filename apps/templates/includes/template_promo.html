@@ -1,0 +1,105 @@
+{% load humanize %}{% if promo %}
+{% comment %}Tangazo dogo la templates — angalia apps/templatetags/template_promo.py{% endcomment %}
+<style>
+.jtp{position:fixed;left:20px;bottom:20px;z-index:9000;display:flex;align-items:flex-end;font-family:Inter,'DM Sans',system-ui,sans-serif;
+  --a:{{ promo.gradient_start }};--b:{{ promo.gradient_end }};opacity:0;transform:translateY(40px) scale(.8);transform-origin:0 100%;pointer-events:none;
+  transition:opacity .45s ease,transform .7s cubic-bezier(.34,1.45,.64,1)}
+.jtp[hidden]{display:none}
+.jtp.on{opacity:1;transform:none;pointer-events:auto}
+.jtp{gap:12px}
+.jtp-card{position:relative;display:flex;text-decoration:none;color:#fff}
+.jtp:hover .jtp-phone{transform:translateY(-4px) rotate(-2deg)}
+.jtp-bub{position:relative;margin-bottom:14px}
+.jtp-phone{position:relative;flex-shrink:0;width:96px;height:198px;padding:4px;border-radius:20px;background:linear-gradient(145deg,#3a3d48,#0b0c10 45%,#25272e);
+  box-shadow:0 0 0 1px rgba(255,255,255,.16),0 18px 40px rgba(0,0,0,.55),0 0 34px color-mix(in srgb,var(--a) 55%,transparent);
+  transition:transform .35s cubic-bezier(.34,1.45,.64,1);animation:jtpWiggle 1.2s .9s ease-in-out}
+.jtp-phone::before{content:"";position:absolute;inset:-10px;z-index:-1;border-radius:28px;border:2px solid color-mix(in srgb,var(--a) 70%,transparent);
+  animation:jtpRing 2.4s 1.2s ease-out 3;opacity:0}
+.jtp-scr{position:relative;display:block;width:88px;height:190px;border-radius:16px;overflow:hidden;background:linear-gradient(160deg,var(--a),var(--b))}
+.jtp-scr iframe{position:absolute;top:0;left:0;width:390px;height:842px;border:0;background:#fff;transform:scale(.2257);transform-origin:0 0;pointer-events:none;opacity:0;transition:opacity .5s}
+.jtp-scr iframe.ok{opacity:1}
+.jtp-island{position:absolute;top:8px;left:50%;width:28px;height:7px;margin-left:-14px;border-radius:6px;background:#000;z-index:2}
+.jtp-txt{position:relative;display:flex;flex-direction:column;gap:3px;max-width:200px;padding:12px 14px;border-radius:16px 16px 16px 4px;
+  background:rgba(10,12,22,.92);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 16px 40px rgba(0,0,0,.45)}
+.jtp-tag{align-self:flex-start;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#fff;
+  background:linear-gradient(135deg,var(--a),var(--b))}
+.jtp-txt b{font-size:14px;line-height:1.25;font-weight:800}
+.jtp-txt small{font-size:11.5px;color:#9aa4bd;line-height:1.35}
+.jtp-cta{margin-top:4px;font-size:12px;font-weight:800;color:#3ee68a}
+.jtp-x{position:absolute;top:-10px;right:-10px;z-index:3;width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:#11131f;color:#cfd6e6;
+  font:600 15px/1 system-ui,sans-serif;cursor:pointer;display:grid;place-items:center;box-shadow:0 6px 16px rgba(0,0,0,.4)}
+.jtp-x:hover{background:#ff5f57;color:#fff;border-color:#ff5f57}
+@keyframes jtpWiggle{0%,100%{rotate:0deg}20%{rotate:-6deg}40%{rotate:5deg}60%{rotate:-3deg}80%{rotate:2deg}}
+@keyframes jtpRing{0%{opacity:.9;transform:scale(.9)}100%{opacity:0;transform:scale(1.25)}}
+@media(max-width:600px){
+  .jtp{left:12px;bottom:12px}
+  .jtp-phone{width:70px;height:146px;padding:3px;border-radius:16px}
+  .jtp-scr{width:64px;height:140px;border-radius:13px}
+  .jtp-scr iframe{transform:scale(.1641)}
+  .jtp-island{top:6px;width:20px;height:5px;margin-left:-10px}
+  .jtp{gap:10px}.jtp-bub{margin-bottom:10px}.jtp-txt{max-width:170px;padding:10px 12px}
+  .jtp-txt b{font-size:13px}
+}
+@media(prefers-reduced-motion:reduce){.jtp,.jtp-phone{transition:none;animation:none}.jtp-phone::before{display:none}}
+</style>
+<div class="jtp" id="jtp" hidden data-raw="{{ promo.raw }}" role="complementary" aria-label="JamiiTek website templates">
+  <a class="jtp-card" href="/templates/?utm_source=jamiitek&amp;utm_medium=promo-phone" tabindex="-1" aria-hidden="true">
+    <span class="jtp-phone"><span class="jtp-island"></span><span class="jtp-scr"><iframe tabindex="-1" title="{{ promo.name }}"></iframe></span></span>
+  </a>
+  <div class="jtp-bub">
+    <a class="jtp-card jtp-txt" href="/templates/?utm_source=jamiitek&amp;utm_medium=promo-phone">
+      <span class="jtp-tag">🔥 For sale</span>
+      <b>This website can be yours</b>
+      <small>{{ promo.name }} · from TSh {{ promo.price_hosted_monthly|intcomma }}/mo</small>
+      <span class="jtp-cta">See all templates →</span>
+    </a>
+    <button type="button" class="jtp-x" aria-label="Close">&times;</button>
+  </div>
+</div>
+<script>
+(function(){
+  var el = document.getElementById('jtp'), KEY = 'jt_promo_seen';
+  if (!el || window.self !== window.top) return;
+  // Mara moja tu kwa kila browser. Bila localStorage hatuwezi kuhakikisha hilo — basi haionyeshwi.
+  try { if (localStorage.getItem(KEY)) return; } catch (e) { return; }
+  var frame = el.querySelector('iframe'), alive = true;
+
+  function drift(){
+    var y = 0, wait = 1500, last = 0;
+    function step(t){
+      if (!alive) return;
+      var w, d;
+      try { w = frame.contentWindow; d = frame.contentDocument; } catch (e) { return; }
+      if (!d || !d.documentElement) return;
+      var dt = Math.min(64, t - (last || t)), max = d.documentElement.scrollHeight - w.innerHeight; last = t;
+      if (wait > 0) wait -= dt;
+      else if (y >= max){ y = 0; wait = 2000; w.scrollTo(0, 0); }
+      else { y = Math.min(max, y + 90 * dt / 1000); w.scrollTo(0, y); }
+      requestAnimationFrame(step);
+    }
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) requestAnimationFrame(step);
+  }
+
+  function show(){
+    try { localStorage.setItem(KEY, String(Date.now())); } catch (e) {}
+    frame.addEventListener('load', function(){ frame.classList.add('ok'); drift(); }, {once: true});
+    frame.src = el.dataset.raw;
+    el.hidden = false;
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ el.classList.add('on'); }); });
+  }
+  function close(){
+    alive = false;
+    el.classList.remove('on');
+    setTimeout(function(){ el.remove(); }, 500);
+  }
+  el.querySelector('.jtp-x').addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); close(); });
+  el.querySelectorAll('.jtp-card').forEach(function(a){ a.addEventListener('click', function(){ alive = false; }); });
+
+  // Inasubiri ukurasa umalize kufunguka, kisha sekunde 6 na browser ikiwa imetulia
+  function later(){
+    setTimeout(function(){ (window.requestIdleCallback || function(f){ setTimeout(f, 1); })(show, {timeout: 3000}); }, 6000);
+  }
+  if (document.readyState === 'complete') later(); else window.addEventListener('load', later, {once: true});
+})();
+</script>
+{% endif %}
