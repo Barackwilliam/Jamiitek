@@ -44,6 +44,8 @@ def _title_for(tx):
         'chatbot_subscription': 'JamiiBot Subscription',
         'hosting_renewal':      'Hosting Renewal',
         'invoice':              'Invoice Payment',
+        'builder_template':     'Website Template',
+        'builder_logo':         'Remove JamiiTek Logo',
     }.get(tx.purpose, 'Payment')
 
 

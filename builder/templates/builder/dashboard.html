@@ -49,6 +49,9 @@ inquiries, kupakia ZIP na JamiiBot. Kila kitu kingine kiko ndani ya Studio.
       {% elif blockers %}
         <span class="db-state"><i></i>Draft · {{ blockers|length }} step{{ blockers|length|pluralize }} to save</span>
         <a class="btn sm amber" href="{% url 'builder:studio_step' site.id blockers.0.0 %}" title="Save every Studio step to publish">Finish setup →</a>
+      {% elif pay_template %}
+        <span class="db-state"><i></i>Draft — ready to publish</span>
+        <a class="btn sm amber" href="{% url 'builder:checkout' site.id 'template' %}">🚀 Pay &amp; publish</a>
       {% else %}
         <span class="db-state"><i></i>Draft — ready to publish</span>
         <button class="btn sm amber">🚀 Publish</button>
@@ -63,6 +66,38 @@ inquiries, kupakia ZIP na JamiiBot. Kila kitu kingine kiko ndani ya Studio.
     <div><b>{{ last_change }}</b><span>Last change</span></div>
   </div>
 </section>
+
+{# ═══ MALIPO (builder/billing.py) ═══ #}
+{% load humanize %}
+{% if just_paid %}
+<section class="db-pay ok"><span class="db-pay-ic">🎉</span>
+  <div><b>{% if site.is_published %}Your website is online!{% else %}Payment received!{% endif %}</b>
+    <p>Thank you. There is no JamiiTek logo on your site. Next: add your own name (domain) in the Studio.</p></div>
+  <a class="btn sm amber" href="{% url 'builder:studio_step' site.id 'publish' %}">Add my domain →</a>
+</section>
+{% elif pay_template %}
+<section class="db-pay"><span class="db-pay-ic">💳</span>
+  <div><b>This design costs TSh {{ pay_template.price|intcomma }}</b>
+    <p>You can try it for free. Pay one time when you are ready to put it online — M-Pesa, Tigo Pesa, Airtel Money or card.</p></div>
+  <a class="btn sm amber" href="{% url 'builder:checkout' site.id 'template' %}">Pay now</a>
+</section>
+{% elif logo_price %}
+<section class="db-pay"><span class="db-pay-ic">✨</span>
+  <div><b>Remove JamiiTek logo</b>
+    <p>{% if badge_from %}From {{ badge_from|date:"j F Y" }}, free websites show "Made with JamiiTek" at the bottom. {% endif %}Pay once (TSh {{ logo_price|intcomma }}), remove the logo and use your own name.</p></div>
+  <a class="btn sm amber" href="{% url 'builder:checkout' site.id 'logo' %}">Remove logo</a>
+</section>
+{% elif badge_from %}
+<section class="db-pay"><span class="db-pay-ic">ℹ️</span>
+  <div><b>Coming soon: "Made with JamiiTek"</b>
+    <p>From {{ badge_from|date:"j F Y" }}, free websites show "Made with JamiiTek" at the bottom.</p></div>
+</section>
+{% elif site.is_premium and site.hosting_until %}
+<section class="db-pay ok"><span class="db-pay-ic">⭐</span>
+  <div><b>No JamiiTek logo · your own name allowed</b>
+    <p>Hosting is paid until {{ site.hosting_until|date:"j F Y" }}.</p></div>
+</section>
+{% endif %}
 
 {# ═══ 2. WEBSITE STUDIO ═══ #}
 <a class="db-studio" href="{% url 'builder:studio_step' site.id studio_next %}">
@@ -140,6 +175,13 @@ inquiries, kupakia ZIP na JamiiBot. Kila kitu kingine kiko ndani ya Studio.
 .db-facts b{display:block;font:800 19px/1.2 var(--ff-display);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .db-facts span{font-size:11.5px;color:var(--muted)}
 /* Studio */
+.db-pay{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:18px 20px;margin-bottom:18px;border-radius:18px;
+  border:1px solid rgba(255,160,40,.35);background:linear-gradient(135deg,rgba(255,160,40,.1),rgba(255,160,40,.02))}
+.db-pay.ok{border-color:rgba(37,211,102,.4);background:linear-gradient(135deg,rgba(37,211,102,.12),rgba(37,211,102,.02))}
+.db-pay-ic{font-size:28px}
+.db-pay div{flex:1;min-width:200px}
+.db-pay b{display:block;font-size:16px}
+.db-pay p{margin:4px 0 0;color:var(--muted);font-size:13.5px;line-height:1.55}
 .db-studio{position:relative;overflow:hidden;display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:26px;border-radius:22px;text-decoration:none;
   border:1px solid rgba(0,212,255,.35);background:linear-gradient(125deg,rgba(0,212,255,.13),rgba(124,58,237,.1) 55%,rgba(37,211,102,.08));
   transition:transform .2s,border-color .2s,box-shadow .2s}

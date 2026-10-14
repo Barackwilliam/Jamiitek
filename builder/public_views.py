@@ -9,6 +9,7 @@ from django.shortcuts import render, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
+from .billing import with_badge
 from .rendering import (render_page_html, render_raw_document, render_shortcodes,
                         render_inquiry_form)
 
@@ -78,6 +79,7 @@ def _check_published(request, site):
                   {'site': site, 'is_owner': is_owner}, status=200)
 
 
+@with_badge
 def home(request):
     site = _get_site(request)
     blocked = _check_published(request, site)
@@ -94,6 +96,7 @@ def home(request):
     }))
 
 
+@with_badge
 def page_view(request, slug):
     site = _get_site(request)
     blocked = _check_published(request, site)
@@ -111,6 +114,7 @@ def page_view(request, slug):
     }))
 
 
+@with_badge
 def collection_list(request, col_slug):
     site = _get_site(request)
     blocked = _check_published(request, site)
@@ -126,6 +130,7 @@ def collection_list(request, col_slug):
     }))
 
 
+@with_badge
 def item_detail(request, col_slug, item_slug):
     site = _get_site(request)
     blocked = _check_published(request, site)

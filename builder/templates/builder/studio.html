@@ -252,6 +252,8 @@ vitufe vinaziunganisha kwa attribute ya form="…".{% endcomment %}
       <p class="hint sd-lead">Save every step below, then publish — your website becomes visible to everyone at
         <b>{{ site.subdomain }}.jamiitek.com</b>. Until then only the Studio preview shows it.</p>
       <ul class="sd-check" id="sd-check"></ul>
+      {% if pay_template %}<p class="hint" style="margin-top:12px">💳 This design costs <b>TSh {{ pay_template.price|floatformat:"0g" }}</b>.
+        When you publish, you pay one time with M-Pesa, Tigo Pesa, Airtel Money or card.</p>{% endif %}
     </div>
 
     {% if insights %}
@@ -282,9 +284,9 @@ vitufe vinaziunganisha kwa attribute ya form="…".{% endcomment %}
       <b>{{ site.custom_domain|default:'your domain' }}</b> → <b>jamiitek.onrender.com</b>. SSL turns on by itself.
       {{ site.subdomain }}.jamiitek.com keeps working too.</p>
     {% else %}
-    <p class="hint">Use your own address like <b>www.mybusiness.co.tz</b> with Premium.
-      <a href="https://wa.me/{% contact "wa" %}?text=Hello%20JamiiTek,%20I%20want%20to%20upgrade%20{{ site.subdomain }}.jamiitek.com%20to%20Premium%20for%20a%20custom%20domain"
-         target="_blank" rel="noopener" style="color:var(--green)">Upgrade via WhatsApp →</a></p>
+    <p class="hint">Use your own name like <b>www.mybusiness.co.tz</b>.
+      {% if pay_template %}<a href="{% url 'builder:checkout' site.id 'template' %}" style="color:var(--green)">Buy this design (TSh {{ pay_template.price|floatformat:"0g" }}) →</a>
+      {% elif logo_price %}<a href="{% url 'builder:checkout' site.id 'logo' %}" style="color:var(--green)">Remove JamiiTek logo and use your own name — pay once (TSh {{ logo_price|floatformat:"0g" }}) →</a>{% endif %}</p>
     {% endif %}
   </form>
 
@@ -727,6 +729,8 @@ vitufe vinaziunganisha kwa attribute ya form="…".{% endcomment %}
       const res = await fetch(`/builder/site/${SID}/studio/${stepKey}/`, {
         method: 'POST', body: fd, headers: {'X-CSRFToken': CSRF, 'X-Requested-With': 'fetch'}});
       const data = await res.json().catch(() => null);
+      // Template inayouzwa: Publish inampeleka kwenye ukurasa wa malipo
+      if (data && data.pay_url){ location.href = data.pay_url; return data; }
       if (!res.ok || !data || !data.ok) throw new Error((data && data.error) || `Error ${res.status} on ${new URL(res.url).pathname} — please try again`);
       status('ok', '✓ Saved');
       if (data.done){ data.done.forEach(k => done.add(k)); paintSteps(); }

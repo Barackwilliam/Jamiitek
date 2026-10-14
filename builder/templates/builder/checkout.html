@@ -1,0 +1,67 @@
+{% extends 'builder/base_panel.html' %}
+{% load humanize %}
+{% block title %}Pay — {{ site.site_name }}{% endblock %}
+
+{% comment %}
+Ukurasa wa malipo (builder/billing.py). Malipo yote ni Pesapal — M-Pesa, Tigo Pesa,
+Airtel Money au kadi. Kiingereza rahisi; Kiswahili kwenye badge tu.
+{% endcomment %}
+
+{% block head %}
+<style>
+.co{max-width:560px;margin:10px auto 40px}
+.co-card{border-radius:22px;border:1px solid var(--line);background:linear-gradient(170deg,var(--panel-2),var(--panel));overflow:hidden;
+  box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.co-top{display:flex;align-items:center;gap:14px;padding:22px 24px;border-bottom:1px solid var(--line)}
+.co-dot{width:46px;height:46px;flex-shrink:0;border-radius:13px;background:var(--grad,linear-gradient(135deg,var(--violet),var(--cyan)))}
+.co-top small{display:block;color:var(--muted);font-size:12px;font-weight:600}
+.co-top b{display:block;font-size:17px;margin-top:2px}
+.co-tag{margin-left:auto;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:800;white-space:nowrap;
+  color:#ffb547;background:rgba(255,160,40,.12);border:1px solid rgba(255,160,40,.42)}
+.co-body{padding:24px}
+.co-price{font-size:40px;font-weight:800;letter-spacing:-.03em}
+.co-price small{font-size:14px;color:var(--muted);font-weight:600;letter-spacing:0;margin-left:8px}
+.co-list{list-style:none;padding:0;margin:16px 0 22px;font-size:15px}
+.co-list li{padding:7px 0 7px 28px;position:relative}
+.co-list li::before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:800}
+.co-pay{width:100%;min-height:54px;font-size:17px}
+.co-ways{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:14px}
+.co-ways span{padding:5px 10px;border-radius:8px;border:1px solid var(--line);font-size:12px;font-weight:700;color:var(--muted)}
+.co-note{margin:16px 0 0;text-align:center;color:var(--muted);font-size:13px;line-height:1.6}
+.co-back{display:block;margin-top:18px;text-align:center;color:var(--muted);font-size:13px}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="co">
+  <div class="co-card">
+    <div class="co-top">
+      <span class="co-dot" {% if tpl %}style="--grad:{{ tpl.gradient_css }}"{% endif %}></span>
+      <div style="min-width:0">
+        <small>{% if kind == 'template' %}You are buying{% else %}Your website{% endif %}</small>
+        <b>{% if kind == 'template' %}{{ tpl.name }}{% else %}{{ site.subdomain }}.jamiitek.com{% endif %}</b>
+      </div>
+      {% if kind == 'template' %}<span class="co-tag">Inauzwa</span>{% endif %}
+    </div>
+    <div class="co-body">
+      <div class="co-price">TSh {{ price|intcomma }}<small>pay one time</small></div>
+      <ul class="co-list">
+        {% if kind == 'template' %}
+        <li>Your website goes online</li>
+        {% endif %}
+        <li>No JamiiTek logo on your site</li>
+        <li>Use your own name (.co.tz / .com)</li>
+        <li>Free hosting for 1 year</li>
+      </ul>
+      <form method="post">
+        {% csrf_token %}
+        <button class="btn amber co-pay" type="submit">Pay now →</button>
+      </form>
+      <div class="co-ways"><span>M-Pesa</span><span>Tigo Pesa</span><span>Airtel Money</span><span>Card</span></div>
+      <p class="co-note">You will pay on the secure Pesapal page. When the payment is done,
+        {% if kind == 'template' %}your website goes online by itself.{% else %}the JamiiTek logo is removed by itself.{% endif %}</p>
+    </div>
+  </div>
+  <a class="co-back" href="{% url 'builder:site_dashboard' site.id %}">← Back to my website</a>
+</div>
+{% endblock %}

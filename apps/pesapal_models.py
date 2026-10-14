@@ -19,6 +19,9 @@ class PesapalTransaction(models.Model):
         ('chatbot_subscription', 'Chatbot Subscription'),
         ('hosting_renewal',      'Hosting Renewal'),
         ('invoice',              'Invoice Payment'),
+        # Builder (builder/billing.py) — target_id = ClientWebsite.pk
+        ('builder_template',     'Website Template'),      # plan_id = WebsiteTemplate.pk
+        ('builder_logo',         'Remove JamiiTek Logo'),
     ]
 
     # ── Hali ya malipo (inafuata Pesapal status_code) ─────
@@ -36,7 +39,7 @@ class PesapalTransaction(models.Model):
     order_tracking_id  = models.CharField(max_length=100, blank=True, db_index=True)
 
     purpose   = models.CharField(max_length=40, choices=PURPOSE)
-    # pk au token ya kitu kinacholipiwa (BotSubscription.id / ManagedWebsite.pk / Invoice.token)
+    # pk au token ya kitu kinacholipiwa (BotSubscription.id / ManagedWebsite.pk / Invoice.token / ClientWebsite.pk)
     target_id = models.CharField(max_length=64, db_index=True)
 
     amount      = models.DecimalField(max_digits=12, decimal_places=2)
@@ -84,6 +87,8 @@ class PesapalTransaction(models.Model):
                 'chatbot_subscription': 'SUB',
                 'hosting_renewal': 'HOST',
                 'invoice': 'INV',
+                'builder_template': 'TPL',
+                'builder_logo': 'LOGO',
             }.get(self.purpose, 'PAY')
             self.merchant_reference = f'JT-{short}-{secrets.token_hex(6).upper()}'
         super().save(*args, **kwargs)
