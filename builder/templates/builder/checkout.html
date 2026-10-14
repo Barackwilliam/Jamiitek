@@ -20,7 +20,8 @@ Airtel Money au kadi. Kiingereza rahisi; Kiswahili kwenye badge tu.
   color:#ffb547;background:rgba(255,160,40,.12);border:1px solid rgba(255,160,40,.42)}
 .co-body{padding:24px}
 .co-price{font-size:40px;font-weight:800;letter-spacing:-.03em}
-.co-price small{font-size:14px;color:var(--muted);font-weight:600;letter-spacing:0;margin-left:8px}
+.co-price small{display:inline-block;font-size:14px;color:var(--muted);font-weight:600;letter-spacing:0;margin-left:8px;white-space:nowrap}
+@media(max-width:420px){.co-price{font-size:34px}.co-price small{display:block;margin:4px 0 0}}
 .co-list{list-style:none;padding:0;margin:16px 0 22px;font-size:15px}
 .co-list li{padding:7px 0 7px 28px;position:relative}
 .co-list li::before{content:"✓";position:absolute;left:0;color:var(--green);font-weight:800}

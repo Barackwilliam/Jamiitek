@@ -90,7 +90,18 @@ def _start(tx, request):
         tx.status = 'failed'
         tx.raw_status = {'error': str(e)}
         tx.save(update_fields=['status', 'raw_status'])
-        messages.error(request, f'Imeshindikana kuanzisha malipo: {e}')
+        # Mteja anaambiwa kwa lugha rahisi; JamiiTek inaarifiwa — mauzo yasipotee kimya kimya
+        try:
+            from .notify import notify
+            notify(f'⚠️ PESAPAL IMEKATAA MALIPO: {tx.get_purpose_display()} TZS {tx.amount:,.0f} '
+                   f'({tx.first_name} {tx.last_name} {tx.phone}). Sababu: {e}')
+        except Exception:
+            logger.exception('Pesapal: taarifa ya malipo yaliyokataliwa imeshindwa')
+        if 'limit' in str(e).lower():
+            messages.error(request, 'Sorry, online payment for this amount is not open yet. '
+                                    'Our team has been told and will contact you soon.')
+        else:
+            messages.error(request, 'Sorry, we could not start the payment. Please try again in a few minutes.')
         return redirect(_safe_back(request))
 
     tx.order_tracking_id = data['order_tracking_id']

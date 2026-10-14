@@ -290,3 +290,19 @@ class BuildForMeTest(TestCase):
             r = self.client.post(self.url, self.data)
         self.assertContains(r, 'Too many requests')
         self.assertEqual(BuildRequest.objects.count(), 4)        # ya kwanza (simu mbaya) ilihesabiwa pia
+
+
+class PesapalRefusesTest(BillingBase):
+    def test_amount_over_the_pesapal_limit_gives_a_clear_message_and_tells_the_team(self):
+        from apps.pesapal_client import PesapalError
+        site = self.make_site(price=350000)
+        with _pesapal() as P, mock.patch('apps.notify.notify') as notify:
+            P.return_value.submit_order.side_effect = PesapalError(
+                'Pesapal: Transaction amount exceeds limit.Contact support for assistance')
+            r = self.c.post(f'/builder/site/{site.id}/pay/template/', follow=True,
+                            HTTP_REFERER=f'http://testserver/builder/site/{site.id}/pay/template/')
+        self.assertContains(r, 'online payment for this amount is not open yet')
+        self.assertNotContains(r, 'Imeshindikana')
+        self.assertIn('350,000', notify.call_args[0][0])
+        self.assertIn('exceeds limit', notify.call_args[0][0])
+        self.assertEqual(PesapalTransaction.objects.get().status, 'failed')
