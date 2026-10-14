@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>{{ invoice.invoice_number }} — {{ invoice.provider_name }}</title>
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#060a14">
+<meta name="theme-color" content="#f3f6fc">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 {% comment %}
 Ankara ya mteja (docs_views.invoice_view). Sehemu mbili:
-  1. "Kituo cha malipo" (giza): kiasi kinachohesabika, saa ya muda uliobaki,
+  1. "Kituo cha malipo" (rangi angavu): kiasi kinachohesabika, saa ya muda uliobaki,
      pete ya asilimia iliyolipwa, hatua za ankara, kulipa (Pesapal / M-Pesa / Benki),
      PDF na kuchapisha, na kitambulisho cha uthibitisho.
   2. Karatasi ya ankara (nyeupe) — ndiyo inayochapishwa.
@@ -18,8 +18,8 @@ Lugha mbili (?lang=en|sw). PDF ni docs/invoice_pdf.html (haijaguswa).
 {% endcomment %}
 <style>
 :root{
-  --bg:#060a14;--bg2:#0b1222;--glass:rgba(255,255,255,.055);--glass2:rgba(255,255,255,.09);
-  --ln:rgba(148,178,255,.14);--ink:#eef3fb;--mut:#8d9ab3;--dim:#56627a;
+  --bg:#f3f6fc;--bg2:#fff;--glass:#f6f8fd;--glass2:#eef2fb;
+  --ln:#e1e7f2;--ink:#0f172a;--mut:#64748b;--dim:#94a3b8;
   --cy:#22d3ee;--vi:#8b5cf6;--gr:#22c55e;--am:#f5b301;--rd:#f43f5e;
   --navy:#16325c;--paper:#fff;--p-ink:#0f172a;--p-mut:#64748b;--p-ln:#e2e8f0;--p-tint:#f6f8fc;
   --ff:'Inter',system-ui,-apple-system,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
@@ -33,66 +33,66 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
 
 /* ── Mandhari: aurora + gridi ── */
 .sky{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
-.sky i{position:absolute;border-radius:50%;filter:blur(110px);opacity:.38}
+.sky i{position:absolute;border-radius:50%;filter:blur(120px);opacity:.22}
 .sky i:nth-child(1){width:55vmax;height:55vmax;left:-15vmax;top:-25vmax;background:var(--vi);animation:fl 24s ease-in-out infinite alternate}
-.sky i:nth-child(2){width:45vmax;height:45vmax;right:-18vmax;top:10vmax;background:var(--cy);opacity:.22;animation:fl 30s ease-in-out infinite alternate-reverse}
+.sky i:nth-child(2){width:45vmax;height:45vmax;right:-18vmax;top:10vmax;background:var(--cy);opacity:.18;animation:fl 30s ease-in-out infinite alternate-reverse}
 .sky.paid i:nth-child(2){background:var(--gr)}.sky.overdue i:nth-child(2){background:var(--rd)}
-.sky::after{content:"";position:absolute;inset:0;opacity:.5;
-  background:linear-gradient(rgba(148,178,255,.05) 1px,transparent 1px) 0 0/44px 44px,linear-gradient(90deg,rgba(148,178,255,.05) 1px,transparent 1px) 0 0/44px 44px;
+.sky::after{content:"";position:absolute;inset:0;opacity:.9;
+  background:linear-gradient(rgba(99,102,241,.06) 1px,transparent 1px) 0 0/44px 44px,linear-gradient(90deg,rgba(99,102,241,.06) 1px,transparent 1px) 0 0/44px 44px;
   -webkit-mask:linear-gradient(#000 0%,transparent 70%);mask:linear-gradient(#000 0%,transparent 70%)}
 @keyframes fl{to{transform:translate(8vmax,6vmax) scale(1.12)}}
 
 .preview{position:relative;z-index:5;background:#f59e0b;color:#1a1100;text-align:center;font-size:12.5px;font-weight:700;padding:8px}
 
 /* ── Topbar ── */
-.top{position:sticky;top:0;z-index:40;background:rgba(6,10,20,.7);backdrop-filter:blur(16px) saturate(150%);-webkit-backdrop-filter:blur(16px) saturate(150%);border-bottom:1px solid var(--ln)}
+.top{position:sticky;top:0;z-index:40;background:rgba(255,255,255,.75);backdrop-filter:blur(16px) saturate(150%);-webkit-backdrop-filter:blur(16px) saturate(150%);border-bottom:1px solid var(--ln)}
 .top-in{max-width:1080px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:14px}
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
-.brand-m{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--cy),var(--vi));box-shadow:0 0 22px rgba(139,92,246,.45)}
+.brand-m{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-weight:800;color:#fff;background:linear-gradient(135deg,var(--cy),var(--vi));box-shadow:0 6px 18px rgba(139,92,246,.35)}
 .brand b{display:block;font-size:14px;letter-spacing:.06em}
 .brand small{display:block;font-size:11px;color:var(--mut)}
-.secure-pill{margin-left:auto;display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border-radius:999px;border:1px solid rgba(34,197,94,.35);background:rgba(34,197,94,.08);color:#86efac;font-size:11.5px;font-weight:700;white-space:nowrap}
+.secure-pill{margin-left:auto;display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border-radius:999px;border:1px solid rgba(34,197,94,.35);background:#ecfdf3;color:#15803d;font-size:11.5px;font-weight:700;white-space:nowrap}
 .secure-pill i{width:7px;height:7px;border-radius:50%;background:var(--gr);box-shadow:0 0 0 3px rgba(34,197,94,.25);animation:pl 2s infinite}
 @keyframes pl{50%{box-shadow:0 0 0 6px rgba(34,197,94,0)}}
-.lang{display:flex;padding:3px;border-radius:10px;background:var(--glass);border:1px solid var(--ln)}
+.lang{display:flex;padding:3px;border-radius:10px;background:#fff;border:1px solid var(--ln)}
 .lang a{padding:6px 12px;border-radius:7px;text-decoration:none;font-size:12px;font-weight:800;color:var(--mut)}
-.lang a.on{background:#fff;color:#0b1222}
+.lang a.on{background:#0f172a;color:#fff}
 
 .wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:26px 20px 60px}
-.flash{padding:13px 16px;margin-bottom:14px;border-radius:14px;font-size:14px;border:1px solid var(--ln);background:var(--glass)}
-.flash.error{border-color:rgba(244,63,94,.45);color:#fda4af;background:rgba(244,63,94,.08)}
-.flash.success{border-color:rgba(34,197,94,.45);color:#86efac;background:rgba(34,197,94,.08)}
+.flash{padding:13px 16px;margin-bottom:14px;border-radius:14px;font-size:14px;border:1px solid var(--ln);background:#fff}
+.flash.error{border-color:rgba(244,63,94,.45);color:#be123c;background:#fff1f3}
+.flash.success{border-color:rgba(34,197,94,.45);color:#15803d;background:#ecfdf3}
 
 /* ── Kituo cha malipo ── */
 .cmd{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;margin-bottom:22px}
-.panel{position:relative;border-radius:24px;border:1px solid var(--ln);background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.02));
-  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 30px 80px rgba(0,0,0,.45);overflow:hidden;animation:up .8s var(--ease) both}
+.panel{position:relative;border-radius:24px;border:1px solid var(--ln);background:linear-gradient(160deg,rgba(255,255,255,.96),rgba(255,255,255,.82));
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 24px 60px rgba(30,41,99,.10),0 2px 6px rgba(30,41,99,.04);overflow:hidden;animation:up .8s var(--ease) both}
 .panel+.panel{animation-delay:.12s}
 @keyframes up{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
-.panel::before{content:"";position:absolute;inset:0 0 auto 0;height:1px;background:linear-gradient(90deg,transparent,rgba(34,211,238,.6),rgba(139,92,246,.6),transparent)}
+.panel::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,var(--cy),var(--vi),#ec4899)}
 .main{padding:26px 28px}
 .row1{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .invno{font:700 13px var(--mono);color:var(--mut);letter-spacing:.04em}
 .chip{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
 .chip i{width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 0 3px color-mix(in srgb,currentColor 25%,transparent)}
-.chip.due{color:#fcd34d;background:rgba(245,179,1,.1);border:1px solid rgba(245,179,1,.35)}
-.chip.paid{color:#86efac;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.4)}
-.chip.overdue{color:#fda4af;background:rgba(244,63,94,.1);border:1px solid rgba(244,63,94,.45)}
-.chip.partial{color:#67e8f9;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.4)}
+.chip.due{color:#a16207;background:#fef9e7;border:1px solid #fcd98a}
+.chip.paid{color:#15803d;background:#ecfdf3;border:1px solid #9ee6b8}
+.chip.overdue{color:#be123c;background:#fff1f3;border:1px solid #fca5b4}
+.chip.partial{color:#0e7490;background:#ecfeff;border:1px solid #9be7f3}
 .amt-l{margin-top:22px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
 .amt{display:flex;align-items:baseline;gap:10px;margin-top:6px;font-weight:800;letter-spacing:-.04em;line-height:1}
 .amt small{font-size:18px;color:var(--mut);letter-spacing:0;font-weight:700}
 .amt b{font-size:clamp(42px,6.4vw,64px);font-variant-numeric:tabular-nums;
-  background:linear-gradient(180deg,#fff 30%,#a5b4cf);-webkit-background-clip:text;background-clip:text;color:transparent}
+  background:linear-gradient(120deg,#0f172a 20%,#4338ca 70%,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent}
 .meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:14px;color:var(--mut);font-size:13.5px}
 .meta b{color:var(--ink);font-weight:700}
 
 /* Saa ya muda uliobaki */
 .clock{display:flex;gap:8px;margin-top:20px}
-.clock div{flex:1;max-width:88px;padding:10px 6px;border-radius:14px;text-align:center;background:rgba(0,0,0,.25);border:1px solid var(--ln)}
+.clock div{flex:1;max-width:88px;padding:10px 6px;border-radius:14px;text-align:center;background:var(--glass);border:1px solid var(--ln)}
 .clock b{display:block;font:700 22px var(--mono);font-variant-numeric:tabular-nums}
 .clock span{font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.1em}
-.clock.late b{color:#fda4af}
+.clock.late b{color:#e11d48}
 .clock-l{margin-top:16px;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
 
 /* Hatua */
@@ -102,9 +102,9 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
 .st{position:relative;text-align:center;font-size:11.5px;color:var(--dim);font-weight:600}
 .st .d{width:28px;height:28px;margin:0 auto 7px;border-radius:50%;display:grid;place-items:center;background:var(--bg2);border:2px solid var(--ln);position:relative;z-index:1;transition:.4s}
 .st.done{color:var(--ink)}
-.st.done .d{background:linear-gradient(135deg,var(--cy),var(--vi));border-color:transparent;box-shadow:0 0 18px rgba(139,92,246,.5)}
+.st.done .d{background:linear-gradient(135deg,var(--cy),var(--vi));border-color:transparent;box-shadow:0 6px 16px rgba(139,92,246,.35)}
 .st.done .d::after{content:"";width:7px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
-.st.now{color:#fcd34d}
+.st.now{color:#b45309}
 .st.now .d{border-color:var(--am);box-shadow:0 0 0 5px rgba(245,179,1,.15)}
 .st.now .d::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--am);animation:pl 1.6s infinite}
 
@@ -114,30 +114,30 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
 .ring{position:relative;width:96px;height:96px;flex-shrink:0}
 .ring svg{width:100%;height:100%;transform:rotate(-90deg)}
 .ring circle{fill:none;stroke-width:9}
-.ring .bgc{stroke:rgba(255,255,255,.08)}
+.ring .bgc{stroke:#eef1f8}
 .ring .fg{stroke:url(#rg);stroke-linecap:round;stroke-dasharray:264;stroke-dashoffset:264;transition:stroke-dashoffset 1.6s var(--ease)}
 .ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;white-space:nowrap;font:800 20px var(--ff)}
 .ring-t small{display:block;font-size:12px;color:var(--mut)}
 .ring-t b{display:block;font-size:15px;margin-top:2px}
 .btn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:14px 18px;border-radius:14px;border:1px solid var(--ln);
   background:var(--glass);color:var(--ink);font:700 14.5px var(--ff);text-decoration:none;cursor:pointer;transition:transform .2s,box-shadow .2s,background .2s,border-color .2s}
-.btn:hover{transform:translateY(-2px);background:var(--glass2);border-color:rgba(148,178,255,.3)}
-.btn.pay{position:relative;overflow:hidden;border:0;padding:17px 18px;font-size:16px;font-weight:800;color:#03130a;
-  background:linear-gradient(135deg,#34d399,#22c55e 55%,#16a34a);box-shadow:0 14px 40px rgba(34,197,94,.35),inset 0 1px 0 rgba(255,255,255,.35)}
+.btn:hover{transform:translateY(-2px);background:var(--glass2);border-color:#c7d2fe}
+.btn.pay{position:relative;overflow:hidden;border:0;padding:17px 18px;font-size:16px;font-weight:800;color:#fff;
+  background:linear-gradient(135deg,#22c55e,#16a34a 60%,#15803d);box-shadow:0 14px 34px rgba(22,163,74,.30),inset 0 1px 0 rgba(255,255,255,.35)}
 .btn.pay::after{content:"";position:absolute;top:0;bottom:0;width:45%;left:-60%;transform:skewX(-20deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);animation:sw 3.2s 1.2s infinite}
 @keyframes sw{0%{left:-60%}40%,100%{left:130%}}
-.btn.pay:hover{box-shadow:0 18px 50px rgba(34,197,94,.5)}
+.btn.pay:hover{background:linear-gradient(135deg,#22c55e,#16a34a 60%,#15803d);box-shadow:0 18px 44px rgba(22,163,74,.42)}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .ways{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
-.ways span{padding:4px 9px;border-radius:7px;border:1px solid var(--ln);font-size:11px;font-weight:700;color:var(--mut)}
-.verify{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;background:rgba(0,0,0,.22);border:1px dashed var(--ln)}
-.verify img{width:58px;height:58px;border-radius:8px;background:#fff;padding:4px}
+.ways span{padding:4px 9px;border-radius:7px;border:1px solid var(--ln);background:#fff;font-size:11px;font-weight:700;color:var(--mut)}
+.verify{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;background:var(--glass);border:1px dashed #cbd5e8}
+.verify img{width:58px;height:58px;border-radius:8px;background:#fff;padding:4px;border:1px solid var(--ln)}
 .verify small{display:block;font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.1em}
-.verify b{display:block;font:700 12.5px var(--mono);color:#a5f3fc;margin-top:3px;word-break:break-all}
+.verify b{display:block;font:700 12.5px var(--mono);color:#4338ca;margin-top:3px;word-break:break-all}
 .verify span{display:block;font-size:11.5px;color:var(--mut);margin-top:2px}
 
 /* ── Karatasi ya ankara ── */
-.paper{position:relative;background:var(--paper);color:var(--p-ink);border-radius:22px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,.5);animation:up .9s .25s var(--ease) both}
+.paper{position:relative;background:var(--paper);color:var(--p-ink);border-radius:22px;overflow:hidden;box-shadow:0 30px 80px rgba(30,41,99,.12),0 2px 6px rgba(30,41,99,.05);animation:up .9s .25s var(--ease) both}
 .paper::before{content:"";position:absolute;inset:0 0 auto 0;height:6px;background:linear-gradient(90deg,var(--cy),var(--vi),#ec4899,var(--am))}
 .ph{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;padding:40px 44px 26px}
 .ph .logo{max-height:46px;margin-bottom:14px}
@@ -192,7 +192,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
 .foot a{color:#e2e8f0;text-decoration:none}
 .foot i{font-style:italic}
 .help{margin-top:18px;text-align:center;font-size:13.5px;color:var(--mut)}
-.help a{color:#86efac;font-weight:700;text-decoration:none}
+.help a{color:#15803d;font-weight:700;text-decoration:none}
 
 @media(max-width:900px){.cmd{grid-template-columns:1fr}}
 @media(max-width:700px){
@@ -275,7 +275,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
         <div><b data-u="s">--</b><span>{% if lang == 'sw' %}Sek{% else %}Sec{% endif %}</span></div>
       </div>
       {% elif invoice.is_paid %}
-      <div class="clock-l" style="color:#86efac">✓ {% if lang == 'sw' %}Asante! Malipo yamepokelewa{% else %}Thank you! Payment received{% endif %}{% if invoice.paid_at %} · {{ invoice.paid_at|localdate:lang }}{% endif %}</div>
+      <div class="clock-l" style="color:#15803d">✓ {% if lang == 'sw' %}Asante! Malipo yamepokelewa{% else %}Thank you! Payment received{% endif %}{% if invoice.paid_at %} · {{ invoice.paid_at|localdate:lang }}{% endif %}</div>
       {% endif %}
 
       <div class="track" data-step="{% if invoice.is_paid %}4{% elif invoice.paid_total %}3{% elif invoice.viewed_at %}2{% else %}1{% endif %}">
