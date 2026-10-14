@@ -1,0 +1,10 @@
+{# Orodha ya sections zote kwenye sidebar ya blog (list + detail). Inahitaji nav_categories. #}
+{% if nav_categories %}
+<div class="rail-box sections-box">
+  <h3>Sections</h3>
+  <nav aria-label="Blog sections">
+    <a href="{% url 'blog_list' %}"{% if not active_cat and not q and not post %} class="on"{% endif %}>All stories</a>
+    {% for c in nav_categories %}<a href="{% url 'blog_list' %}?category={{ c.slug }}"{% if active_cat.pk == c.pk or post.category_id == c.pk %} class="on"{% endif %}>{{ c.name }}{% if c.n %} <small>{{ c.n }}</small>{% endif %}</a>{% endfor %}
+  </nav>
+</div>
+{% endif %}

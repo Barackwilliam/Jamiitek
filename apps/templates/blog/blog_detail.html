@@ -129,6 +129,16 @@ figure.cover figcaption{font-size:12.5px;color:var(--muted);margin-top:8px}
 .cta h3{font-family:var(--serif);font-size:26px;margin:0 0 6px;color:#fff}
 .cta p{margin:0;color:rgba(255,255,255,.85)}
 .cta a{background:#fff;color:var(--blue) !important;font-weight:700;padding:12px 20px;border-radius:6px;white-space:nowrap}
+.read-next{position:relative;display:grid;gap:4px;margin-top:22px;padding:18px 64px 18px 20px;border-radius:10px;background:var(--blue);color:#fff;transition:background .15s}
+.read-next:hover{background:var(--blue-d);color:#fff}
+.rn-l{font-size:11.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;opacity:.8}
+.rn-t{font-family:var(--serif);font-size:20px;font-weight:700;line-height:1.25}
+.rn-go{position:absolute;right:16px;top:50%;transform:translateY(-50%);width:36px;height:36px;border-radius:50%;background:#fff;color:var(--blue);display:grid;place-items:center}
+.rn-go svg{width:18px;height:18px}
+.more-in{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin-top:14px;font-size:13px;font-weight:700;color:var(--muted)}
+.more-in a{padding:6px 11px;border-radius:999px;background:var(--sky);border:1px solid var(--line);color:var(--chip-t);font-weight:600}
+.more-in a:first-child{background:var(--blue-l);border-color:var(--blue-l)}
+.more-in a:hover{border-color:var(--blue);color:var(--blue)}
 .art-side{position:sticky;top:calc(var(--navh) + 70px)}
 .art-side .rail-box+.rail-box{margin-top:18px}
 .bz-bottom{height:56px}
@@ -233,6 +243,17 @@ figure.cover figcaption{font-size:12.5px;color:var(--muted);margin-top:8px}
               <button class="sh cp" type="button" onclick="copyLink(this)" aria-label="Copy link"><i class="fa-solid fa-link"></i></button>
             </div>
           </div>
+
+          {% with nx=related.0 %}{% if nx %}
+          <a class="read-next" href="{% url 'blog_detail' nx.slug %}">
+            <span class="rn-l">Read next{% if nx.category %} · {{ nx.category.name }}{% endif %}</span>
+            <span class="rn-t">{{ nx.title }}</span>
+            <span class="rn-go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span>
+          </a>
+          {% endif %}{% endwith %}
+          {% if post.category %}
+          <div class="more-in">More in <a href="{% url 'blog_list' %}?category={{ post.category.slug }}">{{ post.category.name }}</a>{% for c in nav_categories %}{% if c.pk != post.category_id and forloop.counter <= 6 %}<a href="{% url 'blog_list' %}?category={{ c.slug }}">{{ c.name }}</a>{% endif %}{% endfor %}</div>
+          {% endif %}
         </article>
 
         {# ── COMMENTS ── #}
@@ -309,6 +330,7 @@ figure.cover figcaption{font-size:12.5px;color:var(--muted);margin-top:8px}
           {% endfor %}
         </div>
         {% endif %}
+        {% include 'blog/_sections_box.html' %}
         <div class="quote">
           <div class="qm">&ldquo;</div>
           <p>Get your business online this week — website, hosting and an AI WhatsApp bot.</p>

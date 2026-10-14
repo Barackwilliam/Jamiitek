@@ -9,16 +9,28 @@
            class="{% if active_cat.pk == c.pk or post.category_id == c.pk %}on{% endif %}">{{ c.name }}</a>
       {% endfor %}
     </nav>
+    <button class="bz-more" type="button" aria-label="More sections" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></button>
     <form class="bz-search" action="{% url 'blog_list' %}" method="get" role="search">
       <input type="search" name="q" value="{{ q }}" placeholder="Search stories…" aria-label="Search stories">
-      <button type="submit" aria-label="Search"><i class="fa-solid fa-magnifying-glass"></i></button>
+      <button type="submit" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
     </form>
     <button class="bz-search-toggle" type="button" aria-label="Search"
             onclick="var b=document.getElementById('bzBar');b.classList.toggle('searching');if(b.classList.contains('searching'))b.querySelector('.bz-search input').focus();">
-      <i class="fa-solid fa-magnifying-glass"></i>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
     </button>
   </div>
 </div>
+<script>
+/* Simu: section iliyochaguliwa ionekane, na mshale › uonyeshe kuna sections zaidi pembeni */
+(function(){
+  var bar=document.getElementById('bzBar'); if(!bar) return;
+  var nav=bar.querySelector('.bz-sections'), more=bar.querySelector('.bz-more'); if(!nav||!more) return;
+  var on=nav.querySelector('a.on'); if(on&&on.offsetLeft+on.offsetWidth>nav.clientWidth) nav.scrollLeft=on.offsetLeft-12;
+  function upd(){ var end=nav.scrollLeft+nav.clientWidth>=nav.scrollWidth-6; more.hidden=end; bar.classList.toggle('bz-end',end); }
+  more.addEventListener('click',function(){ nav.scrollBy({left:Math.max(140,nav.clientWidth*.7),behavior:'smooth'}); });
+  nav.addEventListener('scroll',upd,{passive:true}); addEventListener('resize',upd); upd();
+})();
+</script>
 
 {% if ticker %}
 <div class="bz-ticker">
