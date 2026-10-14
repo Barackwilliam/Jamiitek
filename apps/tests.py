@@ -129,6 +129,20 @@ class TemplateSeoTest(NoPingMixin, TestCase):
         self.assertIn('<link rel="canonical" href="https://www.jamiitek.com%s">' % tpl.get_absolute_url(), page)
         self.assertFalse(any('preview_html' in x['sql'] for x in q.captured_queries))
 
+    def test_promo_phone_on_home_and_blog_once_per_browser(self):
+        from django.template import Context, Template
+        html = Template('{% load template_promo %}{% template_promo %}').render(Context())
+        self.assertIn('id="jtp" hidden', html)                       # haionekani hadi JS iamue
+        self.assertIn('data-raw="/templates/preview/%d/raw/"' % self.tpl.pk, html)
+        self.assertIn("localStorage.getItem(KEY)", html)            # mara moja tu kwa browser
+        self.assertIn('/templates/?utm_source=jamiitek', html)
+        self.assertIn('class="jtp-x"', html)
+        # Bila template yenye demo hakuna tangazo kabisa
+        WebsiteTemplate.objects.update(preview_html='')
+        from apps.public_cache import bump
+        bump()
+        self.assertNotIn('jtp', Template('{% load template_promo %}{% template_promo %}').render(Context()))
+
     def test_inactive_or_unknown_template_is_404(self):
         _tpl(name='Hidden', is_active=False)
         self.assertEqual(self.client.get('/templates/hidden/').status_code, 404)
