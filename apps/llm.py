@@ -66,28 +66,88 @@ def gemini_chat(messages, max_tokens=1000, temperature=0.5, json_mode=False, tim
     return result
 
 
+MODEL_KEY = 'llm:gemini_model_replacement'
+
+
+def _models_list():
+    try:
+        r = requests.get(f'{GEMINI_BASE}/models', params={'key': _gemini_key()}, timeout=10)
+    except requests.RequestException:
+        return []
+    if r.status_code != 200:
+        return []
+    return [m['name'].split('/', 1)[-1] for m in r.json().get('models', [])
+            if 'generateContent' in m.get('supportedGenerationMethods', [])]
+
+
+def _version(name):
+    import re
+    m = re.search(r'gemini-(\d+(?:\.\d+)?)', name)
+    return float(m.group(1)) if m else 0.0
+
+
+def replacement_models(current, error_text=''):
+    """Model za kujaribu Google ikiondoa model (404): iliyopendekezwa kwenye ujumbe, kisha mpya zaidi ya familia ileile."""
+    import re
+    out = []
+    m = re.search(r'use (?:models/)?(gemini-[\w.\-]+)', error_text or '')
+    if m:
+        out.append(m.group(1).rstrip('.'))
+    family = 'pro' if 'pro' in current else 'flash'
+    special = ('tts', 'image', 'audio', 'live', 'embedding', 'thinking', 'exp', 'lite')
+    same = [n for n in _models_list() if family in n and not any(x in n for x in special)]
+    same.sort(key=lambda n: ('preview' not in n, _version(n)), reverse=True)
+    seen = set()
+    return [n for n in out + same if not (n in seen or seen.add(n)) and n != current]
+
+
 def _gemini_call(messages, max_tokens, temperature, json_mode, timeout):
     from django.conf import settings
-    model = getattr(settings, 'GEMINI_MODEL', '') or os.getenv('GEMINI_MODEL') or DEFAULT_GEMINI
+    from django.core.cache import cache
+    wanted = getattr(settings, 'GEMINI_MODEL', '') or os.getenv('GEMINI_MODEL') or DEFAULT_GEMINI
+    try:
+        swaps = cache.get(MODEL_KEY) or {}
+    except Exception:
+        swaps = {}
+    model = swaps.get(wanted, wanted)
     system = '\n\n'.join(m['content'] for m in messages if m.get('role') == 'system' and m.get('content'))
     contents = [{'role': 'model' if m.get('role') == 'assistant' else 'user',
                  'parts': [{'text': str(m.get('content') or '')}]}
                 for m in messages if m.get('role') != 'system']
-    config = {'temperature': temperature, 'maxOutputTokens': int(max_tokens or 1000)}
-    if 'pro' in model:
-        config['maxOutputTokens'] += 2048
-    else:
-        config['thinkingConfig'] = {'thinkingBudget': 0}
-    if json_mode:
-        config['responseMimeType'] = 'application/json'
-    body = {'contents': contents or [{'role': 'user', 'parts': [{'text': ''}]}], 'generationConfig': config}
-    if system:
-        body['systemInstruction'] = {'parts': [{'text': system}]}
-    try:
-        r = requests.post(f'{GEMINI_BASE}/models/{model}:generateContent',
-                          params={'key': _gemini_key()}, json=body, timeout=timeout)
-    except requests.RequestException as exc:
-        raise LLMError(f'gemini: {type(exc).__name__}') from exc
+
+    def post(name):
+        config = {'temperature': temperature, 'maxOutputTokens': int(max_tokens or 1000)}
+        if 'pro' in name:
+            config['maxOutputTokens'] += 2048
+        else:
+            config['thinkingConfig'] = {'thinkingBudget': 0}
+        if json_mode:
+            config['responseMimeType'] = 'application/json'
+        body = {'contents': contents or [{'role': 'user', 'parts': [{'text': ''}]}], 'generationConfig': config}
+        if system:
+            body['systemInstruction'] = {'parts': [{'text': system}]}
+        try:
+            return requests.post(f'{GEMINI_BASE}/models/{name}:generateContent',
+                                 params={'key': _gemini_key()}, json=body, timeout=timeout)
+        except requests.RequestException as exc:
+            raise LLMError(f'gemini: {type(exc).__name__}') from exc
+
+    r = post(model)
+    tried = {model}
+    for _ in range(3):   # model imeondolewa na Google -> jaribu mbadala
+        if r.status_code != 404:
+            break
+        nxt = next((n for n in replacement_models(model, r.text) if n not in tried), None)
+        if not nxt:
+            break
+        logger.warning('Gemini model %s haipo; najaribu %s', model, nxt)
+        tried.add(nxt)
+        r = post(nxt)
+        if r.status_code == 200:
+            try:
+                cache.set(MODEL_KEY, dict(swaps, **{wanted: nxt}), timeout=7 * 24 * 3600)
+            except Exception:
+                pass
     if r.status_code != 200:
         raise LLMError(f'gemini HTTP {r.status_code}: {r.text[:200]}')
     data = r.json()

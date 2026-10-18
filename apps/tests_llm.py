@@ -137,3 +137,31 @@ class AiHealthWarningTests(TestCase):
         req = RequestFactory().get("/")
         req.user = AnonymousUser()
         self.assertEqual(ai_health(req), {})
+
+
+@override_settings(GEMINI_API_KEY="g", GROQ_API_KEY="q")
+class GeminiModelReplacementTests(TestCase):
+    def setUp(self):
+        from django.core.cache import cache
+        cache.delete(llm.MODEL_KEY)
+
+    def test_model_suggested_by_google_is_used_and_remembered(self):
+        gone = _http(404, {"error": {"message": "This model models/gemini-2.5-flash is no longer available to new "
+                                                "users. Please update your code to use models/gemini-3.8-flash for "
+                                                "the latest features."}})
+        listing = _http(200, {"models": []})
+        with mock.patch("apps.llm.requests.post", side_effect=[gone, _http(200, GEMINI_OK)]) as post, \
+             mock.patch("apps.llm.requests.get", return_value=listing):
+            text, _ = llm.gemini_chat(MSGS)
+        self.assertEqual(text, "Makala safi ya Kiswahili.")
+        self.assertIn("gemini-3.8-flash:generateContent", post.call_args.args[0])
+        with mock.patch("apps.llm.requests.post", return_value=_http(200, GEMINI_OK)) as post:
+            llm.gemini_chat(MSGS)
+        self.assertIn("gemini-3.8-flash:generateContent", post.call_args.args[0])
+
+    def test_newest_listed_model_of_same_family(self):
+        listing = _http(200, {"models": [{"name": f"models/{n}", "supportedGenerationMethods": ["generateContent"]}
+                                         for n in ("gemini-2.5-flash", "gemini-3.1-flash", "gemini-3.1-flash-lite",
+                                                   "gemini-3.1-pro")]})
+        with mock.patch("apps.llm.requests.get", return_value=listing):
+            self.assertEqual(llm.replacement_models("gemini-2.5-flash")[0], "gemini-3.1-flash")
