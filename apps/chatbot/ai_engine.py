@@ -44,6 +44,17 @@ def clean_reply(text: str) -> str:
 GROQ_API_URL  = "https://api.groq.com/openai/v1/chat/completions"
 DEFAULT_MODEL = os.getenv('GROQ_MODEL', 'llama-3.3-70b-versatile')
 
+# BotConfig.ai_model == GEMINI -> bot hii inajibu kwa Gemini Flash (Kiswahili bora);
+# Gemini ikishindwa (kikomo, mtandao, key) inajibu kwa Groq kama kawaida.
+GEMINI = 'gemini'
+MODEL_CHOICES = [
+    ('', 'Groq (default ya mfumo)'),
+    (GEMINI, 'Gemini Flash — Kiswahili bora (Groq akiba)'),
+    ('llama-3.3-70b-versatile', 'Groq · Llama 3.3 70B'),
+    ('openai/gpt-oss-120b', 'Groq · GPT-OSS 120B'),
+    ('openai/gpt-oss-20b', 'Groq · GPT-OSS 20B'),
+]
+
 
 # Hitilafu ya kiufundi (mtandao, Groq) — si kosa la mteja. Tofauti na
 # `bot.fallback_msg`, ambayo ni ya "sielewi swali lako".
@@ -58,9 +69,28 @@ class BotAIEngine:
         self.api_key = getattr(settings, 'GROQ_API_KEY', '')
 
     @property
+    def uses_gemini(self):
+        return (getattr(self.bot, 'ai_model', '') or '').strip() == GEMINI
+
+    @property
     def model(self):
-        """Model ya bot hii. Ikiwa tupu, tunatumia ya mfumo mzima."""
-        return (getattr(self.bot, 'ai_model', '') or '').strip() or DEFAULT_MODEL
+        """Model ya Groq ya bot hii. Ikiwa tupu (au ni Gemini), tunatumia ya mfumo mzima."""
+        chosen = (getattr(self.bot, 'ai_model', '') or '').strip()
+        return DEFAULT_MODEL if chosen in ('', GEMINI) else chosen
+
+    def _gemini_reply(self, messages, start_time):
+        """Jibu la Gemini Flash, au None (basi Groq inajibu)."""
+        from apps import llm
+        if not llm._gemini_key():
+            return None
+        try:
+            text, _ = llm.gemini_chat(messages, 500, float(getattr(self.bot, 'ai_temperature', 0.7)),
+                                      timeout=25, model=llm.flash_model())
+        except llm.LLMError as exc:
+            logger.warning("Gemini imeshindwa kwa bot %s (%s) — natumia Groq", self.bot.id, exc)
+            return None
+        return {'success': True, 'content': clean_reply(text), 'tokens': 0,
+                'latency_ms': int((time.time() - start_time) * 1000), 'model': GEMINI, 'is_handoff': False}
 
     def build_messages(self, conversation, new_user_message: str) -> list:
         messages = []
@@ -118,6 +148,11 @@ class BotAIEngine:
         if needs_human:
             return {'success': True, 'content': self.bot.human_handoff_msg,
                     'tokens': 0, 'latency_ms': 0, 'is_handoff': True}
+
+        if self.uses_gemini:
+            reply = self._gemini_reply(self.build_messages(conversation, user_message), start_time)
+            if reply:
+                return reply
 
         if not self.api_key:
             logger.error("GROQ_API_KEY not set in settings.py")

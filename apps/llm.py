@@ -97,6 +97,12 @@ def gemini_first():
     return bool(_gemini_key()) and selected() != 'groq'
 
 
+def flash_model():
+    """Model ya Gemini Flash (si Pro) — kwa kazi za haraka kama majibu ya JamiiBot."""
+    from django.conf import settings
+    return getattr(settings, 'GEMINI_MODEL', '') or os.getenv('GEMINI_MODEL') or DEFAULT_GEMINI
+
+
 def groq_model():
     return os.getenv('GROQ_MODEL') or 'llama-3.3-70b-versatile'
 
