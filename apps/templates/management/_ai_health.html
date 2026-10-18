@@ -4,6 +4,7 @@
   <span style="min-width:0">
     <strong>{{ h.title }}</strong>
     <span style="display:block">{{ h.reason }}{% if h.at %} · mara ya mwisho {{ h.at|date:"H:i, d/m" }}{% endif %}{% if h.count > 1 %} · mara {{ h.count }} leo{% endif %}</span>
+    <a href="{% url 'manage_ai' %}" style="color:inherit;font-weight:600;font-size:.82rem">Badili au jaribu AI →</a>
   </span>
 </div>
 {% endif %}{% endwith %}

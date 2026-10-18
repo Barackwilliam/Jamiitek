@@ -89,7 +89,7 @@ class NoKeysTests(TestCase):
 class AiHealthWarningTests(TestCase):
     def setUp(self):
         from django.core.cache import cache
-        cache.delete(llm.HEALTH_KEY)
+        cache.clear()
 
     def _fail(self, status=429, body=None):
         with mock.patch("apps.llm.requests.post", return_value=_http(status, body or {"error": "RESOURCE_EXHAUSTED"})), \
@@ -143,7 +143,7 @@ class AiHealthWarningTests(TestCase):
 class GeminiModelReplacementTests(TestCase):
     def setUp(self):
         from django.core.cache import cache
-        cache.delete(llm.MODEL_KEY)
+        cache.clear()
 
     def test_model_suggested_by_google_is_used_and_remembered(self):
         gone = _http(404, {"error": {"message": "This model models/gemini-2.5-flash is no longer available to new "
@@ -165,3 +165,68 @@ class GeminiModelReplacementTests(TestCase):
                                                    "gemini-3.1-pro")]})
         with mock.patch("apps.llm.requests.get", return_value=listing):
             self.assertEqual(llm.replacement_models("gemini-2.5-flash")[0], "gemini-3.1-flash")
+
+
+@override_settings(GEMINI_API_KEY="g", GROQ_API_KEY="q")
+class AiChoiceTests(TestCase):
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+
+    def test_default_is_gemini_flash(self):
+        self.assertEqual(llm.selected(), "gemini-flash")
+        self.assertTrue(llm.gemini_first())
+
+    def test_groq_choice_goes_groq_first_system_wide(self):
+        llm.choose("groq")
+        self.assertFalse(llm.gemini_first())
+        self.assertIsNone(llm.gemini_response({"messages": MSGS}))
+        with mock.patch("apps.llm.requests.post") as post, mock.patch("groq.Groq") as groq:
+            groq.return_value.chat.completions.create.return_value = "groq-reply"
+            out = llm.client().chat.completions.create(model="llama-3.3-70b-versatile", messages=MSGS)
+        self.assertEqual(out, "groq-reply")
+        self.assertFalse(post.called)
+
+    def test_groq_failure_falls_back_to_gemini(self):
+        llm.choose("groq")
+        with mock.patch("apps.llm.requests.post", return_value=_http(200, GEMINI_OK)), \
+             mock.patch("groq.Groq") as groq:
+            groq.return_value.chat.completions.create.side_effect = RuntimeError("rate limit")
+            out = llm.client().chat.completions.create(model="m", messages=MSGS)
+        self.assertEqual(out.choices[0].message.content, "Makala safi ya Kiswahili.")
+
+    def test_post_shim_groq_error_falls_back_to_gemini(self):
+        llm.choose("groq")
+        with mock.patch("apps.llm.requests.post",
+                        side_effect=[_http(429, {"error": "limit"}), _http(200, GEMINI_OK)]):
+            r = llm.post("https://api.groq.com/openai/v1/chat/completions", json={"messages": MSGS})
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r.json()["choices"][0]["message"]["content"], "Makala safi ya Kiswahili.")
+
+    def test_pro_choice_uses_pro_model(self):
+        llm.choose("gemini-pro")
+        with mock.patch("apps.llm.requests.post", return_value=_http(200, GEMINI_OK)) as post:
+            llm.gemini_chat(MSGS)
+        self.assertIn("gemini-2.5-pro:generateContent", post.call_args.args[0])
+
+    def test_manage_page_switches_and_tests(self):
+        from django.contrib.auth.models import User
+        from apps.models import AIConfig
+        from apps.two_factor import SESSION_FLAG
+        staff = User.objects.create_superuser("boss", "b@x.com", "x")
+        self.client.force_login(staff)
+        session = self.client.session
+        session[SESSION_FLAG] = True
+        session.save()
+        r = self.client.get("/manage/ai/", secure=True)
+        self.assertContains(r, "Gemini Flash")
+        self.assertContains(r, "Tumia hii")
+        self.client.post("/manage/ai/", {"choice": "groq", "action": "choose"}, secure=True)
+        self.assertEqual(AIConfig.load().choice, "groq")
+        self.assertEqual(llm.selected(), "groq")
+        self.client.post("/manage/ai/", {"choice": "evil", "action": "choose"}, secure=True)
+        self.assertEqual(AIConfig.load().choice, "groq")
+        with mock.patch("apps.llm.requests.post", return_value=_http(200, GEMINI_OK)):
+            r = self.client.post("/manage/ai/", {"choice": "gemini-flash", "action": "test"}, secure=True, follow=True)
+        self.assertContains(r, "Makala safi ya Kiswahili.")
+        self.assertEqual(AIConfig.load().choice, "groq")   # kujaribu hakubadili chaguo

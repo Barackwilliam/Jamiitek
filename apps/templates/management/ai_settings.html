@@ -1,0 +1,59 @@
+{% extends 'management/base.html' %}
+{% block title %}AI inayoandika{% endblock %}
+{% block content %}
+<style>
+  .ai-top h1{font-family:var(--head);font-size:22px;font-weight:800;margin:0}
+  .ai-top p{color:var(--text-2);font-size:13px;margin:6px 0 18px;max-width:720px;line-height:1.6}
+  .ai-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+  .ai-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+  .ai-card.on{border-color:#3b82f6;box-shadow:0 0 0 1px #3b82f6 inset}
+  .ai-card h2{font-size:16px;margin:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .ai-tag{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;background:rgba(16,217,138,.12);color:#10d98a;border:1px solid rgba(16,217,138,.3)}
+  .ai-card p{margin:0;font-size:13px;color:var(--text-2);line-height:1.55}
+  .ai-miss{font-size:12px;color:#fbbf24}
+  .ai-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+  .ai-acts form{margin:0}
+  .ai-b{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 14px;border-radius:10px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--card-s);color:var(--text)}
+  .ai-b.pri{background:#3b82f6;border-color:#3b82f6;color:#fff}
+  .ai-b[disabled]{opacity:.55;cursor:default}
+  .ai-help{margin-top:18px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px 18px;font-size:13px;color:var(--text-2);line-height:1.65}
+  .ai-help b{color:var(--text)}
+</style>
+
+<div class="ai-top">
+  <h1>✨ AI inayoandika</h1>
+  <p>Chaguo hapa linatumika kwenye <b>JamiiTek nzima</b> mara moja: blog na habari, spotlight, proposals,
+    mikataba, profile na ankara, hosting, digest, Timu ya AI (wafanyakazi), rasimu za JamiiBot knowledge na builder.
+    AI uliyochagua ikishindwa (kikomo cha bure, mtandao, key), mfumo unatumia nyingine yenye key — kazi haikwami.</p>
+</div>
+
+{% if forced %}
+<div class="jt-msg jt-msg-warning" style="margin-bottom:14px">AI_PROVIDER=groq imewekwa kwenye Render — Groq inatumika bila kujali chaguo hapa. Iondoe ili chaguo hili lifanye kazi.</div>
+{% endif %}
+
+<div class="ai-grid">
+  {% for c in cards %}
+  <div class="ai-card{% if c.on %} on{% endif %}">
+    <h2>{{ c.name }}{% if c.on %} <span class="ai-tag">Inatumika</span>{% endif %}</h2>
+    <p>{{ c.note }}</p>
+    {% if not c.ready %}<div class="ai-miss">⚠️ {{ c.key }} haijawekwa kwenye Render</div>{% endif %}
+    <div class="ai-acts">
+      {% if not c.on %}
+      <form method="post">{% csrf_token %}<input type="hidden" name="choice" value="{{ c.value }}">
+        <button class="ai-b pri" name="action" value="choose">Tumia hii</button></form>
+      {% endif %}
+      <form method="post" onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').textContent='⏳ Inajaribu…'">{% csrf_token %}
+        <input type="hidden" name="choice" value="{{ c.value }}">
+        <button class="ai-b" name="action" value="test"{% if not c.ready %} disabled{% endif %}>Jaribu</button></form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="ai-help">
+  <b>Jaribu</b> inaandika sentensi mbili za Kiswahili kwa AI hiyo moja kwa moja (bila akiba), na kuonyesha model halisi
+  inayotumika — Google ikiondoa model ya zamani, mfumo unachagua mpya yenyewe.
+  <b>Gemini Pro</b> haina kikomo cha bure: bila billing utaona "429 quota". Majibu ya JamiiBot kwa wateja
+  yanabaki na model ya Groq ya kila bot.
+</div>
+{% endblock %}

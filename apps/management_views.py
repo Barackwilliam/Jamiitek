@@ -1,6 +1,6 @@
 # apps/management_views.py — JamiiTek Management Panel
 
-import json, secrets, logging
+import json, os, secrets, logging
 from datetime import date, timedelta
 from decimal import Decimal
 
@@ -1131,3 +1131,36 @@ def storage_health(request):
     """Ukaguzi wa haraka: je, bucket ipo na funguo inafanya kazi?"""
     from apps import storage
     return JsonResponse(storage.health())
+
+
+@staff_required
+def manage_ai(request):
+    """AI inayoandika kwenye JamiiTek nzima: chagua Gemini Flash / Gemini Pro / Groq, na jaribu."""
+    from apps import llm
+    if request.method == 'POST':
+        choice = request.POST.get('choice', '')
+        if choice not in {c[0] for c in llm.CHOICES}:
+            messages.error(request, 'Chaguo si sahihi.')
+        elif request.POST.get('action') == 'test':
+            ok, text, secs, model = llm.test(choice)
+            used = f' [{model}]' if model else ''
+            (messages.success if ok else messages.error)(request, f'{llm.label(choice)}{used} ({secs}s): {text}')
+        else:
+            llm.choose(choice)
+            key = 'GROQ_API_KEY' if choice == 'groq' else 'GEMINI_API_KEY'
+            ready = llm._groq_key() if choice == 'groq' else llm._gemini_key()
+            if ready:
+                messages.success(request, f'{llm.label(choice)} sasa ndiyo AI ya mfumo mzima.')
+            else:
+                messages.warning(request, f'{llm.label(choice)} imechaguliwa, lakini {key} haijawekwa — '
+                                          'mfumo utatumia AI nyingine mpaka uiweke.')
+        return redirect('manage_ai')
+    current = llm.selected()
+    cards = [{'value': v, 'name': n, 'note': note, 'on': v == current,
+              'ready': bool(llm._groq_key() if v == 'groq' else llm._gemini_key()),
+              'key': 'GROQ_API_KEY' if v == 'groq' else 'GEMINI_API_KEY'}
+             for v, n, note in llm.CHOICES]
+    return render(request, 'management/ai_settings.html', {
+        'title': 'AI inayoandika', 'cards': cards,
+        'forced': os.getenv('AI_PROVIDER', '').lower() == 'groq',
+    })

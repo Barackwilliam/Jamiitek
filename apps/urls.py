@@ -162,6 +162,7 @@ urlpatterns = [
     path('manage/login/', management_views.management_login, name='management_login'),
     path('manage/logout/', management_views.management_logout, name='management_logout'),
     path('manage/', management_views.management_dashboard, name='management_dashboard'),
+    path('manage/ai/', management_views.manage_ai, name='manage_ai'),
     path('manage/builder/', builder_views.superadmin, name='manage_builder'),
     path('manage/websites/', management_views.website_list, name='website_list'),
     path('manage/websites/auto-suspend/', management_views.run_auto_suspend_view, name='run_auto_suspend'),
