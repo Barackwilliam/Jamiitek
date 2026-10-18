@@ -10,3 +10,4 @@
   {% endif %}
   {{ block.super }}
 {% endblock %}
+{% block content %}{% include 'management/_ai_health.html' %}{{ block.super }}{% endblock %}

@@ -156,6 +156,7 @@ TEMPLATES = [
                 'apps.context_processors.turnstile_context',
                 'apps.context_processors.sidebar_nav',
                 'apps.context_processors.social_links',
+                'apps.context_processors.ai_health',
 
             ],
         },
