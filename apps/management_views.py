@@ -1141,6 +1141,8 @@ def manage_ai(request):
         choice = request.POST.get('choice', '')
         if choice not in {c[0] for c in llm.CHOICES}:
             messages.error(request, 'Chaguo si sahihi.')
+        elif request.POST.get('action') not in ('test', 'choose'):
+            messages.error(request, 'Kitendo hakijulikani — jaribu tena.')
         elif request.POST.get('action') == 'test':
             ok, text, secs, model = llm.test(choice)
             used = f' [{model}]' if model else ''
