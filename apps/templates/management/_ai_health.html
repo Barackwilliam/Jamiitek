@@ -1,0 +1,9 @@
+{% with h=ai_health %}{% if h %}
+<div role="status" style="display:flex;gap:12px;align-items:flex-start;margin:0 0 18px;padding:12px 14px;border-radius:12px;border:1px solid {% if h.level == 'down' %}#fecaca;background:#fef2f2;color:#7f1d1d{% else %}#fde68a;background:#fffbeb;color:#78350f{% endif %};font-size:.88rem;line-height:1.45">
+  <span style="font-size:1.1rem;line-height:1.2">{% if h.level == 'down' %}⛔{% else %}⚠️{% endif %}</span>
+  <span style="min-width:0">
+    <strong>{{ h.title }}</strong>
+    <span style="display:block">{{ h.reason }}{% if h.at %} · mara ya mwisho {{ h.at|date:"H:i, d/m" }}{% endif %}{% if h.count > 1 %} · mara {{ h.count }} leo{% endif %}</span>
+  </span>
+</div>
+{% endif %}{% endwith %}

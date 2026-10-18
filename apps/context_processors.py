@@ -63,3 +63,18 @@ def social_links(request):
     """Links za mitandao ya kijamii — zilizowekwa pekee."""
     from django.conf import settings
     return {'SOCIAL': {k: v for k, v in getattr(settings, 'SOCIAL_LINKS', {}).items() if v}}
+
+
+def ai_health(request):
+    """Onyo la Gemini kushindwa kwa wafanyakazi (/manage na admin) — linasomwa tu kiolezo kikilitumia."""
+    user = getattr(request, 'user', None)
+    if not user or not user.is_authenticated or not user.is_staff:
+        return {}
+
+    def load():
+        from apps import llm
+        try:
+            return llm.health()
+        except Exception:
+            return None
+    return {'ai_health': load}

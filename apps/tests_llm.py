@@ -83,3 +83,57 @@ class NoKeysTests(TestCase):
         with mock.patch.dict("os.environ", {"GEMINI_API_KEY": "", "GROQ_API_KEY": ""}):
             self.assertIsNone(llm.client())
             self.assertIsNone(llm.gemini_response({"messages": MSGS}))
+
+
+@override_settings(GEMINI_API_KEY="g", GROQ_API_KEY="q")
+class AiHealthWarningTests(TestCase):
+    def setUp(self):
+        from django.core.cache import cache
+        cache.delete(llm.HEALTH_KEY)
+
+    def _fail(self, status=429, body=None):
+        with mock.patch("apps.llm.requests.post", return_value=_http(status, body or {"error": "RESOURCE_EXHAUSTED"})), \
+             mock.patch("groq.Groq"):
+            llm.client().chat.completions.create(model="m", messages=MSGS)
+
+    def test_failure_is_recorded_and_cleared_by_success(self):
+        self.assertIsNone(llm.health())
+        self._fail()
+        self._fail()
+        h = llm.health()
+        self.assertEqual(h["level"], "fallback")
+        self.assertIn("Groq ndiyo inaandika", h["title"])
+        self.assertIn("Kikomo cha bure", h["reason"])
+        self.assertEqual(h["count"], 2)
+        with mock.patch("apps.llm.requests.post", return_value=_http(200, GEMINI_OK)):
+            llm.gemini_chat(MSGS)
+        self.assertIsNone(llm.health())
+
+    def test_bad_key_reason(self):
+        self._fail(400, {"error": {"message": "API key not valid. Please pass a valid API key."}})
+        self.assertIn("GEMINI_API_KEY haikubaliki", llm.health()["reason"])
+
+    @override_settings(GEMINI_API_KEY="")
+    def test_missing_key_warns(self):
+        self.assertIn("Gemini haijawekwa", llm.health()["title"])
+
+    def test_staff_see_warning_on_manage_and_ai_admin(self):
+        from django.contrib.auth.models import User
+        self._fail()
+        staff = User.objects.create_superuser("boss", "b@x.com", "x")
+        self.client.force_login(staff)
+        from apps.two_factor import SESSION_FLAG
+        session = self.client.session
+        session[SESSION_FLAG] = True
+        session.save()
+        for url in ("/manage/", "/admin/apps/blogpost/"):
+            r = self.client.get(url, secure=True, follow=True)
+            self.assertContains(r, "Gemini imeshindwa", msg_prefix=url)
+
+    def test_non_staff_do_not_get_it(self):
+        from django.test import RequestFactory
+        from django.contrib.auth.models import AnonymousUser
+        from apps.context_processors import ai_health
+        req = RequestFactory().get("/")
+        req.user = AnonymousUser()
+        self.assertEqual(ai_health(req), {})

@@ -56,7 +56,17 @@ def any_key():
 # ── Gemini ──────────────────────────────────────────────────────────
 
 def gemini_chat(messages, max_tokens=1000, temperature=0.5, json_mode=False, timeout=60):
-    """OpenAI-style messages -> (maandishi, finish_reason). LLMError kwa kosa."""
+    """OpenAI-style messages -> (maandishi, finish_reason). LLMError kwa kosa (na onyo kwenye /manage)."""
+    try:
+        result = _gemini_call(messages, max_tokens, temperature, json_mode, timeout)
+    except LLMError as exc:
+        _record_fail(exc)
+        raise
+    _record_ok()
+    return result
+
+
+def _gemini_call(messages, max_tokens, temperature, json_mode, timeout):
     from django.conf import settings
     model = getattr(settings, 'GEMINI_MODEL', '') or os.getenv('GEMINI_MODEL') or DEFAULT_GEMINI
     system = '\n\n'.join(m['content'] for m in messages if m.get('role') == 'system' and m.get('content'))
@@ -90,6 +100,87 @@ def gemini_chat(messages, max_tokens=1000, temperature=0.5, json_mode=False, tim
     if not text:
         raise LLMError(f"gemini empty ({cands[0].get('finishReason', '?')})")
     return text, finish
+
+
+# ── Hali ya AI: onyo kwenye /manage ───────────────────────────────────
+# Inahifadhiwa kwenye cache (Redis/DatabaseCache — inashirikiwa na workers wote).
+
+HEALTH_KEY = 'llm:gemini_health'
+
+
+def reason(exc):
+    """Sababu fupi, inayoeleweka, ya Gemini kushindwa (bila key wala data nyeti)."""
+    import re
+    text = str(exc)
+    low = text.lower()
+    m = re.search(r'HTTP (\d{3})', text)
+    code = int(m.group(1)) if m else 0
+    if code == 429 or 'resource_exhausted' in low or 'quota' in low:
+        return 'Kikomo cha bure kimeisha kwa sasa (429)'
+    if code in (401, 403) or 'api key' in low or 'api_key' in low:
+        return 'GEMINI_API_KEY haikubaliki — angalia Render → Environment'
+    if code >= 500:
+        return f'Seva za Google zina tatizo kwa sasa ({code})'
+    if 'timeout' in low:
+        return 'Muda umeisha — Gemini haikujibu'
+    if 'connection' in low:
+        return 'Mtandao — imeshindwa kuifikia Gemini'
+    return text[:200]
+
+
+def _record_fail(exc):
+    from django.core.cache import cache
+    from django.utils import timezone
+    try:
+        now = timezone.now()
+        today = timezone.localdate().isoformat()
+        old = cache.get(HEALTH_KEY) or {}
+        count = old.get('count', 0) + 1 if old.get('day') == today else 1
+        cache.set(HEALTH_KEY, {'at': now.isoformat(), 'reason': reason(exc), 'day': today, 'count': count},
+                  timeout=24 * 3600)
+    except Exception:   # onyo ni taarifa tu — lisizuie uandishi
+        logger.exception('llm health record failed')
+
+
+def _record_ok():
+    from django.core.cache import cache
+    try:
+        if cache.get(HEALTH_KEY):
+            cache.delete(HEALTH_KEY)
+    except Exception:
+        logger.exception('llm health record failed')
+
+
+def health():
+    """None kama Gemini iko sawa; vinginevyo {'level': 'fallback'|'down', 'title', 'reason', 'at', 'count'}."""
+    from datetime import datetime
+    from django.core.cache import cache
+    groq_ok = bool(_groq_key())
+    if not any_key():
+        return {'level': 'down', 'title': 'Hakuna AI iliyowekwa — AI haiwezi kuandika',
+                'reason': 'Weka GEMINI_API_KEY (na GROQ_API_KEY ya akiba) kwenye Render → Environment.',
+                'at': None, 'count': 0}
+    if os.getenv('AI_PROVIDER', 'gemini').lower() == 'groq':
+        return None   # Groq imechaguliwa makusudi
+    if not _gemini_key():
+        return {'level': 'fallback', 'title': 'Gemini haijawekwa — Groq ndiyo inaandika',
+                'reason': 'GEMINI_API_KEY haipo kwenye Render → Environment.', 'at': None, 'count': 0}
+    try:
+        state = cache.get(HEALTH_KEY)
+    except Exception:
+        state = None
+    if not state:
+        return None
+    try:
+        at = datetime.fromisoformat(state['at'])
+    except (KeyError, ValueError):
+        at = None
+    from django.utils import timezone
+    count = state.get('count', 0) if state.get('day') == timezone.localdate().isoformat() else 0
+    return {'level': 'fallback' if groq_ok else 'down',
+            'title': 'Gemini imeshindwa — Groq ndiyo inaandika kwa sasa' if groq_ok
+                     else 'Gemini imeshindwa na hakuna Groq ya akiba — AI haiandiki',
+            'reason': state.get('reason', ''), 'at': at, 'count': count}
 
 
 # ── Shim 1: kiolesura cha Groq SDK ──────────────────────────────────
