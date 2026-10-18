@@ -40,11 +40,11 @@
     <div class="ai-acts">
       {% if not c.on %}
       <form method="post">{% csrf_token %}<input type="hidden" name="choice" value="{{ c.value }}">
-        <button class="ai-b pri" name="action" value="choose">Tumia hii</button></form>
+        <input type="hidden" name="action" value="choose"><button class="ai-b pri">Tumia hii</button></form>
       {% endif %}
       <form method="post" onsubmit="this.querySelector('button').disabled=true;this.querySelector('button').textContent='⏳ Inajaribu…'">{% csrf_token %}
-        <input type="hidden" name="choice" value="{{ c.value }}">
-        <button class="ai-b" name="action" value="test"{% if not c.ready %} disabled{% endif %}>Jaribu</button></form>
+        <input type="hidden" name="choice" value="{{ c.value }}"><input type="hidden" name="action" value="test">
+        <button class="ai-b"{% if not c.ready %} disabled{% endif %}>Jaribu</button></form>
     </div>
   </div>
   {% endfor %}

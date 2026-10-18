@@ -117,6 +117,7 @@ class AiHealthWarningTests(TestCase):
     def test_missing_key_warns(self):
         self.assertIn("Gemini haijawekwa", llm.health()["title"])
 
+    @mock.patch.dict("os.environ", {"STAFF_2FA_REQUIRED": "false"})
     def test_staff_see_warning_on_manage_and_ai_admin(self):
         from django.contrib.auth.models import User
         self._fail()
@@ -209,6 +210,7 @@ class AiChoiceTests(TestCase):
             llm.gemini_chat(MSGS)
         self.assertIn("gemini-2.5-pro:generateContent", post.call_args.args[0])
 
+    @mock.patch.dict("os.environ", {"STAFF_2FA_REQUIRED": "false"})
     def test_manage_page_switches_and_tests(self):
         from django.contrib.auth.models import User
         from apps.models import AIConfig
@@ -220,6 +222,10 @@ class AiChoiceTests(TestCase):
         session.save()
         r = self.client.get("/manage/ai/", secure=True)
         self.assertContains(r, "Gemini Flash")
+        # kitufe cha Jaribu kinazimwa kikibonyezwa, kwa hiyo "action" lazima iwe hidden input
+        self.assertContains(r, '<input type="hidden" name="action" value="test">', count=3)
+        self.client.post("/manage/ai/", {"choice": "groq"}, secure=True)   # bila action: haibadilishi
+        self.assertEqual(AIConfig.load().choice, "gemini-flash")
         self.assertContains(r, "Tumia hii")
         self.client.post("/manage/ai/", {"choice": "groq", "action": "choose"}, secure=True)
         self.assertEqual(AIConfig.load().choice, "groq")
