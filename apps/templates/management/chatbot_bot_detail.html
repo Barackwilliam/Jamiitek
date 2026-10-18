@@ -110,7 +110,12 @@
               <select name="ai_model" class="f-input" style="max-width:260px;padding:4px 8px;font-size:12px">
                 {% for v, label, on in model_choices %}<option value="{{ v }}"{% if on %} selected{% endif %}>{{ label }}</option>{% endfor %}
               </select>
+              <input type="password" name="gemini_api_key" class="f-input" autocomplete="off"
+                     placeholder="{% if bot.gemini_key %}Key: {{ bot.gemini_key_masked }}{% else %}Gemini key ya mteja (hiari){% endif %}"
+                     style="max-width:260px;padding:4px 8px;font-size:12px">
               <button type="submit" class="jt-btn btn-ghost" style="font-size:12px">Hifadhi</button>
+              <span style="flex-basis:100%;text-align:right;font-size:11px;color:var(--text-2)">
+                {% if bot.gemini_key %}✅ Mteja ameweka Gemini key ({{ bot.gemini_key_masked }}){% else %}Gemini inatumia key ya mteja mwenyewe — bila key, bot inajibu kwa Groq.{% endif %}</span>
             </span>
           </form>
           <div class="info-row"><span class="info-key">Collect Name</span><span class="info-val">{% if bot.collect_name %}✅ Yes{% else %}❌ No{% endif %}</span></div>

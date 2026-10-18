@@ -113,23 +113,46 @@ def any_key():
 
 # ── Gemini ──────────────────────────────────────────────────────────
 
-def gemini_chat(messages, max_tokens=1000, temperature=0.5, json_mode=False, timeout=60, model=None):
-    """OpenAI-style messages -> (maandishi, finish_reason). LLMError kwa kosa (na onyo kwenye /manage)."""
+def gemini_chat(messages, max_tokens=1000, temperature=0.5, json_mode=False, timeout=60, model=None,
+                api_key=None):
+    """OpenAI-style messages -> (maandishi, finish_reason). LLMError kwa kosa (na onyo kwenye /manage).
+
+    api_key: key ya mteja (JamiiBot) badala ya GEMINI_API_KEY ya mfumo — matokeo yake
+    hayaathiri onyo la /manage (ni key yake, si ya mfumo).
+    """
     try:
-        result = _gemini_call(messages, max_tokens, temperature, json_mode, timeout, model)
+        result = _gemini_call(messages, max_tokens, temperature, json_mode, timeout, model, api_key)
     except LLMError as exc:
-        _record_fail(exc)
+        if not api_key:
+            _record_fail(exc)
         raise
-    _record_ok()
+    if not api_key:
+        _record_ok()
     return result
+
+
+def verify_key(api_key, timeout=10):
+    """(ok, ujumbe) — inakagua key ya Gemini kwa kuomba orodha ya model (haitumii kikomo cha uandishi)."""
+    key = (api_key or '').strip()
+    if not key:
+        return False, 'Key haijawekwa.'
+    try:
+        r = requests.get(f'{GEMINI_BASE}/models', params={'key': key}, timeout=timeout)
+    except requests.RequestException:
+        return True, 'Imehifadhiwa — haikuweza kukaguliwa sasa hivi (mtandao).'
+    if r.status_code == 200:
+        return True, 'Key imekubaliwa na Google.'
+    if r.status_code in (400, 401, 403):
+        return False, 'Google imekataa key hii — hakikisha umenakili key nzima (inaanza na AIza).'
+    return True, f'Imehifadhiwa — Google ilijibu HTTP {r.status_code}, itajaribiwa tena bot ikijibu.'
 
 
 MODEL_KEY = 'llm:gemini_model_replacement'
 
 
-def _models_list():
+def _models_list(api_key=None):
     try:
-        r = requests.get(f'{GEMINI_BASE}/models', params={'key': _gemini_key()}, timeout=10)
+        r = requests.get(f'{GEMINI_BASE}/models', params={'key': api_key or _gemini_key()}, timeout=10)
     except requests.RequestException:
         return []
     if r.status_code != 200:
@@ -144,7 +167,7 @@ def _version(name):
     return float(m.group(1)) if m else 0.0
 
 
-def replacement_models(current, error_text=''):
+def replacement_models(current, error_text='', api_key=None):
     """Model za kujaribu Google ikiondoa model (404): iliyopendekezwa kwenye ujumbe, kisha mpya zaidi ya familia ileile."""
     import re
     out = []
@@ -153,13 +176,13 @@ def replacement_models(current, error_text=''):
         out.append(m.group(1).rstrip('.'))
     family = 'pro' if 'pro' in current else 'flash'
     special = ('tts', 'image', 'audio', 'live', 'embedding', 'thinking', 'exp', 'lite')
-    same = [n for n in _models_list() if family in n and not any(x in n for x in special)]
+    same = [n for n in _models_list(api_key) if family in n and not any(x in n for x in special)]
     same.sort(key=lambda n: ('preview' not in n, _version(n)), reverse=True)
     seen = set()
     return [n for n in out + same if not (n in seen or seen.add(n)) and n != current]
 
 
-def _gemini_call(messages, max_tokens, temperature, json_mode, timeout, wanted=None):
+def _gemini_call(messages, max_tokens, temperature, json_mode, timeout, wanted=None, api_key=None):
     from django.conf import settings
     from django.core.cache import cache
     if not wanted:
@@ -188,7 +211,7 @@ def _gemini_call(messages, max_tokens, temperature, json_mode, timeout, wanted=N
             body['systemInstruction'] = {'parts': [{'text': system}]}
         try:
             return requests.post(f'{GEMINI_BASE}/models/{name}:generateContent',
-                                 params={'key': _gemini_key()}, json=body, timeout=timeout)
+                                 params={'key': api_key or _gemini_key()}, json=body, timeout=timeout)
         except requests.RequestException as exc:
             raise LLMError(f'gemini: {type(exc).__name__}') from exc
 
@@ -197,7 +220,7 @@ def _gemini_call(messages, max_tokens, temperature, json_mode, timeout, wanted=N
     for _ in range(3):   # model imeondolewa na Google -> jaribu mbadala
         if r.status_code != 404:
             break
-        nxt = next((n for n in replacement_models(model, r.text) if n not in tried), None)
+        nxt = next((n for n in replacement_models(model, r.text, api_key) if n not in tried), None)
         if not nxt:
             break
         logger.warning('Gemini model %s haipo; najaribu %s', model, nxt)

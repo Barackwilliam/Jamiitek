@@ -219,13 +219,20 @@ def manage_bot_action(request, bot_id):
     elif action == 'set_model':
         from .ai_engine import MODEL_CHOICES
         choice = request.POST.get('ai_model', '').strip()
-        if choice in {v for v, _ in MODEL_CHOICES}:
+        key = request.POST.get('gemini_api_key', '').strip()
+        if choice not in {v for v, _ in MODEL_CHOICES}:
+            messages.error(request, "Chaguo la AI si sahihi.")
+        else:
+            if key:
+                ok, msg = bot.set_gemini_key(key)
+                (messages.success if ok else messages.error)(request, f"Gemini key: {msg}")
             bot.ai_model = choice
             bot.save(update_fields=['ai_model'])
             label = dict(MODEL_CHOICES)[choice]
             messages.success(request, f"AI ya majibu ya '{bot.bot_name}' sasa ni: {label}.")
-        else:
-            messages.error(request, "Chaguo la AI si sahihi.")
+            if choice == 'gemini' and not bot.gemini_key:
+                messages.warning(request, "Mteja hajaweka Gemini key yake — bot itajibu kwa Groq mpaka aiweke "
+                                          "(Portal → Bot Config → AI).")
 
     elif action == 'admin_note':
         bot.admin_notes = request.POST.get('note', '')

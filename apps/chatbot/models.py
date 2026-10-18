@@ -8,6 +8,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.core.validators import RegexValidator
+from apps.crypto import EncryptedJSONField, mask
 
 
 # ─────────────────────────────────────────────
@@ -188,6 +189,39 @@ class BotConfig(models.Model):
     # Admin controls
     admin_suspended_reason = models.TextField(blank=True)
     admin_notes            = models.TextField(blank=True)
+
+    # Siri za AI za mteja mwenyewe (encrypted kwa FERNET_KEY): {'gemini_api_key': 'AIza…'}.
+    # Bot yenye ai_model='gemini' inatumia key YAKE — si GEMINI_API_KEY ya JamiiTek.
+    ai_secrets             = EncryptedJSONField(help_text="Siri za AI za mteja (encrypted)")
+
+    @property
+    def gemini_key(self):
+        return ((self.ai_secrets or {}).get('gemini_api_key') or '').strip()
+
+    @property
+    def gemini_key_masked(self):
+        return mask(self.gemini_key)
+
+    def set_gemini_key(self, key):
+        """Hifadhi (au futa, key='') key ya Gemini ya mteja. (ok, ujumbe)."""
+        from apps import llm
+        from apps.crypto import encryption_available
+        key = (key or '').strip().strip('"\'').strip()
+        secrets_ = dict(self.ai_secrets or {})
+        if not key:
+            secrets_.pop('gemini_api_key', None)
+            self.ai_secrets = secrets_
+            self.save(update_fields=['ai_secrets'])
+            return True, 'Key ya Gemini imefutwa.'
+        if not encryption_available():
+            return False, 'Mfumo hauwezi kuhifadhi key kwa usalama kwa sasa (FERNET_KEY). Wasiliana na JamiiTek.'
+        ok, msg = llm.verify_key(key)
+        if not ok:
+            return False, msg
+        secrets_['gemini_api_key'] = key
+        self.ai_secrets = secrets_
+        self.save(update_fields=['ai_secrets'])
+        return True, msg
 
     class Meta:
         verbose_name = "Bot Configuration"

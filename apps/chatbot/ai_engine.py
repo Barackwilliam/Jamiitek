@@ -44,12 +44,13 @@ def clean_reply(text: str) -> str:
 GROQ_API_URL  = "https://api.groq.com/openai/v1/chat/completions"
 DEFAULT_MODEL = os.getenv('GROQ_MODEL', 'llama-3.3-70b-versatile')
 
-# BotConfig.ai_model == GEMINI -> bot hii inajibu kwa Gemini Flash (Kiswahili bora);
-# Gemini ikishindwa (kikomo, mtandao, key) inajibu kwa Groq kama kawaida.
+# BotConfig.ai_model == GEMINI -> bot hii inajibu kwa Gemini Flash (Kiswahili bora) kwa
+# KEY YA MTEJA mwenyewe (BotConfig.ai_secrets). Key ikikosekana, au Gemini ikishindwa
+# (kikomo, mtandao), inajibu kwa Groq kama kawaida.
 GEMINI = 'gemini'
 MODEL_CHOICES = [
     ('', 'Groq (default ya mfumo)'),
-    (GEMINI, 'Gemini Flash — Kiswahili bora (Groq akiba)'),
+    (GEMINI, 'Gemini Flash — key ya mteja (Groq akiba)'),
     ('llama-3.3-70b-versatile', 'Groq · Llama 3.3 70B'),
     ('openai/gpt-oss-120b', 'Groq · GPT-OSS 120B'),
     ('openai/gpt-oss-20b', 'Groq · GPT-OSS 20B'),
@@ -79,13 +80,14 @@ class BotAIEngine:
         return DEFAULT_MODEL if chosen in ('', GEMINI) else chosen
 
     def _gemini_reply(self, messages, start_time):
-        """Jibu la Gemini Flash, au None (basi Groq inajibu)."""
+        """Jibu la Gemini Flash kwa key ya MTEJA mwenyewe, au None (basi Groq inajibu)."""
         from apps import llm
-        if not llm._gemini_key():
+        key = getattr(self.bot, 'gemini_key', '')
+        if not key:
             return None
         try:
             text, _ = llm.gemini_chat(messages, 500, float(getattr(self.bot, 'ai_temperature', 0.7)),
-                                      timeout=25, model=llm.flash_model())
+                                      timeout=25, model=llm.flash_model(), api_key=key)
         except llm.LLMError as exc:
             logger.warning("Gemini imeshindwa kwa bot %s (%s) — natumia Groq", self.bot.id, exc)
             return None
