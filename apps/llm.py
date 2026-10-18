@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta'
 DEFAULT_GEMINI = 'gemini-2.5-flash'
+PRO_GEMINI = 'gemini-2.5-pro'
 
 
 class LLMError(Exception):
@@ -45,8 +46,59 @@ def _groq_key():
     return getattr(settings, 'GROQ_API_KEY', '') or os.getenv('GROQ_API_KEY', '')
 
 
+CHOICE_KEY = 'llm:choice'
+CHOICES = [
+    ('gemini-flash', 'Gemini Flash', 'Kiswahili bora na haraka — bure (free tier ya Google). Inapendekezwa.'),
+    ('gemini-pro', 'Gemini Pro', 'Ubora wa juu zaidi, polepole. Inahitaji billing kwenye Google AI Studio.'),
+    ('groq', 'Groq', 'Bure na haraka sana; Kiswahili cha wastani. Kila sehemu inatumia model yake ya Groq.'),
+]
+
+
+def selected():
+    """Chaguo la /manage/ai/ ('gemini-flash' | 'gemini-pro' | 'groq'), linashikwa kwenye cache dakika 1."""
+    if os.getenv('AI_PROVIDER', '').lower() == 'groq':
+        return 'groq'
+    from django.core.cache import cache
+    try:
+        choice = cache.get(CHOICE_KEY)
+    except Exception:
+        choice = None
+    if not choice:
+        try:
+            from apps.models import AIConfig
+            choice = AIConfig.load().choice
+        except Exception:   # jedwali bado (migration) n.k.
+            choice = 'gemini-flash'
+        try:
+            cache.set(CHOICE_KEY, choice, 60)
+        except Exception:
+            pass
+    return choice if choice in {c[0] for c in CHOICES} else 'gemini-flash'
+
+
+def choose(choice):
+    """Hifadhi chaguo jipya — linaanza kutumika mara moja kwenye mfumo mzima."""
+    from django.core.cache import cache
+    from apps.models import AIConfig
+    cfg = AIConfig.load()
+    cfg.choice = choice
+    cfg.save(update_fields=['choice', 'updated_at'])
+    try:
+        cache.set(CHOICE_KEY, choice, 60)
+    except Exception:
+        pass
+
+
+def label(choice):
+    return next((name for value, name, _ in CHOICES if value == choice), choice)
+
+
 def gemini_first():
-    return bool(_gemini_key()) and os.getenv('AI_PROVIDER', 'gemini').lower() != 'groq'
+    return bool(_gemini_key()) and selected() != 'groq'
+
+
+def groq_model():
+    return os.getenv('GROQ_MODEL') or 'llama-3.3-70b-versatile'
 
 
 def any_key():
@@ -55,10 +107,10 @@ def any_key():
 
 # ── Gemini ──────────────────────────────────────────────────────────
 
-def gemini_chat(messages, max_tokens=1000, temperature=0.5, json_mode=False, timeout=60):
+def gemini_chat(messages, max_tokens=1000, temperature=0.5, json_mode=False, timeout=60, model=None):
     """OpenAI-style messages -> (maandishi, finish_reason). LLMError kwa kosa (na onyo kwenye /manage)."""
     try:
-        result = _gemini_call(messages, max_tokens, temperature, json_mode, timeout)
+        result = _gemini_call(messages, max_tokens, temperature, json_mode, timeout, model)
     except LLMError as exc:
         _record_fail(exc)
         raise
@@ -101,10 +153,12 @@ def replacement_models(current, error_text=''):
     return [n for n in out + same if not (n in seen or seen.add(n)) and n != current]
 
 
-def _gemini_call(messages, max_tokens, temperature, json_mode, timeout):
+def _gemini_call(messages, max_tokens, temperature, json_mode, timeout, wanted=None):
     from django.conf import settings
     from django.core.cache import cache
-    wanted = getattr(settings, 'GEMINI_MODEL', '') or os.getenv('GEMINI_MODEL') or DEFAULT_GEMINI
+    if not wanted:
+        wanted = (PRO_GEMINI if selected() == 'gemini-pro'
+                  else getattr(settings, 'GEMINI_MODEL', '') or os.getenv('GEMINI_MODEL') or DEFAULT_GEMINI)
     try:
         swaps = cache.get(MODEL_KEY) or {}
     except Exception:
@@ -220,7 +274,7 @@ def health():
         return {'level': 'down', 'title': 'Hakuna AI iliyowekwa — AI haiwezi kuandika',
                 'reason': 'Weka GEMINI_API_KEY (na GROQ_API_KEY ya akiba) kwenye Render → Environment.',
                 'at': None, 'count': 0}
-    if os.getenv('AI_PROVIDER', 'gemini').lower() == 'groq':
+    if selected() == 'groq':
         return None   # Groq imechaguliwa makusudi
     if not _gemini_key():
         return {'level': 'fallback', 'title': 'Gemini haijawekwa — Groq ndiyo inaandika',
@@ -260,17 +314,7 @@ class _Completions:
     def create(self, model=None, messages=None, max_tokens=None, temperature=0.5,
                response_format=None, timeout=None, **kwargs):
         messages = messages or []
-        if gemini_first():
-            try:
-                json_mode = bool(response_format and response_format.get('type') == 'json_object')
-                text, finish = gemini_chat(messages, max_tokens or 1000, temperature,
-                                           json_mode=json_mode, timeout=max(timeout or 60, 45))
-                return _completion(text, finish, 'gemini')
-            except LLMError as exc:
-                logger.warning('Gemini imeshindwa (%s) — natumia Groq', exc)
-        if not _groq_key():
-            raise LLMError('Gemini imeshindwa na GROQ_API_KEY haipo')
-        from groq import Groq
+        json_mode = bool(response_format and response_format.get('type') == 'json_object')
         params = dict(model=model, messages=messages, temperature=temperature, **kwargs)
         if max_tokens is not None:
             params['max_tokens'] = max_tokens
@@ -278,7 +322,35 @@ class _Completions:
             params['response_format'] = response_format
         if timeout is not None:
             params['timeout'] = timeout
-        return Groq(api_key=_groq_key()).chat.completions.create(**params)
+
+        def via_gemini():
+            text, finish = gemini_chat(messages, max_tokens or 1000, temperature,
+                                       json_mode=json_mode, timeout=max(timeout or 60, 45))
+            return _completion(text, finish, 'gemini')
+
+        def via_groq():
+            from groq import Groq
+            return Groq(api_key=_groq_key()).chat.completions.create(**params)
+
+        if gemini_first():
+            try:
+                return via_gemini()
+            except LLMError as exc:
+                logger.warning('Gemini imeshindwa (%s) — natumia Groq', exc)
+            if not _groq_key():
+                raise LLMError('Gemini imeshindwa na GROQ_API_KEY haipo')
+            return via_groq()
+        if not _groq_key():
+            if _gemini_key():
+                return via_gemini()
+            raise LLMError('Hakuna AI iliyowekwa')
+        try:
+            return via_groq()
+        except Exception as exc:   # Groq imechaguliwa lakini imeshindwa -> Gemini akiba
+            if not _gemini_key():
+                raise
+            logger.warning('Groq imeshindwa (%s) — natumia Gemini', exc)
+            return via_gemini()
 
 
 class _Client:
@@ -334,10 +406,63 @@ def post(url, headers=None, json=None, timeout=30, **kwargs):
             return _Response(text, 'gemini')
         except LLMError as exc:
             logger.warning('Gemini imeshindwa (%s) — natumia Groq', exc)
-    if not _groq_key():
-        r = requests.models.Response()
-        r.status_code, r._content = 503, b'{"error": "no AI key"}'
+    r = None
+    if _groq_key():
+        headers = dict(headers or {})
+        headers['Authorization'] = f'Bearer {_groq_key()}'
+        try:
+            r = requests.post(url, headers=headers, json=payload, timeout=timeout, **kwargs)
+        except requests.RequestException:
+            if gemini_first() or not _gemini_key():
+                raise
+        if r is not None and (r.status_code == 200 or gemini_first()):
+            return r
+    if not gemini_first() and _gemini_key() and payload.get('messages'):
+        # Groq imechaguliwa lakini imeshindwa (au haina key) -> Gemini akiba
+        try:
+            fmt = payload.get('response_format') or {}
+            text, _ = gemini_chat(payload['messages'], payload.get('max_tokens') or 1000,
+                                  payload.get('temperature', 0.5),
+                                  json_mode=fmt.get('type') == 'json_object', timeout=max(timeout or 30, 45))
+            return _Response(text, 'gemini')
+        except LLMError as exc:
+            logger.warning('Gemini (akiba) imeshindwa (%s)', exc)
+    if r is not None:
         return r
-    headers = dict(headers or {})
-    headers['Authorization'] = f'Bearer {_groq_key()}'
-    return requests.post(url, headers=headers, json=payload, timeout=timeout, **kwargs)
+    r = requests.models.Response()
+    r.status_code, r._content = 503, b'{"error": "no AI key"}'
+    return r
+
+
+# ── Jaribio la /manage/ai/ ──────────────────────────────────────────
+
+def test(choice):
+    """Jaribio fupi la Kiswahili, bila akiba. (ok, maandishi, sekunde, model halisi)."""
+    import time
+    msgs = [{'role': 'system', 'content': 'Wewe ni mwandishi wa JamiiTek. Jibu kwa Kiswahili sanifu.'},
+            {'role': 'user', 'content': 'Andika sentensi mbili fupi kuhusu faida ya tovuti kwa biashara ndogo.'}]
+    started = time.monotonic()
+    try:
+        if choice == 'groq':
+            if not _groq_key():
+                return False, 'GROQ_API_KEY haijawekwa kwenye Render → Environment.', 0.0, ''
+            from groq import Groq
+            model = groq_model()
+            resp = Groq(api_key=_groq_key()).chat.completions.create(
+                model=model, messages=msgs, max_tokens=300, temperature=0.4, timeout=30)
+            text = resp.choices[0].message.content or ''
+        else:
+            if not _gemini_key():
+                return False, 'GEMINI_API_KEY haijawekwa kwenye Render → Environment.', 0.0, ''
+            from django.conf import settings
+            from django.core.cache import cache
+            base = (PRO_GEMINI if choice == 'gemini-pro'
+                    else getattr(settings, 'GEMINI_MODEL', '') or os.getenv('GEMINI_MODEL') or DEFAULT_GEMINI)
+            text, _ = gemini_chat(msgs, 300, 0.4, timeout=45, model=base)
+            try:
+                model = (cache.get(MODEL_KEY) or {}).get(base, base)
+            except Exception:
+                model = base
+        return True, text.strip(), round(time.monotonic() - started, 1), model
+    except Exception as exc:
+        return False, str(exc)[:300], round(time.monotonic() - started, 1), ''

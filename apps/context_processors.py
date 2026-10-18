@@ -20,6 +20,7 @@ def turnstile_context(request):
 
 _NAV_EXACT = {
     'management_dashboard': 'dashboard',
+    'manage_ai': 'ai',
     'manage_builder': 'builder',
     'manage_chatbot': 'chatbot',
     'manage_bot_clients': 'bot_clients',

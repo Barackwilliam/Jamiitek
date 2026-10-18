@@ -2076,3 +2076,25 @@ class EmailLog(models.Model):
                                  'opened_at', 'failed_at', 'error'])
         return True
 
+
+
+class AIConfig(models.Model):
+    """AI inayoandika kwenye JamiiTek nzima (apps/llm.py) — mmoja tu, inabadilishwa /manage/ai/."""
+    CHOICES = [
+        ('gemini-flash', 'Gemini Flash'),
+        ('gemini-pro', 'Gemini Pro'),
+        ('groq', 'Groq'),
+    ]
+    choice = models.CharField(max_length=20, choices=CHOICES, default='gemini-flash')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'AI config'
+        verbose_name_plural = 'AI config'
+
+    def __str__(self):
+        return self.get_choice_display()
+
+    @classmethod
+    def load(cls):
+        return cls.objects.order_by('pk').first() or cls.objects.create()
