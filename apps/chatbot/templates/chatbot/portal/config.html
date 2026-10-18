@@ -238,55 +238,34 @@
 
 <!-- ══ AI TAB ═══════════════════════════════════════════ -->
 <div class="tab-pane" id="tab-ai">
-  <div class="row g-3 f1">
-    <div class="col-lg-7">
-      <div class="jt-card">
-        <div class="jt-card-head"><span class="jt-card-title"><i class="fas fa-wand-magic-sparkles" style="color:#8b5cf6"></i> AI inayojibu wateja wako</span></div>
-        <div class="jt-card-body">
-          <form method="post" autocomplete="off">{% csrf_token %}<input type="hidden" name="section" value="ai">
-            <div class="toggle-block mb-3">
-              <label class="toggle-row" style="cursor:pointer">
-                <div><div class="tl">Groq (default)</div><div class="ts">Bure, haraka sana. Haihitaji chochote kutoka kwako.</div></div>
-                <input type="radio" name="ai_engine" value="groq" {% if not ai_is_gemini %}checked{% endif %}>
-              </label>
-              <label class="toggle-row" style="cursor:pointer">
-                <div><div class="tl">Gemini Flash (Google)</div><div class="ts">Kiswahili bora zaidi. Inatumia API key YAKO ya Gemini (bure) — kikomo chake ni chako peke yako.</div></div>
-                <input type="radio" name="ai_engine" value="gemini" {% if ai_is_gemini %}checked{% endif %}>
-              </label>
-            </div>
-            <div class="mb-2" style="margin-top:18px"><label class="f-label">Gemini API key yako</label>
-              <input type="password" name="gemini_api_key" class="f-input" autocomplete="new-password"
-                     placeholder="{% if bot.gemini_key %}Imehifadhiwa: {{ bot.gemini_key_masked }} — andika mpya kubadili{% else %}AIza…{% endif %}">
-            </div>
-            {% if bot.gemini_key %}
-            <label class="ts mb-3" style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" name="delete_key"> Futa key yangu iliyohifadhiwa</label>
-            {% endif %}
-            <div class="ts mb-3" style="color:var(--text3);margin-top:8px;line-height:1.6">
-              {% if ai_is_gemini and bot.gemini_key %}✅ Bot yako inajibu kwa Gemini Flash.
-              {% elif ai_is_gemini %}⚠️ Umechagua Gemini lakini hujaweka key — bot inajibu kwa Groq mpaka uiweke.
-              {% else %}Bot yako inajibu kwa Groq.{% endif %}
-              Gemini ikishindwa (kikomo cha siku kimeisha, mtandao), bot inajibu kwa Groq — wateja hawakosi jibu.
-            </div>
-            <button type="submit" class="jt-btn btn-green"><i class="fas fa-check"></i> Hifadhi AI</button>
-          </form>
+  <div class="jt-card f1" style="max-width:640px">
+    <div class="jt-card-head"><span class="jt-card-title"><i class="fas fa-wand-magic-sparkles" style="color:#8b5cf6"></i> AI ya bot yako</span></div>
+    <div class="jt-card-body">
+      <form method="post" autocomplete="off">{% csrf_token %}<input type="hidden" name="section" value="ai">
+        <div class="toggle-block mb-3">
+          <label class="toggle-row" style="cursor:pointer">
+            <div class="tl">Groq (Default)</div>
+            <input type="radio" name="ai_engine" value="groq" {% if not ai_is_gemini %}checked{% endif %}>
+          </label>
+          <label class="toggle-row" style="cursor:pointer">
+            <div class="tl">Gemini (Custom){% if ai_is_gemini and bot.gemini_key %} <span style="color:var(--green);font-size:11px">✓ inatumika</span>{% endif %}</div>
+            <input type="radio" name="ai_engine" value="gemini" {% if ai_is_gemini %}checked{% endif %}>
+          </label>
         </div>
-      </div>
-    </div>
-    <div class="col-lg-5">
-      <div class="jt-card" style="background:rgba(139,92,246,.04);border-color:rgba(139,92,246,.15)">
-        <div class="jt-card-body" style="padding:14px 16px;font-size:12.5px;color:var(--text2);line-height:1.75">
-          <div style="color:#a78bfa;font-weight:700;margin-bottom:8px">Jinsi ya kupata Gemini API key (bure, dakika 2)</div>
-          1. Fungua <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--cyan)">aistudio.google.com/apikey</a> na uingie kwa akaunti yako ya Google (Gmail).<br>
-          2. Kubali masharti ya Google AI Studio ukiulizwa.<br>
-          3. Bonyeza <strong>Create API key</strong> → <strong>Create API key in new project</strong>.<br>
-          4. Bonyeza alama ya <strong>copy</strong> kunakili key nzima — inaanza na <code>AIza</code> na ina herufi 39.<br>
-          5. Ibandike kwenye sehemu ya <strong>Gemini API key yako</strong>, chagua <strong>Gemini Flash</strong>, kisha <strong>Hifadhi AI</strong>. Tunaikagua na Google papo hapo.
-          <div style="margin-top:10px;color:var(--text3)">
-            🔒 Key ni siri yako: usiitume WhatsApp wala kwa mtu yeyote. Tunaihifadhi ikiwa imefichwa (encrypted).<br>
-            💡 Ni bure kwa kikomo cha kila siku cha Google; kikiisha, bot inajibu kwa Groq hadi kesho. Unaweza kuifuta au kutengeneza mpya AI Studio wakati wowote.
-          </div>
+        <div id="gemini-box"{% if not ai_is_gemini %} hidden{% endif %}>
+          <ol style="font-size:12.5px;color:var(--text2);line-height:1.8;padding-left:18px;margin:4px 0 12px">
+            <li>Fungua <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--cyan)">aistudio.google.com/apikey</a> uingie kwa Gmail yako.</li>
+            <li>Bonyeza <strong>Create API key</strong>.</li>
+            <li>Nakili key (inaanza na <code>AIza</code>) uibandike hapa chini.</li>
+          </ol>
+          <input type="password" name="gemini_api_key" class="f-input mb-2" autocomplete="new-password"
+                 placeholder="{% if bot.gemini_key %}{{ bot.gemini_key_masked }}{% else %}AIza…{% endif %}">
+          {% if bot.gemini_key %}
+          <label class="ts mb-2" style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" name="delete_key"> Futa key</label>
+          {% endif %}
         </div>
-      </div>
+        <button type="submit" class="jt-btn btn-green mt-2"><i class="fas fa-check"></i> Hifadhi</button>
+      </form>
     </div>
   </div>
 </div>
@@ -294,6 +273,7 @@
 <script>
 function showTab(id,btn){document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.cfg-tab').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+id).classList.add('active');btn.classList.add('active')}
 // Show tab from URL hash
+document.querySelectorAll('input[name=ai_engine]').forEach(r=>r.addEventListener('change',()=>{document.getElementById('gemini-box').hidden=document.querySelector('input[name=ai_engine]:checked').value!=='gemini'}));
 const h=location.hash.replace('#','');if(h){const b=document.querySelector(`[onclick*="${h}"]`);if(b){b.click()}}
 </script>
 {% endblock %}
