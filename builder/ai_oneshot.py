@@ -59,15 +59,9 @@ JSON_SCHEMA_HINT = {
 
 
 def _client():
-    key = os.getenv('GROQ_API_KEY')
-    if not key:
-        return None
-    try:
-        from groq import Groq
-    except ImportError:
-        logger.error('groq package not installed')
-        return None
-    return Groq(api_key=key)
+    # Gemini kwanza, Groq akiba (apps/llm.py)
+    from apps.llm import client
+    return client()
 
 
 PASS1_SYSTEM = """You are a world-class copywriter and web designer creating

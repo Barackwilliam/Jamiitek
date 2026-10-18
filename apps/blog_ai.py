@@ -22,14 +22,9 @@ TIMEOUT = 60
 
 
 def _client():
-    key = os.getenv('GROQ_API_KEY')
-    if not key:
-        return None
-    try:
-        from groq import Groq
-    except ImportError:
-        return None
-    return Groq(api_key=key)
+    # Gemini kwanza, Groq akiba (apps/llm.py)
+    from apps.llm import client
+    return client()
 
 
 # ── Bank ya mada — AI inachagua ambayo bado haijaandikwa ──
@@ -108,7 +103,7 @@ def generate_draft(existing_titles=None):
     """
     client = _client()
     if client is None:
-        return False, 'AI is not configured (GROQ_API_KEY missing).'
+        return False, 'AI is not configured (GEMINI_API_KEY or GROQ_API_KEY missing).'
 
     existing_titles = existing_titles or []
     topic, lang, keyword = pick_topic(existing_titles)

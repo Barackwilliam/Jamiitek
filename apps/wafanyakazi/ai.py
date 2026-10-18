@@ -70,7 +70,8 @@ def _pick_replacement(current):
 
 def write(system, prompt, max_tokens=500, temperature=0.5):
     """Rudisha jibu la AI, au '' (hakuna key, kikomo kimefika, au hitilafu)."""
-    if not _key() or _state['left'] <= 0:
+    from apps import llm
+    if not (_key() or llm.gemini_first()) or _state['left'] <= 0:
         return ''
     _state['left'] -= 1
     model = _state['model'] or os.getenv('GROQ_MODEL') or PREFERRED[0]
@@ -85,7 +86,14 @@ def write(system, prompt, max_tokens=500, temperature=0.5):
         })
 
     try:
-        r = post(model)
+        # Gemini kwanza (Kiswahili bora); ikishindwa, Groq kama awali
+        r = llm.gemini_response({'messages': [{'role': 'system', 'content': system},
+                                              {'role': 'user', 'content': prompt}],
+                                 'max_tokens': max_tokens, 'temperature': temperature})
+        if r is None and not _key():
+            _state['failed'] += 1
+            return ''
+        r = r or post(model)
         if r.status_code == 404 and 'model_not_found' in r.text:
             replacement = _pick_replacement(model)
             if replacement:

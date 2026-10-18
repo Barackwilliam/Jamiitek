@@ -180,8 +180,9 @@ SHERIA MUHIMU:
 
 def draft_answer(bot, gap):
     """AI inaandika rasimu. Inarudisha maandishi au tupu."""
+    from apps import llm
     key = getattr(settings, 'GROQ_API_KEY', '')
-    if not key:
+    if not (key or llm.gemini_first()):
         return ''
 
     services = "\n".join(
@@ -204,15 +205,19 @@ def draft_answer(bot, gap):
     )
 
     try:
-        r = requests.post(
+        payload = {
+            'model': MODEL,
+            'messages': [{'role': 'user', 'content': prompt}],
+            'temperature': 0.3,     # chini — hatutaki ubunifu hapa
+            'max_tokens': 300,
+        }
+        r = llm.gemini_response(payload)   # Gemini kwanza — Kiswahili bora
+        if r is None and not key:
+            return ''
+        r = r or requests.post(
             GROQ_URL,
             headers={'Authorization': f'Bearer {key}', 'Content-Type': 'application/json'},
-            json={
-                'model': MODEL,
-                'messages': [{'role': 'user', 'content': prompt}],
-                'temperature': 0.3,     # chini — hatutaki ubunifu hapa
-                'max_tokens': 300,
-            },
+            json=payload,
             timeout=30,
         )
         if r.status_code != 200:

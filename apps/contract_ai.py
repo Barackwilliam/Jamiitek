@@ -20,14 +20,9 @@ TIMEOUT = 90
 
 
 def _client():
-    key = os.getenv('GROQ_API_KEY')
-    if not key:
-        return None
-    try:
-        from groq import Groq
-    except ImportError:
-        return None
-    return Groq(api_key=key)
+    # Gemini kwanza, Groq akiba (apps/llm.py)
+    from apps.llm import client
+    return client()
 
 
 SYSTEM = """You are a professional contract writer for JamiiTek, a web
@@ -88,7 +83,7 @@ def generate_contract(project_info):
     """
     client = _client()
     if client is None:
-        return False, 'AI is not configured (GROQ_API_KEY missing).'
+        return False, 'AI is not configured (GEMINI_API_KEY or GROQ_API_KEY missing).'
 
     info = project_info
     amount_line = ''

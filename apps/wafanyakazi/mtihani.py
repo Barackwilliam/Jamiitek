@@ -161,7 +161,8 @@ def run(mtihani_id=None, now=None):
                 total += 1
                 passed += c['ok']
     outcome['score'] = {'passed': passed, 'total': total}
-    outcome['groq'] = bool(ai._key())
+    from apps import llm
+    outcome['groq'] = bool(ai._key() or llm.gemini_first())
     exam.result = outcome
     exam.finished_at = timezone.now()
     exam.save(update_fields=['status', 'result', 'finished_at'])

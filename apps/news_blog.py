@@ -215,7 +215,7 @@ def write_article(event, region_label):
     from apps.blog_ai import _client, _clean_html
     client = _client()
     if client is None:
-        return False, 'GROQ_API_KEY missing'
+        return False, 'No AI key (GEMINI_API_KEY or GROQ_API_KEY)'
 
     user = (
         f'Region focus: {region_label}\n'

@@ -259,7 +259,7 @@ def write(topic_name, facts, angle_text, previous_titles, avoid_titles):
     from apps.news_blog import _chat, _json, _slug
     client = _client()
     if client is None:
-        return False, 'GROQ_API_KEY missing'
+        return False, 'No AI key (GEMINI_API_KEY or GROQ_API_KEY)'
 
     user = (
         f'TOPIC: {topic_name}\n'

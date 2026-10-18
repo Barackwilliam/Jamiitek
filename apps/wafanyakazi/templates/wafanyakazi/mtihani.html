@@ -70,7 +70,7 @@
           Ibrahimu anaitambua: {% for b in r.bots %}<b>{{ b }}</b>{% if not forloop.last %}, {% endif %}{% empty %}<b style="color:var(--bad)">hakuna bot yenye jina JamiiBot</b>{% endfor %}</p>
       </div>
       {% if not r.groq %}
-      <div class="mt-note warn">GROQ_API_KEY haijawekwa — rasimu zote ni template za kawaida. Weka key ili kupima AI.</div>
+      <div class="mt-note warn">Hakuna AI iliyowekwa (GEMINI_API_KEY au GROQ_API_KEY) — rasimu zote ni template za kawaida. Weka key ili kupima AI.</div>
       {% endif %}
     </div>
 

@@ -103,14 +103,21 @@ def _plain(facts):
 
 
 def _ai(facts):
+    from apps import llm
     key = os.getenv('GROQ_API_KEY', '').strip()
-    if not key:
+    if not (key or llm.gemini_first()):
         return None
     try:
         import json
 
         import requests
-        r = requests.post(
+        payload = {'model': MODEL, 'temperature': 0.3, 'max_tokens': 400,
+                   'messages': [{'role': 'system', 'content': SYSTEM},
+                                {'role': 'user', 'content': json.dumps(facts, ensure_ascii=False)}]}
+        r = llm.gemini_response(payload)
+        if r is None and not key:
+            return None
+        r = r or requests.post(
             GROQ_URL,
             headers={'Authorization': f'Bearer {key}',
                      'Content-Type': 'application/json'},

@@ -17,14 +17,9 @@ TIMEOUT = 75
 
 
 def _client():
-    key = os.getenv('GROQ_API_KEY')
-    if not key:
-        return None
-    try:
-        from groq import Groq
-    except ImportError:
-        return None
-    return Groq(api_key=key)
+    # Gemini kwanza, Groq akiba (apps/llm.py)
+    from apps.llm import client
+    return client()
 
 
 # ── COMPANY PROFILE ──
@@ -56,7 +51,7 @@ def generate_profile(info=None):
     """Rudisha (ok, {about_en, about_sw, mission_en, mission_sw, vision_en, vision_sw})."""
     client = _client()
     if client is None:
-        return False, 'AI is not configured (GROQ_API_KEY missing).'
+        return False, 'AI is not configured (GEMINI_API_KEY or GROQ_API_KEY missing).'
 
     info = info or {}
     default_tagline = "Building Tanzania's Digital Future"

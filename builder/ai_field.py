@@ -115,14 +115,9 @@ If any answer is "no", rewrite it before returning. Ship your BEST version."""
 
 
 def _client():
-    key = os.getenv('GROQ_API_KEY')
-    if not key:
-        return None
-    try:
-        from groq import Groq
-    except ImportError:
-        return None
-    return Groq(api_key=key)
+    # Gemini kwanza, Groq akiba (apps/llm.py)
+    from apps.llm import client
+    return client()
 
 
 def _build_context(site, extra_context: dict):
