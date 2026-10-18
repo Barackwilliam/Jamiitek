@@ -160,6 +160,12 @@ def manage_bot_detail(request, bot_id):
         'services': bot.services.all(),
         'faqs': bot.faqs.all(),
     }
+    from .ai_engine import MODEL_CHOICES
+    current = (bot.ai_model or '').strip()
+    choices = list(MODEL_CHOICES)
+    if current not in {v for v, _ in choices}:
+        choices.append((current, f'{current} (iliyowekwa awali)'))
+    context['model_choices'] = [(v, label, v == current) for v, label in choices]
     return render(request, 'management/chatbot_bot_detail.html', context)
 
 
@@ -209,6 +215,24 @@ def manage_bot_action(request, bot_id):
             messages.success(request, f"✅ WhatsApp imeunganishwa! Bot '{bot.bot_name}' inafanya kazi.")
         else:
             messages.warning(request, "Phone Number ID haikuwekwa — bot bado haijawashwa.")
+
+    elif action == 'set_model':
+        from .ai_engine import MODEL_CHOICES
+        choice = request.POST.get('ai_model', '').strip()
+        key = request.POST.get('gemini_api_key', '').strip()
+        if choice not in {v for v, _ in MODEL_CHOICES}:
+            messages.error(request, "Chaguo la AI si sahihi.")
+        else:
+            if key:
+                ok, msg = bot.set_gemini_key(key)
+                (messages.success if ok else messages.error)(request, f"Gemini key: {msg}")
+            bot.ai_model = choice
+            bot.save(update_fields=['ai_model'])
+            label = dict(MODEL_CHOICES)[choice]
+            messages.success(request, f"AI ya majibu ya '{bot.bot_name}' sasa ni: {label}.")
+            if choice == 'gemini' and not bot.gemini_key:
+                messages.warning(request, "Mteja hajaweka Gemini key yake — bot itajibu kwa Groq mpaka aiweke "
+                                          "(Portal → Bot Config → AI).")
 
     elif action == 'admin_note':
         bot.admin_notes = request.POST.get('note', '')

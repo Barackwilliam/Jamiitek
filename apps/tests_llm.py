@@ -236,3 +236,118 @@ class AiChoiceTests(TestCase):
             r = self.client.post("/manage/ai/", {"choice": "gemini-flash", "action": "test"}, secure=True, follow=True)
         self.assertContains(r, "Makala safi ya Kiswahili.")
         self.assertEqual(AIConfig.load().choice, "groq")   # kujaribu hakubadili chaguo
+
+
+def _with_fernet(test_case):
+    """Weka FERNET_KEY ya majaribio ili ai_secrets ziweze kuhifadhiwa."""
+    from cryptography.fernet import Fernet
+    from apps import crypto
+    patcher = mock.patch.dict("os.environ", {"FERNET_KEY": Fernet.generate_key().decode(),
+                                             "STAFF_2FA_REQUIRED": "false"})
+    patcher.start()
+    test_case.addCleanup(patcher.stop)
+    crypto._CHECKED, crypto._FERNET = False, None
+    test_case.addCleanup(lambda: setattr(crypto, "_CHECKED", False))
+
+
+GROQ_OK = {"choices": [{"message": {"content": "Jibu la Groq"}}], "usage": {"total_tokens": 9}}
+
+
+@override_settings(GEMINI_API_KEY="system-key", GROQ_API_KEY="q")
+class JamiiBotModelChoiceTests(TestCase):
+    def setUp(self):
+        from django.core.cache import cache
+        from django.contrib.auth.models import User
+        from apps.chatbot.models import BotConfig, ChatbotClient, Conversation
+        cache.clear()
+        _with_fernet(self)
+        self.owner = User.objects.create_user("mteja", "m@x.com", "x")
+        self.boss = User.objects.create_superuser("bossbot", "bb@x.com", "x")
+        cl = ChatbotClient.objects.create(user=self.owner, full_name="B", business_name="Biz", email="m@x.com")
+        self.bot = BotConfig.objects.create(client=cl, bot_name="DukaBot", business_name="Duka",
+                                            status="active", is_active=True)
+        self.conv = Conversation.objects.create(bot=self.bot, customer_phone="255700000000")
+
+    def _reply(self, post_side_effect):
+        from apps.chatbot.ai_engine import BotAIEngine
+        # apps.llm na ai_engine zinashiriki requests.post moja
+        with mock.patch("requests.post", side_effect=post_side_effect) as post:
+            return BotAIEngine(self.bot).get_response(self.conv, "Bei ya website ni ngapi?"), post
+
+    def _give_key(self, key="AIzaMtejaKey123"):
+        with mock.patch("requests.get", return_value=_http(200, {"models": []})):
+            ok, _ = self.bot.set_gemini_key(key)
+        self.assertTrue(ok)
+        self.bot.refresh_from_db()
+
+    def test_default_bot_stays_on_groq(self):
+        res, _ = self._reply([_http(200, GROQ_OK)])
+        self.assertEqual(res["content"], "Jibu la Groq")
+        self.assertEqual(res["model"], "llama-3.3-70b-versatile")
+
+    def test_gemini_bot_uses_the_clients_own_key(self):
+        self._give_key()
+        self.bot.ai_model = "gemini"
+        self.bot.save()
+        self.bot.refresh_from_db()
+        self.assertEqual(self.bot.gemini_key, "AIzaMtejaKey123")   # encrypted round-trip
+        res, post = self._reply([_http(200, GEMINI_OK)])
+        self.assertEqual(res["content"], "Makala safi ya Kiswahili.")
+        self.assertEqual(res["model"], "gemini")
+        self.assertEqual(post.call_args.kwargs["params"]["key"], "AIzaMtejaKey123")
+        self.assertIn("gemini-2.5-flash:generateContent", post.call_args.args[0])
+
+    def test_gemini_bot_without_key_never_uses_system_key(self):
+        self.bot.ai_model = "gemini"
+        self.bot.save()
+        res, post = self._reply([_http(200, GROQ_OK)])
+        self.assertEqual(res["content"], "Jibu la Groq")
+        self.assertEqual(post.call_count, 1)
+        self.assertIn("groq.com", post.call_args.args[0])
+
+    def test_client_key_failure_falls_back_to_groq_without_system_warning(self):
+        from apps import llm
+        self._give_key()
+        self.bot.ai_model = "gemini"
+        self.bot.save()
+        res, post = self._reply([_http(429, {"error": "quota"}), _http(200, GROQ_OK)])
+        self.assertEqual(res["content"], "Jibu la Groq")
+        self.assertEqual(post.call_args.kwargs["json"]["model"], "llama-3.3-70b-versatile")
+        self.assertIsNone(llm.health())   # key ya mteja haiwashi onyo la /manage
+
+    def test_bad_key_is_rejected(self):
+        with mock.patch("requests.get", return_value=_http(400, {"error": "API key not valid"})):
+            ok, msg = self.bot.set_gemini_key("AIzaMbaya")
+        self.assertFalse(ok)
+        self.bot.refresh_from_db()
+        self.assertEqual(self.bot.gemini_key, "")
+
+    def test_client_portal_ai_tab(self):
+        self.client.force_login(self.owner)
+        r = self.client.get("/chatbot/config/")
+        self.assertContains(r, "aistudio.google.com/apikey")
+        self.assertContains(r, "Create API key")
+        with mock.patch("requests.get", return_value=_http(200, {"models": []})):
+            self.client.post("/chatbot/config/", {"section": "ai", "ai_engine": "gemini",
+                                                  "gemini_api_key": " AIzaYangu999 "})
+        self.bot.refresh_from_db()
+        self.assertEqual(self.bot.ai_model, "gemini")
+        self.assertEqual(self.bot.gemini_key, "AIzaYangu999")
+        r = self.client.get("/chatbot/config/")
+        self.assertNotContains(r, "AIzaYangu999")          # key haionyeshwi tena
+        self.assertContains(r, "AIza")                     # ila iliyofichwa (mask)
+        self.client.post("/chatbot/config/", {"section": "ai", "ai_engine": "groq", "delete_key": "on"})
+        self.bot.refresh_from_db()
+        self.assertEqual(self.bot.ai_model, "")
+        self.assertEqual(self.bot.gemini_key, "")
+
+    def test_manage_page_sets_bot_model(self):
+        self.client.force_login(self.boss)
+        url = f"/manage/chatbot/bots/{self.bot.id}/"
+        self.assertContains(self.client.get(url, secure=True), "Gemini Flash")
+        self.client.post(url + "action/", {"action": "set_model", "ai_model": "gemini"}, secure=True)
+        self.bot.refresh_from_db()
+        self.assertEqual(self.bot.ai_model, "gemini")
+        self.client.post(url + "action/", {"action": "set_model", "ai_model": "evil"}, secure=True)
+        self.bot.refresh_from_db()
+        self.assertEqual(self.bot.ai_model, "gemini")

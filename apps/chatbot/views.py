@@ -668,11 +668,38 @@ def chatbot_config(request):
             BotFAQ.objects.filter(id=request.POST.get('faq_id'), bot=bot).delete()
             messages.success(request, "FAQ imefutwa.")
 
+        elif section == 'ai':
+            from .ai_engine import GEMINI
+            key = request.POST.get('gemini_api_key', '').strip()
+            key_ok = True
+            if request.POST.get('delete_key'):
+                _, msg = bot.set_gemini_key('')
+                messages.info(request, msg)
+            elif key:
+                key_ok, msg = bot.set_gemini_key(key)
+                (messages.success if key_ok else messages.error)(request, msg)
+            if request.POST.get('ai_engine') == 'gemini':
+                if key_ok:
+                    bot.ai_model = GEMINI
+                    bot.save(update_fields=['ai_model'])
+                    if bot.gemini_key:
+                        messages.success(request, "Bot yako sasa inajibu kwa Gemini Flash.")
+                    else:
+                        messages.warning(request, "Weka Gemini API key yako — mpaka hapo bot inajibu kwa Groq.")
+            elif bot.ai_model == GEMINI:
+                bot.ai_model = ''
+                bot.save(update_fields=['ai_model'])
+                messages.success(request, "Bot yako sasa inajibu kwa Groq.")
+            from django.urls import reverse
+            return redirect(reverse('chatbot_config') + '#ai')
+
         return redirect('chatbot_config')
 
+    from .ai_engine import GEMINI
     return render(request, 'chatbot/portal/config.html', {
         'client': client, 'bot': bot,
         'services': bot.services.all(), 'faqs': bot.faqs.all(),
+        'ai_is_gemini': bot.ai_model == GEMINI,
     })
 
 
