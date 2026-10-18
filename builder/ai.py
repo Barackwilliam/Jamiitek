@@ -1,6 +1,6 @@
 """
 AI Assistant (Groq) — inamsaidia mteja kutengeneza content na HTML sections.
-Weka GROQ_API_KEY kwenye environment variables za Render.
+Weka GEMINI_API_KEY (mkuu) na/au GROQ_API_KEY (akiba) kwenye environment variables za Render.
     pip install groq
 """
 import os
@@ -19,14 +19,12 @@ logger = logging.getLogger(__name__)
 
 
 def _groq_client():
-    key = os.getenv('GROQ_API_KEY')
-    if not key:
-        return None, 'GROQ_API_KEY is not configured on the server.'
-    try:
-        from groq import Groq
-    except ImportError:
-        return None, 'The groq package is not installed (pip install groq).'
-    return Groq(api_key=key), None
+    # Gemini kwanza, Groq akiba (apps/llm.py)
+    from apps.llm import client
+    c = client()
+    if c is None:
+        return None, 'No AI key is configured on the server (GEMINI_API_KEY or GROQ_API_KEY).'
+    return c, None
 
 GROQ_MODEL = os.getenv('GROQ_MODEL', 'llama-3.3-70b-versatile')
 AI_DAILY_LIMIT = int(os.getenv('BUILDER_AI_DAILY_LIMIT', '25'))

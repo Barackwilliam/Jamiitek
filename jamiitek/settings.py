@@ -319,6 +319,10 @@ CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET', '')
 
 # ── Chatbot / WhatsApp ─────────────────────────────────
 GROQ_API_KEY = os.getenv('GROQ_API_KEY', '')
+# Google Gemini — mwandishi mkuu wa makala zote (apps/llm.py); Groq ni akiba.
+# AI_PROVIDER=groq kwenye Render inarudisha Groq kuwa mkuu bila deploy.
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
 
 # Google Search Console — ukaguzi wa SEO wa kila wiki (apps/seo/gsc.py).
 # JSON ya service account (au base64 yake); ruhusa ya kusoma tu.

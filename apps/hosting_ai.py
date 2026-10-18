@@ -15,14 +15,9 @@ TIMEOUT = 35
 
 
 def _client():
-    key = os.getenv('GROQ_API_KEY')
-    if not key:
-        return None
-    try:
-        from groq import Groq
-    except ImportError:
-        return None
-    return Groq(api_key=key)
+    # Gemini kwanza, Groq akiba (apps/llm.py)
+    from apps.llm import client
+    return client()
 
 
 SYSTEM = """You write short, professional hosting notices for JamiiTek, a web
