@@ -158,6 +158,9 @@ class TemplateSeoTest(NoPingMixin, TestCase):
         self.assertIn('Gusa kuitazama', html)
         self.assertIn("addEventListener('scroll', onScroll", html)   # inasubiri mtu aanze ku-scroll
         self.assertNotIn('setTimeout(show, 500)', html)
+        self.assertIn("POS = 'jt_promo_pos'", html)                  # inaburutwa, upande unakumbukwa
+        self.assertIn('.jtp.tuck .jtp-txt', html)                     # ikivutwa ukingoni inajificha nusu
+        self.assertIn("window.addEventListener('click'", html)        # kuburuta hakufungui link wala loader
         self.assertIn('class="jtp-x"', html)
         # Bila template yenye demo hakuna tangazo kabisa
         WebsiteTemplate.objects.update(preview_html='')
