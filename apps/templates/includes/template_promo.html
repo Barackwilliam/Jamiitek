@@ -46,12 +46,15 @@
 </div>
 <script>
 (function(){
-  var el = document.getElementById('jtp'), KEY = 'jt_promo_seen';
+  var el = document.getElementById('jtp'), KEY = 'jt_promo_seen', TTL = 2 * 60 * 60 * 1000;
   if (!el || window.self !== window.top) return;
   // ?promo=1 kwenye link inaionyesha tena (kwa kujaribu baada ya kuiona)
   var force = /[?&]promo=1\b/.test(location.search);
-  // Mara moja tu kwa kila browser. Bila localStorage hatuwezi kuhakikisha hilo — basi haionyeshwi.
-  try { if (localStorage.getItem(KEY) && !force) return; } catch (e) { return; }
+  // Mara moja kila saa 2 kwa kila browser. Bila localStorage hatuwezi kuhakikisha hilo — basi haionyeshwi.
+  try {
+    var seen = parseInt(localStorage.getItem(KEY), 10);
+    if (seen && Date.now() - seen < TTL && !force) return;
+  } catch (e) { return; }
   var frame = el.querySelector('iframe'), alive = true;
 
   function drift(){
@@ -94,11 +97,15 @@
   el.querySelector('.jtp-x').addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); close(); });
   el.querySelector('.jtp-card').addEventListener('click', function(){ alive = false; });
 
-  // Inatokea ~sekunde 1 baada ya ukurasa kuonekana — haisubiri picha zote wala JamiiBot
-  // (kwenye simu yenye mtandao wa polepole hiyo ilichukua muda mrefu, mtu akawa ameshaondoka).
+  // Inasubiri mtu aanze ku-scroll, ili isifunike hero na kitufe cha "Start Your Project" mwanzoni.
   // Demo inapakiwa ikishaonekana, kwa hiyo haichelewesha ukurasa wenyewe.
-  function later(){ setTimeout(show, 500); }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', later, {once: true}); else later();
+  function onScroll(){
+    if (window.scrollY < 80) return;
+    window.removeEventListener('scroll', onScroll);
+    setTimeout(show, 400);
+  }
+  window.addEventListener('scroll', onScroll, {passive: true});
+  onScroll();   // ukurasa ukifunguka ukiwa tayari chini (link yenye #anchor au reload)
 })();
 </script>
 {% endif %}

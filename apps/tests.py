@@ -129,16 +129,18 @@ class TemplateSeoTest(NoPingMixin, TestCase):
         self.assertIn('<link rel="canonical" href="https://www.jamiitek.com%s">' % tpl.get_absolute_url(), page)
         self.assertFalse(any('preview_html' in x['sql'] for x in q.captured_queries))
 
-    def test_promo_phone_on_home_and_blog_once_per_browser(self):
+    def test_promo_phone_on_scroll_every_two_hours(self):
         from django.template import Context, Template
         html = Template('{% load template_promo %}{% template_promo %}').render(Context())
         self.assertIn('id="jtp" hidden', html)                       # haionekani hadi JS iamue
         self.assertIn('data-raw="/templates/preview/%d/raw/"' % self.tpl.pk, html)
-        self.assertIn("localStorage.getItem(KEY)", html)            # mara moja tu kwa browser
+        self.assertIn("localStorage.getItem(KEY)", html)            # mara moja kila saa 2 kwa browser
+        self.assertIn('TTL = 2 * 60 * 60 * 1000', html)
         self.assertIn('href="/templates/%s/?utm_source=jamiitek' % self.tpl.slug, html)   # "Gusa kuitazama"
         self.assertIn('Website hii inauzwa', html)
         self.assertIn('Gusa kuitazama', html)
-        self.assertIn('setTimeout(show, 500)', html)                 # inatokea ~sekunde 1
+        self.assertIn("addEventListener('scroll', onScroll", html)   # inasubiri mtu aanze ku-scroll
+        self.assertNotIn('setTimeout(show, 500)', html)
         self.assertIn('class="jtp-x"', html)
         # Bila template yenye demo hakuna tangazo kabisa
         WebsiteTemplate.objects.update(preview_html='')
