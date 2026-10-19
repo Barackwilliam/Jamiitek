@@ -1,0 +1,177 @@
+{% comment %}
+  Kadi ya "Website Development" kwenye homepage: tovuti inajengwa mbele ya macho
+  kwa mzunguko wa 14s — brief ya AI → code → wireframe → tovuti kamili → mteja
+  ananunua (M-Pesa) → simu (responsive) → alama za ubora → iko hewani.
+  HTML/CSS pekee (container units zinaifanya ilingane na upana wa kadi);
+  prefers-reduced-motion inaonyesha hatua ya mwisho bila mwendo.
+  Duka la Juma ni duka la mfano tu.
+{% endcomment %}
+<style>
+.wb{--T:14s;--ink:#0B1730;--hi:#7DE2FF;position:relative;container-type:inline-size;width:100%;aspect-ratio:16/11.5;margin:18px 0 4px;pointer-events:none;font-family:Inter,system-ui,sans-serif}
+@media (min-width:1000px){.wb{position:absolute;z-index:0;top:64px;right:30px;width:min(62%,540px);margin:0}}
+.wb *{box-sizing:border-box}
+.wb__brief,.wb__win,.wb__code,.wb__phone,.wb__scores,.wb__ship,.wb__status,.wb__pay,.wb__cursor{position:absolute;animation:var(--T) infinite both}
+
+/* 1 · brief ya AI */
+.wb__brief{left:0;top:0;width:78%;display:flex;align-items:center;gap:1.6cqw;padding:1.6cqw 2.2cqw;border-radius:99px;font-size:2.35cqw;color:#E9F3FF;
+  background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(125,226,255,.28),0 2cqw 5cqw -2cqw rgba(0,0,0,.5);backdrop-filter:blur(6px);animation-name:wbIn0}
+.wb__spark{flex:none;display:grid;place-items:center;width:4.2cqw;height:4.2cqw;border-radius:50%;color:#2A1702;font-weight:800;background:linear-gradient(135deg,#FFC456,#FF7A3D);animation:wbSpin 3s linear infinite}
+.wb__type{overflow:hidden;white-space:nowrap;clip-path:inset(0 100% 0 0);animation:wbType var(--T) steps(46) infinite both}
+.wb__type::after{content:"";display:inline-block;width:.15em;height:1em;margin-left:.15em;vertical-align:-.12em;background:var(--hi);animation:wbBlink .8s steps(1) infinite}
+
+/* 2 · dirisha la browser */
+.wb__win{left:4%;top:12%;width:76%;height:66%;border-radius:2.2cqw;overflow:hidden;background:#fff;
+  box-shadow:0 4cqw 9cqw -3cqw rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.12);animation-name:wbWin}
+.wb__bar{display:flex;align-items:center;gap:1cqw;height:6.2%;min-height:3.6cqw;padding:0 1.6cqw;background:#EEF2F8;border-bottom:1px solid #DDE4EF}
+.wb__bar>i{width:1.25cqw;height:1.25cqw;border-radius:50%;background:#FF6159}.wb__bar>i+i{background:#FFBD2E}.wb__bar>i+i+i{background:#28C941}
+.wb__url{position:relative;flex:1;height:2.8cqw;margin-left:1.4cqw;border-radius:99px;background:#fff;font-size:1.6cqw;color:#55627A;box-shadow:inset 0 0 0 1px #DDE4EF}
+.wb__url b{position:absolute;inset:0;display:flex;align-items:center;padding-left:1.6cqw;font-weight:600;animation:var(--T) infinite both}
+.wb__url .u1{animation-name:wbUrl1}.wb__url .u2{color:#15803D;animation-name:wbUrl2}
+.wb__page{position:relative;height:calc(100% - 3.6cqw)}
+.wb__wire,.wb__ui{position:absolute;inset:0;padding:1.8cqw 2.2cqw;display:flex;flex-direction:column;gap:1.6cqw}
+.wb__wire{animation:wbWire var(--T) infinite both}
+.wb__wire span{border-radius:1cqw;background:repeating-linear-gradient(90deg,#E8EDF5 0 40%,#F3F6FA 50% 90%,#E8EDF5);background-size:200% 100%;animation:wbShim 1.4s linear infinite}
+.wb__wire .w1{height:3cqw}.wb__wire .w2{height:14cqw}.wb__wire .w3{flex:1;background:none;animation:none;display:grid;grid-template-columns:repeat(4,1fr);gap:1.4cqw}
+.wb__wire .w3 i{border-radius:1cqw;background:#EDF1F7}
+.wb__ui{animation:wbUi var(--T) infinite both}
+.wb__nav{display:flex;align-items:center;gap:2cqw;font-size:1.9cqw;color:#55627A}
+.wb__nav b{font:800 2.4cqw Sora,Inter,sans-serif;color:var(--ink);letter-spacing:-.03em}
+.wb__nav span{flex:1;text-align:center}
+.wb__cart{position:relative;font-style:normal;padding:.6cqw 1.4cqw;border-radius:99px;background:#F1F5FB;color:var(--ink);font-weight:700}
+.wb__cart i{position:absolute;top:-1cqw;right:-1cqw;display:grid;place-items:center;width:2.8cqw;height:2.8cqw;border-radius:50%;font:800 1.5cqw Inter,sans-serif;color:#fff;background:#FF7A3D;animation:var(--T) infinite both}
+.wb__cart .c2{animation-name:wbC2}.wb__cart .c3{animation-name:wbC3;background:#16A34A}
+.wb__hero{display:flex;align-items:stretch;gap:2cqw;height:15cqw;padding:2cqw 2.4cqw;border-radius:1.6cqw;color:#fff;
+  background:radial-gradient(60% 120% at 100% 0%,rgba(255,196,86,.55),transparent 60%),linear-gradient(120deg,#123563,#1B4C8C);animation:wbPop var(--T) infinite both;--d:.2s}
+.wb__hero>div{flex:1;display:flex;flex-direction:column;justify-content:center;gap:.8cqw}
+.wb__hero small{font:700 1.4cqw var(--mono,monospace);letter-spacing:.14em;color:#FFC456}
+.wb__hero strong{font:800 3cqw/1.05 Sora,Inter,sans-serif;letter-spacing:-.04em}
+.wb__btn{align-self:flex-start;padding:.8cqw 1.8cqw;border-radius:99px;font-size:1.6cqw;font-weight:700;color:#2A1702;background:linear-gradient(90deg,#FFC456,#FF7A3D)}
+.wb__heroimg{flex:none;width:30%;border-radius:1.2cqw;background:radial-gradient(circle at 50% 38%,#FFE7B8 0 22%,transparent 23%),linear-gradient(160deg,#FF9E5E,#F5A623)}
+.wb__grid{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:1.4cqw}
+.wb__p{display:flex;flex-direction:column;gap:.5cqw;font-size:1.5cqw;color:var(--ink);animation:wbPop var(--T) infinite both}
+.wb__p .img{flex:1;min-height:5cqw;border-radius:1cqw;background:var(--c)}
+.wb__p b{font-weight:700}.wb__p em{font-style:normal;color:#16A34A;font-weight:700}
+.wb__p:nth-child(1){--d:.35s}.wb__p:nth-child(2){--d:.5s}.wb__p:nth-child(3){--d:.65s}.wb__p:nth-child(4){--d:.8s}
+.wb__p:nth-child(1) .img{position:relative;animation:wbAdd var(--T) infinite both}
+.wb__cursor{left:20%;top:70%;width:3.4cqw;height:3.4cqw;animation-name:wbCur}
+.wb__cursor::before{content:"";position:absolute;inset:0;background:#0B1730;clip-path:polygon(0 0,0 85%,28% 62%,48% 100%,62% 94%,42% 56%,80% 56%);filter:drop-shadow(0 0 1px #fff) drop-shadow(0 .3cqw .5cqw rgba(0,0,0,.4))}
+.wb__cursor::after{content:"";position:absolute;left:-2cqw;top:-2cqw;width:4cqw;height:4cqw;border-radius:50%;border:2px solid #FF7A3D;opacity:0;animation:wbClick var(--T) infinite both}
+.wb__pay{left:36%;top:48%;display:flex;align-items:center;gap:1.2cqw;padding:1.4cqw 2cqw;border-radius:1.4cqw;font-size:1.9cqw;font-weight:700;color:#0B1730;background:#fff;
+  box-shadow:0 2cqw 5cqw -1cqw rgba(0,0,0,.5),inset 0 0 0 1px #D1FAE5;animation-name:wbPay}
+.wb__pay i{display:grid;place-items:center;width:3.4cqw;height:3.4cqw;border-radius:50%;color:#fff;font-style:normal;background:#16A34A}
+.wb__pay small{display:block;font-weight:500;color:#55627A;font-size:1.5cqw}
+
+/* 3 · code inaandikwa */
+.wb__code{left:0;bottom:2%;width:46%;padding:1.8cqw 2cqw;border-radius:1.8cqw;font:500 1.75cqw/1.65 'JetBrains Mono',ui-monospace,monospace;color:#C3CDE0;
+  background:rgba(8,18,40,.94);box-shadow:0 3cqw 7cqw -2cqw rgba(0,0,0,.7),inset 0 0 0 1px rgba(125,226,255,.18);animation-name:wbCode}
+.wb__code .ln{margin:0;white-space:nowrap;overflow:hidden;clip-path:inset(0 100% 0 0);animation:wbLine var(--T) steps(24) infinite both}
+.wb__code .ln:nth-child(1){--d:0s}.wb__code .ln:nth-child(2){--d:.45s}.wb__code .ln:nth-child(3){--d:.9s}.wb__code .ln:nth-child(4){--d:1.35s}.wb__code .ln:nth-child(5){--d:1.8s}.wb__code .ln:nth-child(6){--d:2.25s}
+.wb__code .t{color:#7DE2FF}.wb__code .a{color:#FFC456}.wb__code .s{color:#86EFAC}.wb__code .k{color:#C4B5FD}.wb__code .c{color:#5B6B88}
+
+/* 4 · simu — responsive */
+.wb__phone{right:0;top:20%;width:22%;aspect-ratio:9/18.5;padding:1cqw;border-radius:3.2cqw;background:#0B1730;box-shadow:0 4cqw 8cqw -3cqw rgba(0,0,0,.7),inset 0 0 0 1px rgba(255,255,255,.2);animation-name:wbPhone}
+.wb__ps{height:100%;border-radius:2.4cqw;overflow:hidden;background:#fff;display:flex;flex-direction:column;gap:1cqw;padding:2.6cqw 1.2cqw 1.2cqw}
+.wb__ps b{font:800 1.6cqw Sora,Inter,sans-serif;color:#0B1730}
+.wb__ps .h{height:30%;border-radius:1cqw;background:radial-gradient(60% 120% at 100% 0%,rgba(255,196,86,.6),transparent 60%),linear-gradient(120deg,#123563,#1B4C8C)}
+.wb__ps .g{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:.8cqw}.wb__ps .g i{border-radius:.8cqw;background:var(--c)}
+
+/* 5 · alama za ubora */
+.wb__scores{right:1%;bottom:2%;display:flex;gap:1.6cqw;padding:1.4cqw 1.8cqw;border-radius:1.8cqw;background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);backdrop-filter:blur(6px);animation-name:wbScore}
+.wb__sc{display:flex;flex-direction:column;align-items:center;gap:.4cqw;font-size:1.35cqw;color:#C3CDE0}
+.wb__sc svg{width:6.4cqw;height:6.4cqw;transform:rotate(-90deg)}
+.wb__sc circle{fill:none;stroke-width:4.5}.wb__sc .bg{stroke:rgba(255,255,255,.14)}
+.wb__sc .fg{stroke:#22C55E;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:100;animation:wbRing var(--T) infinite both}
+.wb__sc b{margin-top:-5.3cqw;margin-bottom:1.6cqw;font:800 1.9cqw Sora,Inter,sans-serif;color:#fff}
+
+/* 6 · iko hewani */
+.wb__ship{left:26%;top:2%;display:flex;align-items:center;gap:1.2cqw;padding:1.4cqw 2.2cqw;border-radius:99px;font-size:2cqw;font-weight:700;color:#052E16;background:linear-gradient(90deg,#86EFAC,#22C55E);
+  box-shadow:0 0 0 0 rgba(34,197,94,.6),0 2cqw 5cqw -1cqw rgba(0,0,0,.5);animation-name:wbShip}
+.wb__ship small{font-weight:500;opacity:.8}
+
+/* 7 · hatua */
+.wb__status{left:4%;top:80%;display:none}
+@media (min-width:1000px){.wb__status{display:flex;gap:1cqw}}
+.wb__status span{font:600 1.4cqw var(--mono,monospace);letter-spacing:.08em;text-transform:uppercase;padding:.7cqw 1.3cqw;border-radius:99px;color:#8FA0C0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);animation:var(--T) infinite both}
+.wb__status span:nth-child(1){animation-name:wbS1}.wb__status span:nth-child(2){animation-name:wbS2}.wb__status span:nth-child(3){animation-name:wbS3}.wb__status span:nth-child(4){animation-name:wbS4}
+@media (min-width:1000px){.wb__code{bottom:21%}}
+
+/* ── ratiba (14s) ── */
+@keyframes wbIn0{0%{opacity:0;transform:translateY(-1cqw)}3%,76%{opacity:1;transform:none}80%,100%{opacity:0;transform:translateY(-1cqw)}}
+@keyframes wbType{0%,2%{clip-path:inset(0 100% 0 0)}14%,100%{clip-path:inset(0 0 0 0)}}
+@keyframes wbWin{0%,8%{opacity:0;transform:translateY(3cqw) scale(.96)}13%,92%{opacity:1;transform:none}97%,100%{opacity:0}}
+@keyframes wbWire{0%,12%{opacity:0}15%,30%{opacity:1}36%,100%{opacity:0}}
+@keyframes wbUi{0%,30%{opacity:0}36%,92%{opacity:1}97%,100%{opacity:0}}
+@keyframes wbPop{0%,31%{opacity:0;transform:translateY(1.5cqw) scale(.97)}38%,92%{opacity:1;transform:none}97%,100%{opacity:0}}
+@keyframes wbCode{0%,9%{opacity:0;transform:translateX(-3cqw)}13%,40%{opacity:1;transform:none}48%,100%{opacity:0;transform:translateX(-2cqw)}}
+@keyframes wbLine{0%,13%{clip-path:inset(0 100% 0 0)}24%,100%{clip-path:inset(0 0 0 0)}}
+@keyframes wbCur{0%,42%{opacity:0;left:62%;top:20%}45%{opacity:1;left:62%;top:20%}51%{left:9%;top:76%}53%{left:9.4%;top:76.6%}56%{left:9%;top:76%;opacity:1}60%,100%{opacity:0;left:9%;top:76%}}
+@keyframes wbClick{0%,51.5%{opacity:0;transform:scale(.3)}53%{opacity:1;transform:scale(1)}56%,100%{opacity:0;transform:scale(1.8)}}
+@keyframes wbAdd{0%,52%{box-shadow:none}53%,57%{box-shadow:0 0 0 .5cqw #FF7A3D}60%,100%{box-shadow:none}}
+@keyframes wbC2{0%,53%{opacity:1;transform:none}55%,100%{opacity:0;transform:scale(.4)}}
+@keyframes wbC3{0%,53%{opacity:0;transform:scale(1.6)}56%,92%{opacity:1;transform:none}97%,100%{opacity:0}}
+@keyframes wbPay{0%,55%{opacity:0;transform:translateY(2cqw) scale(.9)}58%,64%{opacity:1;transform:none}68%,100%{opacity:0;transform:translateY(-1cqw)}}
+@keyframes wbPhone{0%,60%{opacity:0;transform:translateX(5cqw) rotate(6deg)}67%,92%{opacity:1;transform:none}97%,100%{opacity:0}}
+@keyframes wbScore{0%,66%{opacity:0;transform:translateY(2cqw)}70%,92%{opacity:1;transform:none}97%,100%{opacity:0}}
+@keyframes wbRing{0%,68%{stroke-dashoffset:100}80%,100%{stroke-dashoffset:var(--o)}}
+@keyframes wbUrl1{0%,78%{opacity:1}80%,100%{opacity:0}}
+@keyframes wbUrl2{0%,78%{opacity:0}80%,94%{opacity:1}97%,100%{opacity:0}}
+@keyframes wbShip{0%,79%{opacity:0;transform:translateY(-2cqw) scale(.9)}82%{opacity:1;transform:none;box-shadow:0 0 0 0 rgba(34,197,94,.6),0 2cqw 5cqw -1cqw rgba(0,0,0,.5)}88%{box-shadow:0 0 0 2.4cqw rgba(34,197,94,0),0 2cqw 5cqw -1cqw rgba(0,0,0,.5)}92%{opacity:1;transform:none}97%,100%{opacity:0}}
+@keyframes wbS1{0%,1%,24%,100%{color:#8FA0C0;background:transparent}3%,21%{color:#2A1702;background:#FFC456}}
+@keyframes wbS2{0%,22%,46%,100%{color:#8FA0C0;background:transparent}24%,43%{color:#2A1702;background:#FFC456}}
+@keyframes wbS3{0%,44%,70%,100%{color:#8FA0C0;background:transparent}46%,67%{color:#2A1702;background:#FFC456}}
+@keyframes wbS4{0%,68%,96%,100%{color:#8FA0C0;background:transparent}70%,93%{color:#052E16;background:#22C55E}}
+@keyframes wbShim{to{background-position:-200% 0}}
+@keyframes wbSpin{to{transform:rotate(360deg)}}
+@keyframes wbBlink{50%{opacity:0}}
+.wb__code .ln,.wb__hero,.wb__p{animation-delay:var(--d,0s)}
+
+@media (prefers-reduced-motion:reduce){
+  .wb *,.wb *::before,.wb *::after{animation:none!important}
+  .wb__type,.wb__code .ln{clip-path:none}
+  .wb__wire,.wb__cursor,.wb__pay,.wb__url .u1,.wb__cart .c2,.wb__code{opacity:0}
+  .wb__sc .fg{stroke-dashoffset:var(--o)}
+}
+</style>
+<div class="wb" aria-hidden="true">
+  <div class="wb__brief"><span class="wb__spark">✦</span><span class="wb__type">Build an online shop for Duka la Juma — M-Pesa checkout, mobile-first</span></div>
+
+  <div class="wb__win">
+    <div class="wb__bar"><i></i><i></i><i></i><span class="wb__url"><b class="u1">localhost:3000</b><b class="u2">🔒 dukalajuma.co.tz</b></span></div>
+    <div class="wb__page">
+      <div class="wb__wire"><span class="w1"></span><span class="w2"></span><span class="w3"><i></i><i></i><i></i><i></i></span></div>
+      <div class="wb__ui">
+        <div class="wb__nav"><b>Duka la Juma</b><span>Shop · Offers · Contact</span><em class="wb__cart">🛒<i class="c2">2</i><i class="c3">3</i></em></div>
+        <div class="wb__hero"><div><small>NEW · 2026</small><strong>Mitindo mipya ya msimu</strong><span class="wb__btn">Nunua sasa →</span></div><span class="wb__heroimg"></span></div>
+        <div class="wb__grid">
+          <div class="wb__p" style="--c:linear-gradient(150deg,#DBEAFE,#93C5FD)"><span class="img"></span><b>Shati</b><em>Tsh 25,000</em></div>
+          <div class="wb__p" style="--c:linear-gradient(150deg,#FDE7C8,#FDBA74)"><span class="img"></span><b>Gauni</b><em>Tsh 40,000</em></div>
+          <div class="wb__p" style="--c:linear-gradient(150deg,#DCFCE7,#86EFAC)"><span class="img"></span><b>Viatu</b><em>Tsh 35,000</em></div>
+          <div class="wb__p" style="--c:linear-gradient(150deg,#FCE7F3,#F9A8D4)"><span class="img"></span><b>Mkoba</b><em>Tsh 30,000</em></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wb__cursor"></div>
+  <div class="wb__pay"><i>✓</i><span>M-Pesa · Tsh 25,000<small>Payment received</small></span></div>
+
+  <div class="wb__code">
+    <div class="ln"><span class="c">&lt;!-- hero --&gt;</span></div>
+    <div class="ln"><span class="t">&lt;section</span> <span class="a">class</span>=<span class="s">"hero"</span><span class="t">&gt;</span></div>
+    <div class="ln">&nbsp;&nbsp;<span class="t">&lt;h1&gt;</span>Mitindo mipya<span class="t">&lt;/h1&gt;</span></div>
+    <div class="ln">&nbsp;&nbsp;<span class="t">&lt;Pay</span> <span class="a">via</span>=<span class="s">"mpesa"</span> <span class="t">/&gt;</span></div>
+    <div class="ln"><span class="t">&lt;/section&gt;</span></div>
+    <div class="ln"><span class="k">deploy</span>(<span class="s">"dukalajuma.co.tz"</span>)</div>
+  </div>
+
+  <div class="wb__phone"><div class="wb__ps"><b>Duka la Juma</b><span class="h"></span><span class="g"><i style="--c:#BFDBFE"></i><i style="--c:#FED7AA"></i><i style="--c:#BBF7D0"></i><i style="--c:#FBCFE8"></i></span></div></div>
+
+  <div class="wb__scores">
+    <div class="wb__sc"><svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15.9" pathLength="100"/><circle class="fg" cx="18" cy="18" r="15.9" pathLength="100" style="--o:1"/></svg><b>99</b>Speed</div>
+    <div class="wb__sc"><svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15.9" pathLength="100"/><circle class="fg" cx="18" cy="18" r="15.9" pathLength="100" style="--o:0"/></svg><b>100</b>SEO</div>
+    <div class="wb__sc"><svg viewBox="0 0 36 36"><circle class="bg" cx="18" cy="18" r="15.9" pathLength="100"/><circle class="fg" cx="18" cy="18" r="15.9" pathLength="100" style="--o:0"/></svg><b>100</b>A11y</div>
+  </div>
+
+  <div class="wb__ship">✓ Live on dukalajuma.co.tz <small>· SSL · 0.8s</small></div>
+  <div class="wb__status"><span>Design</span><span>Code</span><span>Test</span><span>Live</span></div>
+</div>

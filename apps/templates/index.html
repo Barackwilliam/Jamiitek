@@ -2,6 +2,7 @@
 {% load static jt_contact %}
 
 {% block head %}
+{% if services and services.0.art != 'code' %}<link rel="stylesheet" href="{% static 'css/jt-art.css' %}">{% endif %}
 <style>
 /* ═══ HOME — mitindo ya ukurasa huu pekee (mfumo wa pamoja uko jt-site.css) ═══ */
 
@@ -150,10 +151,9 @@
 .svc--hero .svc__go{color:#fff}
 .svc--hero .svc__n{color:#8FA0C0}
 .svc--hero .svc__ic{background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);color:#fff}
-.orb{position:absolute;z-index:-1;right:-110px;top:-110px;width:520px;height:520px;pointer-events:none}
-.orb i{position:absolute;inset:var(--s);border-radius:50%;border:1px solid rgba(255,255,255,.14);animation:spin var(--t) linear infinite}
-.orb i::after{content:"";position:absolute;top:50%;left:-4px;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:var(--c,#fff);box-shadow:0 0 16px var(--c,#fff)}
-.orb b{position:absolute;inset:40%;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,var(--a) 45%,transparent 72%);opacity:.9}
+/* Kadi ya kwanza: mchoro hai wa huduma yenyewe (Website → _web_build, nyingine → _svc_art) */
+.svc__art{position:relative;margin:14px 0 4px;pointer-events:none}
+@media (min-width:1000px){.svc__art{position:absolute;top:70px;right:26px;width:min(56%,480px);margin:0}}
 
 /* ── Bidhaa (mwanga) ── */
 .prods{background:var(--paper)}
@@ -348,12 +348,13 @@
       <h2>Services built for modern businesses.</h2>
       <p>End-to-end digital work — design, development, hosting and the support that keeps it running.</p>
     </div>
+    {% include 'site/_jamiilite.html' %}
     <div class="bento">
       {% for sv in services %}
       <article class="svc rv{% if forloop.first %} svc--hero{% endif %}" data-glow{% if forloop.first %} data-live{% endif %} style="--a:{{ sv.accent|default:'#2E7BF6' }};--rd:{% cycle '0s' '.08s' '.16s' %}">
-        {% if forloop.first %}<div class="orb" aria-hidden="true"><i style="--s:0;--t:38s;--c:var(--amber);animation-delay:-9s"></i><i style="--s:12%;--t:26s;--c:#7DE2FF;animation-delay:-17s"></i><i style="--s:24%;--t:18s;--c:#fff;animation-delay:-4s"></i><b></b></div>{% endif %}
         <span class="svc__n">{{ forloop.counter|stringformat:"02d" }}</span>
         <span class="svc__ic"><svg viewBox="0 0 24 24" fill="currentColor"><path d="{{ sv.icon_path }}"/></svg></span>
+        {% if forloop.first %}{% if sv.art == 'code' %}{% include 'site/_web_build.html' %}{% else %}<div class="svc__art" aria-hidden="true">{% include 'site/_svc_art.html' with svc=sv %}</div>{% endif %}{% endif %}
         <h3>{{ sv.service_type }}</h3>
         <p>{% if sv.summary %}{{ sv.summary }}{% else %}{{ sv.description|striptags|truncatewords:28 }}{% endif %}</p>
         <a class="svc__go" href="{{ sv.home_url }}"{% if sv.home_url|slice:":4" == "http" %} target="_blank" rel="noopener"{% endif %}>{{ sv.link_label|default:"Learn more" }}
