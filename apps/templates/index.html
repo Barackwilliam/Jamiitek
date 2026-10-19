@@ -340,8 +340,6 @@
   </div>
 </section>
 
-{% include 'site/_jamiilite.html' %}
-
 {% if services %}
 <section class="sec" id="services" style="padding-top:calc(var(--sec)*.6)">
   <div class="wrap">
@@ -350,6 +348,7 @@
       <h2>Services built for modern businesses.</h2>
       <p>End-to-end digital work — design, development, hosting and the support that keeps it running.</p>
     </div>
+    {% include 'site/_jamiilite.html' %}
     <div class="bento">
       {% for sv in services %}
       <article class="svc rv{% if forloop.first %} svc--hero{% endif %}" data-glow{% if forloop.first %} data-live{% endif %} style="--a:{{ sv.accent|default:'#2E7BF6' }};--rd:{% cycle '0s' '.08s' '.16s' %}">

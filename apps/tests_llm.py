@@ -363,6 +363,6 @@ class JamiiLiteAnnouncementTests(TestCase):
         self.assertEqual(svc.icon, "network")
         r = self.client.get("/")
         self.assertContains(r, 'id="jamiilite"')
-        self.assertContains(r, "Inakuja hivi karibuni")
+        self.assertContains(r, "Coming soon · JamiiLite 5G")
         self.assertContains(r, "subject=JamiiLite%205G")
         self.assertContains(r, svc.service_type)

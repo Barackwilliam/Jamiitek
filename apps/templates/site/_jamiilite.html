@@ -1,6 +1,6 @@
 <style>
 /* ── JamiiLite 5G: tangazo — mtandao unaenea mtaa → mkoa → taifa (mzunguko wa 12s) ── */
-.jl{padding:calc(var(--sec)*.35) 0 0}
+.jl{margin:0 0 14px}
 .jl__card{position:relative;display:grid;gap:clamp(18px,3vw,40px);align-items:center;padding:clamp(22px,4vw,48px);border-radius:28px;color:#fff;overflow:hidden;isolation:isolate;
   background:radial-gradient(520px 320px at 85% 45%,rgba(34,184,224,.22),transparent 62%),radial-gradient(460px 300px at 0% 100%,rgba(245,166,35,.2),transparent 60%),linear-gradient(135deg,var(--navy-2),var(--navy-d));
   box-shadow:0 40px 90px -40px rgba(10,34,69,.7)}
@@ -9,8 +9,8 @@
 @media (min-width:900px){.jl__card{grid-template-columns:1fr 1.05fr}}
 .jl__tag{display:inline-flex;align-items:center;gap:8px;font:600 11.5px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--amber)}
 .jl__tag i{width:8px;height:8px;border-radius:50%;background:var(--sun);box-shadow:0 0 0 0 rgba(255,122,61,.6);animation:jlBeat 1.8s infinite}
-.jl__card h2{color:#fff;font-size:clamp(1.55rem,1rem + 2vw,2.45rem);font-weight:800;letter-spacing:-.045em;line-height:1.08;margin:12px 0 12px}
-.jl__card h2 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.jl__card h3{color:#fff;font-size:clamp(1.55rem,1rem + 2vw,2.45rem);font-weight:800;letter-spacing:-.045em;line-height:1.08;margin:12px 0 12px}
+.jl__card h3 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
 .jl__card p{color:var(--m-l);max-width:520px;margin:0 0 16px}
 .jl__ul{display:grid;gap:8px;margin:0 0 22px;padding:0;list-style:none;color:var(--t-l);font-size:.95rem}
 .jl__ul li{display:flex;gap:10px;align-items:flex-start}
@@ -59,25 +59,24 @@
   .jl-pkt{display:none}
 }
 </style>
-<section class="jl" id="jamiilite" aria-labelledby="jl-h">
-  <div class="wrap">
+<div class="jl" id="jamiilite">
     <div class="jl__card rv">
       <div>
-        <span class="jl__tag"><i></i>Inakuja hivi karibuni · JamiiLite 5G</span>
-        <h2 id="jl-h">WiFi yako, <em>inajiuza yenyewe</em> — mtaa kwa mtaa, mkoa kwa mkoa.</h2>
-        <p>JamiiLite 5G ni mfumo wa kusimamia biashara ya WiFi hotspot kwa wamiliki wa routers za MikroTik. Mteja anachagua kifurushi, analipa kwa simu na kuunganishwa papo hapo — muda ukiisha, anakatwa mwenyewe.</p>
+        <span class="jl__tag"><i></i>Coming soon · JamiiLite 5G</span>
+        <h3>Your WiFi, <em>selling itself</em> — street by street, region by region.</h3>
+        <p>JamiiLite 5G is a WiFi hotspot billing system for MikroTik router owners. Customers choose a package, pay by mobile money and get online instantly — and are disconnected automatically when their time runs out.</p>
         <ul class="jl__ul">
-          <li>Vocha za kiotomatiki mteja akishalipa</li>
-          <li>Muda na kasi kwa kila kifurushi</li>
-          <li>Vocha moja, idadi ya vifaa uliyoruhusu tu — hakuna kugawana password</li>
-          <li>Ona router ikiwa hewani na iwashe upya ukiwa mbali</li>
+          <li>Automatic vouchers the moment a customer pays</li>
+          <li>Time and speed limits for every package</li>
+          <li>One voucher works only on the devices you allow — no password sharing</li>
+          <li>See your routers online and restart them remotely</li>
         </ul>
-        <div class="jl__st" aria-hidden="true"><span>Mtaa kwa mtaa</span><span>Mkoa kwa mkoa</span><span>Taifa zima</span></div>
-        <a class="btn btn--gold" href="{% url 'contact' %}?subject=JamiiLite%205G">Nijulishe ikizinduliwa
+        <div class="jl__st" aria-hidden="true"><span>Street by street</span><span>Region by region</span><span>Nationwide</span></div>
+        <a class="btn btn--gold" href="{% url 'contact' %}?subject=JamiiLite%205G">Notify me at launch
           <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M4 11h12.2l-4.6-4.6L13 5l7 7-7 7-1.4-1.4 4.6-4.6H4z"/></svg></a>
       </div>
       <div class="jl__viz">
-      <svg class="jl-map" viewBox="-10 -10 530 510" role="img" aria-label="Ramani ya Tanzania: mtandao wa WiFi wa JamiiLite 5G unaenea kutoka mtaa mmoja hadi mikoa yote">
+      <svg class="jl-map" viewBox="-10 -10 530 510" role="img" aria-label="Map of Tanzania: the JamiiLite 5G WiFi network spreading from one street to every region">
         <defs>
           <linearGradient id="jlG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22B8E0"/><stop offset=".55" stop-color="#F5A623"/><stop offset="1" stop-color="#FF7A3D"/></linearGradient>
           <pattern id="jlDots" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="4.5" cy="4.5" r="1.2" fill="#7DE2FF" fill-opacity=".22"/></pattern>
@@ -93,5 +92,4 @@
       </svg>
       </div>
     </div>
-  </div>
-</section>
+</div>
