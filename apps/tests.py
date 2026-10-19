@@ -202,7 +202,7 @@ class TemplateSeoTest(NoPingMixin, TestCase):
         paid = _tpl(name='Two Ways', price=80000)
         page = self.client.get(paid.get_absolute_url()).content.decode()
         self.assertIn('Two ways to get Two Ways online', page)
-        self.assertNotIn('Njia mbili', page)                                 # maoni ya code hayavuji kwenye ukurasa
+        self.assertNotIn('mnunuzi analinganisha', page)                      # maoni ya template hayavuji kwenye ukurasa
         self.assertIn('<b>Do it yourself</b>', page)
         self.assertIn('<b>We build it for you</b>', page)
         self.assertIn('Free quote', page)                                    # ada ya kazi = 0: bei inakubaliwa
