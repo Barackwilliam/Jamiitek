@@ -88,6 +88,7 @@ class Service(models.Model):
         ('design', 'Palette — design'),
         ('builder', 'Builder — site builder'),
         ('layout', 'Layout — templates'),
+        ('network', 'Network — WiFi / internet'),
     ]
 
     service_type = models.CharField('Name', max_length=255, db_column='Service_type')

@@ -353,3 +353,16 @@ class JamiiBotModelChoiceTests(TestCase):
         self.client.post(url + "action/", {"action": "set_model", "ai_model": "evil"}, secure=True)
         self.bot.refresh_from_db()
         self.assertEqual(self.bot.ai_model, "gemini")
+
+
+class JamiiLiteAnnouncementTests(TestCase):
+    def test_homepage_shows_announcement_and_service(self):
+        from apps.models import Service
+        svc = Service.objects.get(service_type__startswith="JamiiLite")   # data migration 0057
+        self.assertTrue(svc.show_on_home)
+        self.assertEqual(svc.icon, "network")
+        r = self.client.get("/")
+        self.assertContains(r, 'id="jamiilite"')
+        self.assertContains(r, "Inakuja hivi karibuni")
+        self.assertContains(r, "subject=JamiiLite%205G")
+        self.assertContains(r, svc.service_type)
