@@ -78,6 +78,11 @@ body{font-family:'Inter',-apple-system,sans-serif;height:100vh;height:100dvh;dis
 #save-state{font-family:var(--ff-m);font-size:10.5px;color:var(--dim);letter-spacing:.5px;display:flex;align-items:center;gap:6px}
 #save-state.saving{color:var(--amber)}
 #save-state.saved{color:var(--green)}
+/* Template inayouzwa: bei ya kuchapisha inaonekana wakati wote (hakuna mshangao kwenye Publish) */
+.ed-draft{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;
+  color:#fcd34d;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.35);text-decoration:none}
+.ed-draft:hover{background:rgba(245,158,11,.2)}
+@media(max-width:900px){.ed-draft .full{display:none}}
 .grow{flex:1}
 
 .devs{display:flex;gap:2px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:3px}
@@ -549,6 +554,7 @@ li.CodeMirror-hint-active{background:rgba(0,212,255,.18)!important;color:#fff!im
     </select>
   </label>
   <span id="save-state"><span>●</span><span class="txt"> Ready</span></span>
+  {% if pay_template %}<a class="ed-draft" href="{% url 'builder:checkout' site.id 'template' %}" title="Your changes are saved as a draft. Pay when you are ready to put the website online.">Draft<span class="full"> · publishing costs</span> TSh {{ pay_template.price|floatformat:"0g" }}</a>{% endif %}
   <div class="grow"></div>
   <div class="devs" id="tour-devices" role="group" aria-label="Screen size">
     <button data-dev="Desktop" class="on" title="Desktop"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></button>

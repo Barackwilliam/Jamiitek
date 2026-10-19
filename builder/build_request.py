@@ -32,6 +32,11 @@ def build_fee():
     return pricing().build_fee
 
 
+def _renew_fee():
+    from .billing import pricing
+    return pricing().yearly_hosting_price
+
+
 class BuildForm(forms.ModelForm):
     class Meta:
         model = BuildRequest
@@ -112,7 +117,7 @@ def build_for_me(request, slug):
 
     return render(request, 'build_for_me.html', {
         'tpl': tpl, 'form': form, 'error': error, 'fee': fee, 'tpl_price': tpl_price, 'total': total,
-        'max_photos': MAX_PHOTOS,
+        'max_photos': MAX_PHOTOS, 'renew_fee': _renew_fee(),
     })
 
 

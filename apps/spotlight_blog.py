@@ -76,7 +76,8 @@ CORE_FACTS = {
         'Free subdomain: yourname.jamiitek.com',
         'Ready-made structures for shops, tourism, restaurants, events and more',
         'Orders and inquiries can go straight to WhatsApp',
-        'Templates from TSh 15,000 per month; start at jamiitek.com/get-started/',
+        'Ready-made templates are free to try in the Builder: free designs publish free on yourname.jamiitek.com, '
+        'paid designs have one price shown on each template page (jamiitek.com/templates/), paid once when publishing',
     ]),
     'domains-hosting': ('Domains & managed hosting', [
         'Domain registration for .co.tz (TSh 25,000/yr), .tz (TSh 15,000/yr), .com/.org/.net (TSh 30,000/yr)',

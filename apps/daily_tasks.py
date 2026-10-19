@@ -21,6 +21,7 @@ RATIBA (kila kazi ina alama yake ya cache, hazitegemeani):
   | send_digest                | siku        |
   | prune_site_imports         | siku        |
   | builder_hosting            | siku        |
+  | builder_unpaid             | siku        |
   | prune_snapshots            | siku 7      |
   | prune_baileys_keys         | siku 7      |
   | cluster_gaps               | siku 7      |
@@ -71,6 +72,7 @@ SCHEDULE = {
     'send_digest':               ('jamiitek:task:send_digest',         24 * 60 * MINUTE),
     'prune_site_imports':        ('jamiitek:task:prune_site_imports',  24 * 60 * MINUTE),
     'builder_hosting':           ('jamiitek:task:builder_hosting',     24 * 60 * MINUTE),
+    'builder_unpaid':            ('jamiitek:task:builder_unpaid',      24 * 60 * MINUTE),
     'prune_snapshots':           ('jamiitek:task:prune_snapshots',      7 * 24 * 60 * MINUTE),
     'prune_baileys_keys':        ('jamiitek:task:prune_baileys',        7 * 24 * 60 * MINUTE),
     'cluster_gaps':              ('jamiitek:task:cluster_gaps',         7 * 24 * 60 * MINUTE),
@@ -125,6 +127,7 @@ def _run_tasks_in_background():
         _run_command('prune_baileys_keys', quiet=True)
         _run_command('prune_site_imports', quiet=True)
         _run_command('builder_hosting')       # ukumbusho wa hosting ya Builder (builder/billing.py)
+        _run_command('builder_unpaid')        # ukumbusho kwa waliojaribu template inayouzwa bila kulipa
 
         # MPANGILIO: kuunganisha KABLA ya muhtasari, ili orodha
         # inayotumwa WhatsApp iwe imeshasafishwa.

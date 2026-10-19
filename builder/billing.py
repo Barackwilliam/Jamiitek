@@ -144,4 +144,7 @@ def fulfill(tx):
         fields += ['paid_template_id', 'is_published']
     site.save(update_fields=fields)
     site.bump_version()
+    if tx.purpose == 'builder_template':
+        from apps import template_funnel
+        template_funnel.count(tx.plan_id, 'paid')      # hatua ya 4 ya mauzo
     return True

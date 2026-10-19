@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Reminders — JamiiTek</title>
+<style>
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:#060d1e;color:#e6ecf5;font:16px/1.6 system-ui,-apple-system,'Segoe UI',sans-serif;padding:20px;box-sizing:border-box}
+.c{box-sizing:border-box;max-width:440px;width:100%;padding:30px;border-radius:20px;background:#0b1630;border:1px solid rgba(255,255,255,.1);text-align:center}
+h1{font-size:21px;margin:0 0 10px}p{margin:0 0 20px;color:#a9b6cc}
+button,a.b{display:inline-block;padding:13px 22px;border-radius:12px;border:0;font:700 15px system-ui,sans-serif;cursor:pointer;text-decoration:none}
+button{background:#f5a524;color:#111}a.b{background:rgba(255,255,255,.08);color:#e6ecf5;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="c">
+  {% if done %}
+  <h1>Reminders stopped</h1>
+  <p>We will not email you again about {{ site.site_name|default:site.subdomain }}. Your website is still saved.</p>
+  {% else %}
+  <h1>Stop reminders?</h1>
+  <p>We will stop emailing you about putting {{ site.site_name|default:site.subdomain }} online. Your website stays saved.</p>
+  <form method="post">{% csrf_token %}<button type="submit">Stop reminders</button></form>
+  {% endif %}
+  <a class="b" href="{% url 'builder:site_dashboard' site.id %}">Open my website</a>
+</div>
+</body>
+</html>

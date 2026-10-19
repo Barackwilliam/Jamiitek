@@ -1088,8 +1088,8 @@ class WebsiteTemplate(models.Model):
 
     @property
     def price_label(self):
-        """Maneno ya badge: "Bure" au "Inauzwa · TSh 80,000"."""
-        return f'Inauzwa · TSh {self.price:,}' if self.for_sale else 'Bure'
+        """Maneno ya badge: "Free" au "TSh 80,000 · one-time"."""
+        return f'TSh {self.price:,} · one-time' if self.for_sale else 'Free'
 
     def price_hosted_formatted(self):
         return f"{self.price_hosted_monthly:,}"
@@ -1103,6 +1103,24 @@ class WebsiteTemplate(models.Model):
         ordering = ['order', '-created_at']
         # /templates/: zilizo hai, kwa mpangilio
         indexes = [models.Index(fields=['is_active', 'order'], name='template_active_order_idx')]
+
+
+class TemplateFunnel(models.Model):
+    """Hatua 4 za kuuza template, kwa siku (apps/template_funnel.py). Zinaonekana kwenye admin ya
+    templates: zinaonyesha wateja wanapotelea — si kubahatisha."""
+    template = models.ForeignKey(WebsiteTemplate, on_delete=models.CASCADE, related_name='funnel')
+    day = models.DateField()
+    views = models.PositiveIntegerField(default=0, help_text='Ukurasa wa template umefunguliwa (bila bots wala staff)')
+    tries = models.PositiveIntegerField(default=0, help_text='Website imeanzishwa na template hii kwenye Builder')
+    checkouts = models.PositiveIntegerField(default=0, help_text='Website imefika ukurasa wa malipo (mara moja kwa website)')
+    paid = models.PositiveIntegerField(default=0, help_text='Malipo yamethibitishwa (Pesapal)')
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['template', 'day'], name='template_funnel_day_uniq')]
+        verbose_name = 'Template sales funnel (day)'
+
+    def __str__(self):
+        return f'{self.template_id} {self.day}'
 
 
 # ============================================================

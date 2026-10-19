@@ -223,6 +223,7 @@ def from_template(request, pk):
     "✨ Customize in Builder" kutoka Templates Marketplace. Asiye na account
     anajisajili kwanza, kisha anarudi hapa (builder/template_bridge.py).
     """
+    from apps import template_funnel
     from apps.models import WebsiteTemplate
     from .template_bridge import create_site_from_template, put_template_on_home, suggest_subdomain
 
@@ -240,6 +241,7 @@ def from_template(request, pk):
             if site is None:
                 raise Http404
             page = put_template_on_home(site, tpl)
+            template_funnel.count(tpl.pk, 'tries')
             messages.success(request, f'“{tpl.name}” is now the Home page of {site.site_name}. Make it yours!')
             return redirect('builder:page_editor', site_id=site.id, page_id=page.id)
         subdomain = (request.POST.get('subdomain') or '').lower().strip()
@@ -251,6 +253,7 @@ def from_template(request, pk):
             if not site_name:
                 raise ValidationError('Enter your business name.')
             site, page = create_site_from_template(request.user, tpl, site_name, subdomain)
+            template_funnel.count(tpl.pk, 'tries')
             _register_subdomain(site)
             messages.success(request, f'Your website is ready with the “{tpl.name}” design. '
                                       'Click any text or image to change it.')
@@ -681,6 +684,34 @@ def toggle_publish(request, site_id):
     return redirect('builder:site_dashboard', site_id=site.id)
 
 
+def unpaid_stop(request, token):
+    """Kusitisha email za "website yako iko tayari kwenda hewani" (builder_unpaid). GET inaonyesha
+    kitufe tu — scanner za email zinazofungua link zisisitishe ukumbusho bila mtu kutaka."""
+    from .management.commands.builder_unpaid import site_from_stop_token
+    site = site_from_stop_token(token)
+    if site is None:
+        raise Http404
+    done = False
+    if request.method == 'POST':
+        ts = dict(site.theme_settings or {})
+        ts['pay_reminders_off'] = True
+        ClientWebsite.objects.filter(pk=site.pk).update(theme_settings=ts)
+        done = True
+    return render(request, 'builder/unpaid_stop.html', {'site': site, 'done': done})
+
+
+def _funnel_checkout(site, tpl):
+    """Hatua ya 3 ya mauzo: website hii imefika ukurasa wa malipo — inahesabiwa mara moja tu."""
+    from apps import template_funnel
+    ts = dict(site.theme_settings or {})
+    if ts.get('funnel_checkout') == tpl.pk:
+        return
+    ts['funnel_checkout'] = tpl.pk
+    site.theme_settings = ts
+    site.save(update_fields=['theme_settings'])
+    template_funnel.count(tpl.pk, 'checkouts')
+
+
 @login_required
 def checkout(request, site_id, kind):
     """Ukurasa wa malipo (Pesapal): kununua template inayouzwa, au kuondoa logo ya JamiiTek."""
@@ -697,8 +728,11 @@ def checkout(request, site_id, kind):
         return redirect('builder:site_dashboard', site_id=site.id)
     if request.method == 'POST':
         return billing.start(request, site, kind)
+    if kind == 'template':
+        _funnel_checkout(site, tpl)
     return render(request, 'builder/checkout.html', {'site': site, 'kind': kind, 'tpl': tpl, 'price': price,
-                                                     'paused': billing.is_paused(site)})
+                                                     'paused': billing.is_paused(site),
+                                                     'renew_fee': billing.pricing().yearly_hosting_price})
 
 
 # ── Pages + Editor ──────────────────────────────────────
@@ -713,8 +747,10 @@ def page_editor(request, site_id, page_id):
         canvas_head = _canvas_head(page.raw_document)
     from .layouts import font_for
     font_href, font_body, font_head = font_for(site)
+    from .billing import needs_payment
     return render(request, 'builder/editor.html', {
         'site': site, 'page': page,
+        'pay_template': needs_payment(site),       # "Draft · publishing costs TSh X" juu
         'pages': site.pages.all(),                 # kuhamia ukurasa mwingine bila kutoka editor
         'collections': site.collections.all(),
         'canvas_head': canvas_head,

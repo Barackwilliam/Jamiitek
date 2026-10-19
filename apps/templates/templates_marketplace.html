@@ -10,9 +10,10 @@
 
 {% block extra_css %}
 {% comment %}
-Templates Marketplace. Kila template ina badge ya bei ("Bure" au "Inauzwa · TSh …")
+Templates Marketplace. Kila template ina badge ya bei ("Free" au "TSh … · one-time")
 na njia mbili:
-  ✨ Try it free   — builder:from_template (builder/template_bridge.py)
+  View template    — ukurasa wa template (unaeleza bei, unauza)
+  ✨ Customize free — builder:from_template (builder/template_bridge.py)
   👁 Live preview  — template_preview
 Hakuna malipo kupitia WhatsApp — malipo yote ni Pesapal (Builder).
 CSS yote iko ndani ya .mk ili isiguse base.html.
@@ -39,18 +40,18 @@ CSS yote iko ndani ya .mk ili isiguse base.html.
       </div>
       <div class="mk-ctas">
         <a class="mk-btn p" href="#mk-grid">Browse {{ total_count }} template{{ total_count|pluralize }} ↓</a>
-        <a class="mk-btn s" href="{% url 'builder:signup' %}">Start from a blank page</a>
+        <a class="mk-btn s" href="{% url 'select_website' %}">Have us build it</a>
       </div>
       <div class="mk-stats"><span><b>{{ total_count }}</b>designs</span><span><b>Free</b>to try</span>
-        <span><b>One</b>payment, no monthly fee</span><span><b>100%</b>works on phones</span></div>
+        {% if renew_fee %}<span><b>1 year</b>hosting included</span>{% else %}<span><b>One</b>payment, no monthly fee</span>{% endif %}<span><b>100%</b>works on phones</span></div>
     </div>
   </section>
 
   <section class="mk-in">
     <div class="mk-steps">
       <div class="mk-step"><i>01</i><span>🎨</span><b>Pick a design</b><p>See how it looks on a phone, tablet and computer before you choose.</p></div>
-      <div class="mk-step"><i>02</i><span>✨</span><b>Try it free</b><p>Add your business name, photos, prices and WhatsApp number. It costs nothing to try.</p></div>
-      <div class="mk-step"><i>03</i><span>🚀</span><b>Put it online</b><p>Free designs go online for free. For designs with a price, you pay once with M-Pesa, Tigo Pesa, Airtel Money or card.</p></div>
+      <div class="mk-step"><i>02</i><span>✨</span><b>Customize free</b><p>Add your business name, photos, prices and WhatsApp number. It costs nothing to try.</p></div>
+      <div class="mk-step"><i>03</i><span>🚀</span><b>Put it online</b><p>Free designs go online for free. For designs with a price, you pay once with M-Pesa, Tigo Pesa, Airtel Money or card{% if renew_fee %} — the first year of hosting is included{% endif %}.</p></div>
     </div>
   </section>
 
@@ -75,8 +76,8 @@ CSS yote iko ndani ya .mk ili isiguse base.html.
           <div class="mk-chrome"><i></i><i></i><i></i><span>{{ tpl.name|slugify }}.jamiitek.com</span></div>
           <div class="mk-frame"><iframe data-src="{% url 'template_preview_raw' tpl.pk %}" title="{{ tpl.name }}" tabindex="-1" aria-hidden="true" loading="lazy"></iframe><div class="mk-shine"></div></div>
           <div class="mk-hover">
-            <a class="mk-btn s" href="{{ tpl.get_absolute_url }}">👁 See details</a>
-            <a class="mk-btn p" href="{% url 'builder:from_template' tpl.pk %}">✨ Try it free</a>
+            <a class="mk-btn p" href="{{ tpl.get_absolute_url }}">View template</a>
+            <a class="mk-btn s" href="{% url 'builder:from_template' tpl.pk %}">✨ Customize free</a>
           </div>
           {% if tpl.badge %}<span class="mk-badge {{ tpl.badge }}">{{ tpl.get_badge_display }}</span>{% endif %}
         </div>
@@ -85,7 +86,7 @@ CSS yote iko ndani ya .mk ili isiguse base.html.
           <h3><a href="{{ tpl.get_absolute_url }}">{{ tpl.name }}</a></h3>
           <p>{{ tpl.description }}</p>
           <div class="mk-acts">
-            <a class="mk-btn p" href="{% url 'builder:from_template' tpl.pk %}">✨ Try it free</a>
+            <a class="mk-btn p" href="{{ tpl.get_absolute_url }}">View template</a>
             <a class="mk-btn s mk-ic" href="{% url 'template_preview' tpl.pk %}" target="_blank" rel="noopener" title="Live preview" aria-label="Live preview of {{ tpl.name }}">
               <svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></a>
           </div>
@@ -101,7 +102,7 @@ CSS yote iko ndani ya .mk ili isiguse base.html.
       <div><h2>No time to do it yourself?</h2>
         <p>Tell us about your business and send your photos. Our team will build your website for you.</p></div>
       <div class="mk-ctas">
-        <a class="mk-btn p" href="{% url 'select_website' %}">Unahitaji tukutengenezee?</a>
+        <a class="mk-btn p" href="{% url 'select_website' %}">Have us build it</a>
         <a class="mk-btn s" href="{% url 'builder:signup' %}">Start from a blank page</a>
       </div>
     </div>

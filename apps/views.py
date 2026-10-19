@@ -757,13 +757,20 @@ def templates_marketplace(request, cat_slug=None):
         'seo': seo,
         'canonical': url,
         'item_list_ld': json.dumps(template_seo.item_list_ld(tpl_list, list_name, url), ensure_ascii=False),
+        **_offer(),
     })
 
 
-def _build_fee():
-    """Ada ya "Unahitaji tukutengenezee?" (0 = vitufe vinaelekeza kwenye proposal kama zamani)."""
-    from builder.build_request import build_fee
-    return build_fee()
+def _offer():
+    """Bei zote za admin (BuilderPricing) ambazo mnunuzi anapaswa kuziona KABLA ya kulipa.
+
+    renew_fee — hosting ya kila mwaka kuanzia mwaka wa 2 (0 = haiishi)
+    logo_fee  — kuondoa "Developed by JamiiTek" kwenye template ya bure (0 = haitolewi)
+    build_fee — timu ikujengee (0 = kitufe kinaelekeza kwenye proposal)
+    """
+    from builder.billing import pricing
+    p = pricing()
+    return {'renew_fee': p.yearly_hosting_price, 'logo_fee': p.remove_logo_price, 'build_fee': p.build_fee}
 
 
 def template_detail(request, slug):
@@ -774,6 +781,10 @@ def template_detail(request, slug):
     # Supabase hapa — demo zinapakiwa na iframe, na anatomia iko kwenye cache ya RAM.
     heavy = ('preview_html', 'long_description')
     tpl = get_object_or_404(WebsiteTemplate.objects.defer('preview_html'), slug=slug, is_active=True)
+    from . import template_funnel
+    if request.method == 'GET' and template_funnel.is_person(request):
+        template_funnel.count(tpl.pk, 'views')
+    offer = _offer()
     related = list(WebsiteTemplate.objects.defer(*heavy).filter(is_active=True, category=tpl.category)
                    .exclude(pk=tpl.pk).order_by('order', '-created_at')[:3])
     if len(related) < 3:
@@ -793,7 +804,8 @@ def template_detail(request, slug):
         'faq': template_seo.faq(tpl),
         'related': related,
         'anatomy': template_seo.anatomy(tpl),
-        'build_fee': _build_fee(),
+        **offer,
+        'build_total': (tpl.price if tpl.for_sale else 0) + offer['build_fee'],   # sawa na builder/build_request.py
         'json_ld': [json.dumps(block, ensure_ascii=False) for block in template_seo.json_ld(tpl)],
     })
 
@@ -807,7 +819,7 @@ def template_preview(request, pk):
     return render(request, 'template_preview.html', {
         'template': tpl, 'canonical': template_seo.BASE_URL + tpl.get_absolute_url(),
         'anatomy': template_seo.anatomy(tpl), 'cat_noun': template_seo.cat_info(tpl)['noun'],
-        'build_fee': _build_fee()})
+        **_offer()})
 
 
 from django.views.decorators.clickjacking import xframe_options_exempt
