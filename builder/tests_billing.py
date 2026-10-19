@@ -103,6 +103,19 @@ class PaidTemplateTest(BillingBase):
         page = self.c.get(f'/builder/site/{site.id}/pay/template/').content.decode()
         self.assertIn('From year 2: TSh 40,000 per year to stay online', page)
 
+    def test_funnel_counts_try_checkout_once_and_paid(self):
+        from apps.models import TemplateFunnel
+        tpl = WebsiteTemplate.objects.create(name='Funnel Shop', category='shop', description='Shop.',
+                                             preview_html=DOC, price=80000)
+        r = self.c.post(f'/builder/templates/{tpl.pk}/use/', {'target': 'new', 'site_name': 'Duka Jipya', 'subdomain': 'dukajipya'})
+        self.assertEqual(r.status_code, 302)
+        site = self.user.websites.get(subdomain='dukajipya')
+        self.c.get(f'/builder/site/{site.id}/pay/template/')
+        self.c.get(f'/builder/site/{site.id}/pay/template/')          # reload haihesabiwi tena
+        self.pay(site, 'template')
+        row = TemplateFunnel.objects.get(template=tpl)
+        self.assertEqual((row.tries, row.checkouts, row.paid), (1, 1, 1))
+
     def test_amount_comes_from_the_server_not_the_form(self):
         site = self.make_site(price=80000)
         with _pesapal():

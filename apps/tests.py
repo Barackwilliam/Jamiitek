@@ -197,6 +197,50 @@ class TemplateSeoTest(NoPingMixin, TestCase):
         self.assertIn('Remove the logo later: TSh 20,000 once, then TSh 40,000 per year',
                       self.client.get(free.get_absolute_url()).content.decode())
 
+    def test_two_ways_to_buy_side_by_side(self):
+        from builder.models import BuilderPricing
+        paid = _tpl(name='Two Ways', price=80000)
+        page = self.client.get(paid.get_absolute_url()).content.decode()
+        self.assertIn('Two ways to get Two Ways online', page)
+        self.assertNotIn('Njia mbili', page)                                 # maoni ya code hayavuji kwenye ukurasa
+        self.assertIn('<b>Do it yourself</b>', page)
+        self.assertIn('<b>We build it for you</b>', page)
+        self.assertIn('Free quote', page)                                    # ada ya kazi = 0: bei inakubaliwa
+        self.assertIn('href="/proposals/?template=%d">Have us build it' % paid.pk, page)
+        p = BuilderPricing.get(); p.build_fee = 100000; p.save()
+        page = self.client.get(paid.get_absolute_url()).content.decode()
+        self.assertIn('TSh 180,000<small>one time</small>', page)            # design + kazi, jumla moja
+        self.assertIn('Design TSh 80,000 + our work TSh 100,000', page)
+        self.assertIn('href="/templates/two-ways/build-for-me/">Have us build it', page)
+        self.assertNotIn('Free quote', page)
+
+    def test_sales_funnel_counts_people_not_bots_or_staff(self):
+        from django.contrib.auth.models import User
+        from apps.models import TemplateFunnel
+        tpl = _tpl(name='Funnel One', price=80000)
+        browser = 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/126 Mobile Safari/537.36'
+        self.client.get(tpl.get_absolute_url(), HTTP_USER_AGENT=browser)
+        self.client.get(tpl.get_absolute_url(), HTTP_USER_AGENT=browser)
+        self.client.get(tpl.get_absolute_url(), HTTP_USER_AGENT='Mozilla/5.0 (compatible; Googlebot/2.1)')
+        self.client.get(tpl.get_absolute_url())                               # hakuna user agent
+        staff = User.objects.create_user('mhariri', password='x', is_staff=True)
+        self.client.force_login(staff)
+        self.client.get(tpl.get_absolute_url(), HTTP_USER_AGENT=browser)
+        self.assertEqual(TemplateFunnel.objects.get(template=tpl).views, 2)
+
+    def test_funnel_shows_in_templates_admin(self):
+        from django.contrib.auth.models import User
+        from django.utils import timezone
+        from apps.models import TemplateFunnel
+        tpl = _tpl(name='Admin Funnel', price=80000)
+        TemplateFunnel.objects.create(template=tpl, day=timezone.localdate(), views=50, tries=10, checkouts=4, paid=1)
+        TemplateFunnel.objects.create(template=tpl, day=timezone.localdate() - timezone.timedelta(days=40), views=999)
+        admin_user = User.objects.create_superuser('mmiliki', 'm@example.com', 'x')
+        self.client.force_login(admin_user)
+        with mock.patch.dict('os.environ', {'STAFF_2FA_REQUIRED': 'false'}):
+            page = self.client.get('/admin/apps/websitetemplate/').content.decode()
+        self.assertIn('50 views → 10 tried (20%) → 4 at checkout (40%) → 1 paid (25%)', page)   # siku 40 hazihesabiwi
+
     def test_market_card_leads_to_the_template_page(self):
         tpl = _tpl(name='Card One', price=80000)
         market = self.client.get('/templates/').content.decode()

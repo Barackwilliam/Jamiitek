@@ -438,7 +438,7 @@ from .models import WebsiteTemplate
 
 @admin.register(WebsiteTemplate)
 class WebsiteTemplateAdmin(admin.ModelAdmin):
-    list_display  = ('name', 'category', 'badge', 'is_free', 'price', 'is_active', 'order')
+    list_display  = ('name', 'category', 'badge', 'is_free', 'price', 'is_active', 'order', 'funnel_30d')
     list_editable = ('is_active', 'order', 'badge', 'is_free', 'price')
     list_filter   = ('category', 'is_active', 'is_free', 'badge')
     search_fields = ('name', 'description')
@@ -455,8 +455,9 @@ class WebsiteTemplateAdmin(admin.ModelAdmin):
         }),
         ('💰 Pricing', {
             'fields': ('is_free', 'price'),
-            'description': 'Weka tiki "Free" kwa template ya bure (badge: Bure), AU andika bei ya kununua mara moja '
-                           '(badge: Inauzwa · TSh …). Malipo yote ni kupitia Pesapal.'
+            'description': 'Weka tiki "Free" kwa template ya bure (badge: Free), AU andika bei ya kununua mara moja '
+                           '(badge: TSh … · one-time). Malipo yote ni kupitia Pesapal. Ada ya hosting ya mwaka '
+                           'wa 2, kuondoa logo na "Have us build it" ziko kwenye Builder pricing.'
         }),
         ('🎨 Card Appearance', {
             'fields': ('gradient_start', 'gradient_end'),
@@ -470,6 +471,25 @@ class WebsiteTemplateAdmin(admin.ModelAdmin):
             'fields': ('is_active', 'order')
         }),
     )
+
+    # Hatua 4 za mauzo (apps/template_funnel.py), siku 30 zilizopita — wateja wanapotelea wapi
+    def get_queryset(self, request):
+        from datetime import timedelta
+        from django.db.models import Q, Sum
+        from django.utils import timezone
+        last30 = Q(funnel__day__gt=timezone.localdate() - timedelta(days=30))
+        return super().get_queryset(request).annotate(**{
+            f'f_{k}': Sum(f'funnel__{k}', filter=last30) for k in ('views', 'tries', 'checkouts', 'paid')})
+
+    @admin.display(description='Sales — last 30 days')
+    def funnel_30d(self, obj):
+        v, t, c, p = (getattr(obj, f'f_{k}', 0) or 0 for k in ('views', 'tries', 'checkouts', 'paid'))
+
+        def pct(a, b):
+            return f' ({round(a * 100 / b)}%)' if b else ''
+        if not obj.for_sale:      # template ya bure haina malipo — hatua mbili tu zina maana
+            return f'{v} views → {t} tried{pct(t, v)}'
+        return f'{v} views → {t} tried{pct(t, v)} → {c} at checkout{pct(c, t)} → {p} paid{pct(p, c)}'
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)

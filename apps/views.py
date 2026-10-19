@@ -781,6 +781,10 @@ def template_detail(request, slug):
     # Supabase hapa — demo zinapakiwa na iframe, na anatomia iko kwenye cache ya RAM.
     heavy = ('preview_html', 'long_description')
     tpl = get_object_or_404(WebsiteTemplate.objects.defer('preview_html'), slug=slug, is_active=True)
+    from . import template_funnel
+    if request.method == 'GET' and template_funnel.is_person(request):
+        template_funnel.count(tpl.pk, 'views')
+    offer = _offer()
     related = list(WebsiteTemplate.objects.defer(*heavy).filter(is_active=True, category=tpl.category)
                    .exclude(pk=tpl.pk).order_by('order', '-created_at')[:3])
     if len(related) < 3:
@@ -800,7 +804,8 @@ def template_detail(request, slug):
         'faq': template_seo.faq(tpl),
         'related': related,
         'anatomy': template_seo.anatomy(tpl),
-        **_offer(),
+        **offer,
+        'build_total': (tpl.price if tpl.for_sale else 0) + offer['build_fee'],   # sawa na builder/build_request.py
         'json_ld': [json.dumps(block, ensure_ascii=False) for block in template_seo.json_ld(tpl)],
     })
 

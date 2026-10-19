@@ -223,6 +223,7 @@ def from_template(request, pk):
     "✨ Customize in Builder" kutoka Templates Marketplace. Asiye na account
     anajisajili kwanza, kisha anarudi hapa (builder/template_bridge.py).
     """
+    from apps import template_funnel
     from apps.models import WebsiteTemplate
     from .template_bridge import create_site_from_template, put_template_on_home, suggest_subdomain
 
@@ -240,6 +241,7 @@ def from_template(request, pk):
             if site is None:
                 raise Http404
             page = put_template_on_home(site, tpl)
+            template_funnel.count(tpl.pk, 'tries')
             messages.success(request, f'“{tpl.name}” is now the Home page of {site.site_name}. Make it yours!')
             return redirect('builder:page_editor', site_id=site.id, page_id=page.id)
         subdomain = (request.POST.get('subdomain') or '').lower().strip()
@@ -251,6 +253,7 @@ def from_template(request, pk):
             if not site_name:
                 raise ValidationError('Enter your business name.')
             site, page = create_site_from_template(request.user, tpl, site_name, subdomain)
+            template_funnel.count(tpl.pk, 'tries')
             _register_subdomain(site)
             messages.success(request, f'Your website is ready with the “{tpl.name}” design. '
                                       'Click any text or image to change it.')
@@ -681,6 +684,18 @@ def toggle_publish(request, site_id):
     return redirect('builder:site_dashboard', site_id=site.id)
 
 
+def _funnel_checkout(site, tpl):
+    """Hatua ya 3 ya mauzo: website hii imefika ukurasa wa malipo — inahesabiwa mara moja tu."""
+    from apps import template_funnel
+    ts = dict(site.theme_settings or {})
+    if ts.get('funnel_checkout') == tpl.pk:
+        return
+    ts['funnel_checkout'] = tpl.pk
+    site.theme_settings = ts
+    site.save(update_fields=['theme_settings'])
+    template_funnel.count(tpl.pk, 'checkouts')
+
+
 @login_required
 def checkout(request, site_id, kind):
     """Ukurasa wa malipo (Pesapal): kununua template inayouzwa, au kuondoa logo ya JamiiTek."""
@@ -697,6 +712,8 @@ def checkout(request, site_id, kind):
         return redirect('builder:site_dashboard', site_id=site.id)
     if request.method == 'POST':
         return billing.start(request, site, kind)
+    if kind == 'template':
+        _funnel_checkout(site, tpl)
     return render(request, 'builder/checkout.html', {'site': site, 'kind': kind, 'tpl': tpl, 'price': price,
                                                      'paused': billing.is_paused(site),
                                                      'renew_fee': billing.pricing().yearly_hosting_price})

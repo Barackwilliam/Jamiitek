@@ -149,18 +149,22 @@ ukurasa una hisia ya template yake.
 .td-feat span{font-size:24px}.td-feat h3{font-size:16.5px;margin:12px 0 6px;font-weight:800}.td-feat p{margin:0;color:var(--mut);font-size:14px;line-height:1.6}
 .td-feat.hi{border-color:rgba(0,212,255,.3);background:linear-gradient(160deg,rgba(0,212,255,.1),rgba(124,92,255,.05))}
 
-.td-buy{display:grid;grid-template-columns:1.1fr 1fr;gap:0;border-radius:24px;border:1px solid var(--line);overflow:hidden;
-  background:linear-gradient(160deg,color-mix(in srgb,var(--t1) 14%,#0a0f1c),#0a0f1c 70%)}
-.td-buy-l{padding:clamp(22px,3vw,34px)}
 .td-buy-pr{font-size:clamp(34px,4.4vw,48px);font-weight:800;letter-spacing:-.04em;margin:16px 0 4px}
 .td-buy-pr small{display:inline-block;margin-left:10px;font-size:15px;font-weight:600;color:var(--mut);letter-spacing:0}
-.td-buy ul{list-style:none;padding:0;margin:14px 0 0;color:#d6deea;font-size:15px}
-.td-buy li{padding:7px 0 7px 28px;position:relative}.td-buy li::before{content:"✓";position:absolute;left:0;color:var(--g);font-weight:800}
-.td-buy-r{display:flex;flex-direction:column;justify-content:center;gap:14px;padding:clamp(22px,3vw,34px);border-left:1px solid var(--line);background:rgba(255,255,255,.02)}
-.td-buy-r .mk-btn{justify-content:center;font-size:16px;padding:16px 24px}
-.td-buy-r p{margin:0;color:var(--mut);font-size:14.5px;line-height:1.6}
-.td-pay{font-size:12.5px;font-weight:700;color:#cfd8e8;padding:10px 12px;border-radius:12px;border:1px dashed var(--line);text-align:center}
-.td-help{font-weight:800;color:var(--c);text-align:center}
+.td-way ul{list-style:none;padding:0;margin:14px 0 0;color:#d6deea;font-size:15px}
+.td-way li{padding:7px 0 7px 28px;position:relative}.td-way li::before{content:"✓";position:absolute;left:0;color:var(--g);font-weight:800}
+/* Njia mbili za kununua, bega kwa bega (simu: moja juu ya nyingine, "Do it yourself" kwanza) */
+.td-ways{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.td-way{display:flex;flex-direction:column;padding:clamp(22px,3vw,32px);border-radius:24px;border:1px solid var(--line);
+  background:linear-gradient(160deg,color-mix(in srgb,var(--t1) 14%,#0a0f1c),#0a0f1c 70%)}
+.td-way.alt{background:rgba(255,255,255,.02)}
+.td-way-h{display:flex;align-items:center;justify-content:space-between;gap:10px}.td-way-h b{font-size:18px;letter-spacing:-.01em}
+.td-way .td-buy-pr{margin:14px 0 2px}
+.td-way-sub{margin:0;color:var(--mut);font-size:14px;line-height:1.55}
+.td-way ul{flex:1}
+.td-way .mk-btn{justify-content:center;margin-top:20px;font-size:16px;padding:15px 22px}
+.td-way-note{margin:10px 0 0;text-align:center;font-size:12.5px;line-height:1.5;color:var(--mut)}
+.tp-tag.pro{color:#9fd8ff;background:rgba(0,180,255,.1);border:1px solid rgba(0,180,255,.38)}
 .td-plans{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 .td-plan{position:relative;display:flex;flex-direction:column;padding:26px;border-radius:22px;border:1px solid var(--line);background:#0a0f1c}
 .td-plan.best{border-color:rgba(37,211,102,.5);background:linear-gradient(170deg,rgba(37,211,102,.1),#0a0f1c 60%)}
@@ -205,7 +209,7 @@ ukurasa una hisia ya template yake.
   .td-hero h1{order:2}.td-stage{order:3;margin:4px auto 30px}.td-lead{order:4}.td-ctas{order:5}.td-note{order:6}.td-stats{order:7}
  .td-feats,.td-plans,.td-rel{grid-template-columns:1fr 1fr}
   .td-stage{max-width:660px;width:100%}.td-dna{grid-template-columns:1fr 1fr}.td-dna .td-box:first-child{grid-column:1/-1}}
-@media(max-width:760px){.td-buy{grid-template-columns:1fr}.td-buy-r{border-left:0;border-top:1px solid var(--line)}}
+@media(max-width:760px){.td-ways{grid-template-columns:1fr}}
 @media(max-width:620px){.td-feats,.td-plans,.td-rel,.td-dna{grid-template-columns:1fr}.td-stats{grid-template-columns:1fr 1fr;width:100%}
   .td-stats div:nth-child(2){border-right:0}.td-stats div:nth-child(-n+2){border-bottom:1px solid var(--line)}
   .td-chip{display:none}.td-phone{right:-2%}.td-stage{padding-bottom:20px}.td-rig{--ry:0deg;--rx:0deg}
@@ -338,11 +342,14 @@ ukurasa una hisia ya template yake.
 
   <section class="mk-in td-sec" id="pricing">
     <span class="td-kick">Price</span>
-    <h2>{% if tpl.for_sale %}{% if renew_fee %}Pay once. First year of hosting included.{% else %}Pay one time. No monthly fee.{% endif %}{% else %}This design is free.{% endif %}</h2>
-    <div class="td-buy">
-      <div class="td-buy-l">
-        <span class="tp-tag {% if tpl.for_sale %}sale{% else %}free{% endif %}">{% if tpl.for_sale %}One-time{% else %}Free{% endif %}</span>
+    <h2>Two ways to get {{ tpl.name }} online</h2>
+    {% comment %}Njia mbili bega kwa bega: mnunuzi analinganisha bei zote kabla ya kuchagua. Bei ya "We build
+       it" inaifanya "Do it yourself" ionekane nafuu, na wasio na muda wanaiona huduma kamili.{% endcomment %}
+    <div class="td-ways">
+      <div class="td-way">
+        <div class="td-way-h"><b>Do it yourself</b><span class="tp-tag {% if tpl.for_sale %}sale{% else %}free{% endif %}">{% if tpl.for_sale %}One-time{% else %}Free{% endif %}</span></div>
         <div class="td-buy-pr">{% if tpl.for_sale %}TSh {{ tpl.price|intcomma }}<small>one time</small>{% else %}TSh 0<small>free</small>{% endif %}</div>
+        <p class="td-way-sub">{% if tpl.for_sale %}{% if renew_fee %}Pay once. First year of hosting included.{% else %}Pay one time. No monthly fee.{% endif %}{% else %}This design is free.{% endif %}</p>
         <ul>{% if tpl.for_sale %}
           <li>Your website goes online</li>
           <li>No JamiiTek logo on your site</li>
@@ -355,12 +362,34 @@ ukurasa una hisia ya template yake.
           <li>"Developed by JamiiTek" at the bottom</li>
           {% if logo_fee %}<li>Remove the logo later: TSh {{ logo_fee|intcomma }} once{% if renew_fee %}, then TSh {{ renew_fee|intcomma }} per year{% endif %}</li>{% endif %}
         {% endif %}</ul>
-      </div>
-      <div class="td-buy-r">
         <a class="mk-btn p" href="{% url 'builder:from_template' tpl.pk %}">✨ Customize free</a>
-        <p>{% if tpl.for_sale %}Add your name, photos and WhatsApp number first. You pay only when you are ready to put it online.{% else %}Add your name, photos and WhatsApp number, then put it online.{% endif %}</p>
-        {% if tpl.for_sale %}<div class="td-pay">M-Pesa · Tigo Pesa · Airtel Money · Card</div>{% endif %}
-        <a class="td-help" href="{% if build_fee %}{% url 'build_for_me' tpl.slug %}{% else %}{% url 'select_website' %}?template={{ tpl.pk }}{% endif %}">Have us build it for you →</a>
+        <p class="td-way-note">{% if tpl.for_sale %}Pay only when you publish · M-Pesa · Tigo Pesa · Airtel Money · Card{% else %}Add your name, photos and WhatsApp number, then put it online.{% endif %}</p>
+      </div>
+      <div class="td-way alt">
+        <div class="td-way-h"><b>We build it for you</b><span class="tp-tag pro">Done for you</span></div>
+        {% if build_fee %}
+        <div class="td-buy-pr">TSh {{ build_total|intcomma }}<small>one time</small></div>
+        <p class="td-way-sub">{% if tpl.for_sale %}Design TSh {{ tpl.price|intcomma }} + our work TSh {{ build_fee|intcomma }}{% else %}Our work only — the design is free{% endif %}</p>
+        <ul>
+          <li>We add your name, photos, prices and WhatsApp</li>
+          <li>We call you within one working day</li>
+          <li>No JamiiTek logo on your site</li>
+          {% if renew_fee %}<li>Hosting for the first year included</li>
+          <li>From year 2: TSh {{ renew_fee|intcomma }} per year to stay online</li>{% else %}<li>Hosting included — no yearly fee</li>{% endif %}
+        </ul>
+        <a class="mk-btn s" href="{% url 'build_for_me' tpl.slug %}">Have us build it →</a>
+        <p class="td-way-note">Pay once with M-Pesa, Tigo Pesa, Airtel Money or card</p>
+        {% else %}
+        <div class="td-buy-pr">Free quote</div>
+        <p class="td-way-sub">Tell us about your business — you get a fixed price before any work starts.</p>
+        <ul>
+          <li>Our team builds it with your content</li>
+          <li>Price and timeline agreed before we start</li>
+          <li>You see the progress as it is built</li>
+        </ul>
+        <a class="mk-btn s" href="{% url 'select_website' %}?template={{ tpl.pk }}">Have us build it →</a>
+        <p class="td-way-note">Nothing to pay to ask</p>
+        {% endif %}
       </div>
     </div>
   </section>
