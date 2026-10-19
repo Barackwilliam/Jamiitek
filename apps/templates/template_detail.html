@@ -41,6 +41,8 @@ ukurasa una hisia ya template yake.
   background:linear-gradient(90deg,var(--t1),var(--t2));-webkit-background-clip:text;background-clip:text;color:transparent;filter:brightness(1.35) saturate(1.2)}
 .td-lead{font-size:17px;line-height:1.7;color:var(--mut);margin:0 0 26px;max-width:540px}
 .td-ctas{display:flex;flex-wrap:wrap;gap:10px}
+/* Bei inaelezwa pale pale chini ya kitufe — mnunuzi hashangazwi na bei akibonyeza Publish */
+.td-note{margin:12px 0 0;font-size:13.5px;color:var(--mut)}
 .td-stats{display:grid;grid-template-columns:repeat(4,auto);justify-content:start;gap:0;margin-top:30px;border:1px solid var(--line);border-radius:18px;
   background:rgba(255,255,255,.03);backdrop-filter:blur(8px);width:max-content;max-width:100%}
 .td-stats div{padding:12px 14px;border-right:1px solid var(--line)}.td-stats div:last-child{border:0}
@@ -200,7 +202,7 @@ ukurasa una hisia ya template yake.
 @media(max-width:980px){.td-article{grid-template-columns:1fr}
   /* Simu/tablet: template ionekane mara moja chini ya jina, kabla ya maelezo */
   .td-grid{display:flex;flex-direction:column;gap:0}.td-copy{display:contents}.td-tags{order:1}
-  .td-hero h1{order:2}.td-stage{order:3;margin:4px auto 30px}.td-lead{order:4}.td-ctas{order:5}.td-stats{order:6}
+  .td-hero h1{order:2}.td-stage{order:3;margin:4px auto 30px}.td-lead{order:4}.td-ctas{order:5}.td-note{order:6}.td-stats{order:7}
  .td-feats,.td-plans,.td-rel{grid-template-columns:1fr 1fr}
   .td-stage{max-width:660px;width:100%}.td-dna{grid-template-columns:1fr 1fr}.td-dna .td-box:first-child{grid-column:1/-1}}
 @media(max-width:760px){.td-buy{grid-template-columns:1fr}.td-buy-r{border-left:0;border-top:1px solid var(--line)}}
@@ -228,9 +230,10 @@ ukurasa una hisia ya template yake.
           <h1>{{ tpl.name }}<small>{{ cat_noun|capfirst }} website template</small></h1>
           <p class="td-lead">{{ tpl.description|truncatewords:34 }}</p>
           <div class="td-ctas">
-            <a class="mk-btn p" href="{% url 'builder:from_template' tpl.pk %}">✨ Try it free</a>
+            <a class="mk-btn p" href="{% url 'builder:from_template' tpl.pk %}">✨ Customize free</a>
             <a class="mk-btn s" href="#studio">▶ See it working</a>
           </div>
+          <p class="td-note">{% if tpl.for_sale %}Free to try — pay TSh {{ tpl.price|intcomma }} only when you publish.{% else %}Free to try and free to publish.{% endif %}</p>
           <div class="td-stats">
             {% if anatomy.section_count %}<div><b>{{ anatomy.section_count }}</b><span>designed sections</span></div>{% endif %}
             <div><b>3</b><span>screen sizes</span></div>
@@ -335,28 +338,29 @@ ukurasa una hisia ya template yake.
 
   <section class="mk-in td-sec" id="pricing">
     <span class="td-kick">Price</span>
-    <h2>{% if tpl.for_sale %}Pay one time. No monthly fee.{% else %}This design is free.{% endif %}</h2>
+    <h2>{% if tpl.for_sale %}{% if renew_fee %}Pay once. First year of hosting included.{% else %}Pay one time. No monthly fee.{% endif %}{% else %}This design is free.{% endif %}</h2>
     <div class="td-buy">
       <div class="td-buy-l">
-        <span class="tp-tag {% if tpl.for_sale %}sale{% else %}free{% endif %}">{% if tpl.for_sale %}Inauzwa{% else %}Bure{% endif %}</span>
+        <span class="tp-tag {% if tpl.for_sale %}sale{% else %}free{% endif %}">{% if tpl.for_sale %}One-time{% else %}Free{% endif %}</span>
         <div class="td-buy-pr">{% if tpl.for_sale %}TSh {{ tpl.price|intcomma }}<small>one time</small>{% else %}TSh 0<small>free</small>{% endif %}</div>
         <ul>{% if tpl.for_sale %}
           <li>Your website goes online</li>
           <li>No JamiiTek logo on your site</li>
           <li>Use your own name (.co.tz / .com)</li>
-          <li>Free hosting for 1 year</li>
+          {% if renew_fee %}<li>Hosting for the first year included</li>
+          <li>From year 2: TSh {{ renew_fee|intcomma }} per year to stay online</li>{% else %}<li>Hosting included — no yearly fee</li>{% endif %}
         {% else %}
           <li>Your website goes online for free</li>
           <li>Your address: yourname.jamiitek.com</li>
           <li>"Developed by JamiiTek" at the bottom</li>
-          <li>Remove the logo later by paying once</li>
+          {% if logo_fee %}<li>Remove the logo later: TSh {{ logo_fee|intcomma }} once{% if renew_fee %}, then TSh {{ renew_fee|intcomma }} per year{% endif %}</li>{% endif %}
         {% endif %}</ul>
       </div>
       <div class="td-buy-r">
-        <a class="mk-btn p" href="{% url 'builder:from_template' tpl.pk %}">✨ Try it free</a>
+        <a class="mk-btn p" href="{% url 'builder:from_template' tpl.pk %}">✨ Customize free</a>
         <p>{% if tpl.for_sale %}Add your name, photos and WhatsApp number first. You pay only when you are ready to put it online.{% else %}Add your name, photos and WhatsApp number, then put it online.{% endif %}</p>
         {% if tpl.for_sale %}<div class="td-pay">M-Pesa · Tigo Pesa · Airtel Money · Card</div>{% endif %}
-        <a class="td-help" href="{% if build_fee %}{% url 'build_for_me' tpl.slug %}{% else %}{% url 'select_website' %}?template={{ tpl.pk }}{% endif %}">Unahitaji tukutengenezee? →</a>
+        <a class="td-help" href="{% if build_fee %}{% url 'build_for_me' tpl.slug %}{% else %}{% url 'select_website' %}?template={{ tpl.pk }}{% endif %}">Have us build it for you →</a>
       </div>
     </div>
   </section>
@@ -365,9 +369,9 @@ ukurasa una hisia ya template yake.
     <span class="td-kick">How it works</span>
     <h2>Online in three steps</h2>
     <div class="mk-steps">
-      <div class="mk-step"><i>01</i><span>✨</span><b>Try it free</b><p>Open a free account. {{ tpl.name }} opens in the Builder right away.</p></div>
+      <div class="mk-step"><i>01</i><span>✨</span><b>Customize free</b><p>Open a free account. {{ tpl.name }} opens in the Builder right away.</p></div>
       <div class="mk-step"><i>02</i><span>🎨</span><b>Make it yours</b><p>Add your business name, logo, photos, prices and WhatsApp number.</p></div>
-      <div class="mk-step"><i>03</i><span>🚀</span><b>Put it online</b><p>{% if tpl.for_sale %}Pay TSh {{ tpl.price|intcomma }} one time with M-Pesa, Tigo Pesa, Airtel Money or card, and your website goes online.{% else %}Put it online for free on yourname.jamiitek.com and share the link.{% endif %}</p></div>
+      <div class="mk-step"><i>03</i><span>🚀</span><b>Put it online</b><p>{% if tpl.for_sale %}Pay TSh {{ tpl.price|intcomma }} one time with M-Pesa, Tigo Pesa, Airtel Money or card, and your website goes online.{% if renew_fee %} The first year of hosting is included.{% endif %}{% else %}Put it online for free on yourname.jamiitek.com and share the link.{% endif %}</p></div>
     </div>
   </section>
 
@@ -380,7 +384,7 @@ ukurasa una hisia ya template yake.
       </div>
       <dl class="td-facts">
         <div><dt>Category</dt><dd><a href="{{ cat_url }}">{{ tpl.category_plain }}</a></dd></div>
-        <div><dt>Price</dt><dd>{% if tpl.for_sale %}TSh {{ tpl.price|intcomma }} (one time){% else %}Free{% endif %}</dd></div>
+        <div><dt>Price</dt><dd>{% if tpl.for_sale %}TSh {{ tpl.price|intcomma }} (one time){% if renew_fee %}, then TSh {{ renew_fee|intcomma }}/year from year 2{% endif %}{% else %}Free{% endif %}</dd></div>
         <div><dt>Try it</dt><dd>Free in the JamiiTek Builder</dd></div>
         <div><dt>Responsive</dt><dd>Phone · Tablet · Laptop</dd></div>
         <div><dt>Languages</dt><dd>English · Kiswahili</dd></div>
@@ -400,7 +404,7 @@ ukurasa una hisia ya template yake.
       <div><h2>No time to do it yourself?</h2>
         <p>Tell us about your business and send your photos. Our team will build your website for you{% if tpl %} with {{ tpl.name }}{% endif %}.</p></div>
       <div class="mk-ctas">
-        <a class="mk-btn p" href="{% if build_fee %}{% url 'build_for_me' tpl.slug %}{% else %}{% url 'select_website' %}?template={{ tpl.pk }}{% endif %}">Unahitaji tukutengenezee?</a>
+        <a class="mk-btn p" href="{% if build_fee %}{% url 'build_for_me' tpl.slug %}{% else %}{% url 'select_website' %}?template={{ tpl.pk }}{% endif %}">Have us build it</a>
         <a class="mk-btn s" href="{% url 'templates_marketplace' %}">Browse all templates</a>
       </div>
     </div>
@@ -432,7 +436,7 @@ ukurasa una hisia ya template yake.
     <i></i>
     <div><b>{{ tpl.name }}</b><small>{{ tpl.price_label }}</small></div>
     <a class="mk-btn s" href="#studio" tabindex="-1">See it working</a>
-    <a class="mk-btn p" href="{% url 'builder:from_template' tpl.pk %}" tabindex="-1">✨ Try it free</a>
+    <a class="mk-btn p" href="{% url 'builder:from_template' tpl.pk %}" tabindex="-1">✨ Customize free</a>
   </div>
 </div>
 {% endblock %}

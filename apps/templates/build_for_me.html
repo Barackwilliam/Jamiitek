@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load humanize %}
-{% block title %}Unahitaji tukutengenezee? {{ tpl.name }} | JamiiTek{% endblock %}
+{% block title %}Have us build it: {{ tpl.name }} | JamiiTek{% endblock %}
 {% block meta_desc %}Tell us about your business and our team will build your {{ tpl.name }} website for you.{% endblock %}
 {% block extra_css %}
 <meta name="robots" content="noindex">
@@ -40,8 +40,8 @@
 <div class="mk">
   <section class="mk-in bf">
     <nav class="mk-crumbs" aria-label="Breadcrumb"><a href="/">Home</a> › <a href="{% url 'templates_marketplace' %}">Templates</a> ›
-      <a href="{{ tpl.get_absolute_url }}">{{ tpl.name }}</a> › <span>Unahitaji tukutengenezee?</span></nav>
-    <h1>Unahitaji tukutengenezee?</h1>
+      <a href="{{ tpl.get_absolute_url }}">{{ tpl.name }}</a> › <span>Have us build it</span></nav>
+    <h1>Have us build it for you</h1>
     <p class="bf-lead">Tell us about your business. Our team will build your <b style="color:#fff">{{ tpl.name }}</b> website for you,
       with your name, photos, prices and WhatsApp number.</p>
 
@@ -64,14 +64,15 @@
       <aside class="bf-card bf-sum">
         <div class="bf-tpl"><i style="background:{{ tpl.gradient_css }}"></i>
           <div><b>{{ tpl.name }}</b><small>{{ tpl.category_plain }}</small></div></div>
-        <div class="bf-row"><span>Design {% if tpl_price %}<span class="tp-tag sale" style="margin-left:6px">Inauzwa</span>{% else %}<span class="tp-tag free" style="margin-left:6px">Bure</span>{% endif %}</span><b>TSh {{ tpl_price|intcomma }}</b></div>
+        <div class="bf-row"><span>Design {% if tpl_price %}<span class="tp-tag sale" style="margin-left:6px">One-time</span>{% else %}<span class="tp-tag free" style="margin-left:6px">Free</span>{% endif %}</span><b>TSh {{ tpl_price|intcomma }}</b></div>
         <div class="bf-row"><span>Our team builds it for you</span><b>TSh {{ fee|intcomma }}</b></div>
         <div class="bf-row total"><span>Total — pay one time</span><span>TSh {{ total|intcomma }}</span></div>
         <ul class="bf-list">
           <li>We call you within one working day</li>
           <li>We add your name, photos, prices and WhatsApp</li>
           <li>No JamiiTek logo on your site</li>
-          <li>Free hosting for 1 year</li>
+          {% if renew_fee %}<li>Hosting for the first year included</li>
+          <li>From year 2: TSh {{ renew_fee|intcomma }} per year to stay online</li>{% else %}<li>Hosting included — no yearly fee</li>{% endif %}
         </ul>
         <button class="mk-btn p bf-pay" type="submit" style="margin-top:18px">Pay now →</button>
         <div class="bf-ways"><span>M-Pesa</span><span>Tigo Pesa</span><span>Airtel Money</span><span>Card</span></div>

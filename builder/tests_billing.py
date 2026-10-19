@@ -69,7 +69,8 @@ class PaidTemplateTest(BillingBase):
 
         page = self.c.get(f'/builder/site/{site.id}/pay/template/').content.decode()
         self.assertIn('TSh 80,000', page)
-        self.assertIn('Pay now', page)
+        self.assertIn('Pay TSh 80,000 →', page)                # kitufe kinataja kiasi halisi
+        self.assertIn('Hosting included — no yearly fee', page)
 
         tx = self.pay(site, 'template')
         self.assertEqual((tx.purpose, tx.amount, tx.plan_id), ('builder_template', 80000, self.tpl.pk))
@@ -83,6 +84,24 @@ class PaidTemplateTest(BillingBase):
         self.assertIn('Karibu Duka', html)
         self.assertNotIn('jamiitek-badge', html)                    # imelipiwa: hakuna "Developed by JamiiTek"
         self.assertNotContains(self.c.get(f'/builder/site/{site.id}/'), 'Pay now')
+
+    def test_editor_shows_the_price_to_publish_while_editing(self):
+        site = self.make_site(price=80000)
+        page = site.pages.first()
+        html = self.c.get(f'/builder/site/{site.id}/pages/{page.id}/edit/').content.decode()
+        self.assertIn('class="ed-draft" href="/builder/site/%d/pay/template/"' % site.id, html)
+        self.assertIn('Draft<span class="full"> · publishing costs</span> TSh 80,000', html)
+        self.tpl.is_free = True                                  # template ya bure: hakuna cha kulipa
+        self.tpl.save()
+        html = self.c.get(f'/builder/site/{site.id}/pages/{page.id}/edit/').content.decode()
+        self.assertNotIn('class="ed-draft"', html)
+
+    def test_checkout_tells_the_yearly_fee_before_paying(self):
+        from builder.models import BuilderPricing
+        p = BuilderPricing.get(); p.yearly_hosting_price = 40000; p.save()
+        site = self.make_site(price=80000)
+        page = self.c.get(f'/builder/site/{site.id}/pay/template/').content.decode()
+        self.assertIn('From year 2: TSh 40,000 per year to stay online', page)
 
     def test_amount_comes_from_the_server_not_the_form(self):
         site = self.make_site(price=80000)
@@ -222,7 +241,7 @@ class HostingRenewalTest(BillingBase):
 
 
 class BuildForMeTest(TestCase):
-    """ "Unahitaji tukutengenezee?" — builder/build_request.py """
+    """ "Have us build it" — builder/build_request.py """
     def setUp(self):
         ping = mock.patch('apps.indexnow.ping')
         ping.start()
@@ -246,7 +265,7 @@ class BuildForMeTest(TestCase):
         BuilderPricing.objects.update_or_create(pk=1, defaults={'build_fee': 100000})
         self.assertContains(self.client.get(self.tpl.get_absolute_url()), self.url)
         page = self.client.get(self.url)
-        self.assertContains(page, 'Unahitaji tukutengenezee?')
+        self.assertContains(page, 'Have us build it for you')
         self.assertContains(page, 'TSh 180,000')
 
         with _pesapal():

@@ -42,7 +42,7 @@ Airtel Money au kadi. Kiingereza rahisi; Kiswahili kwenye badge tu.
         <small>{% if kind == 'template' %}You are buying{% elif kind == 'renew' %}Hosting for one more year{% else %}Your website{% endif %}</small>
         <b>{% if kind == 'template' %}{{ tpl.name }}{% else %}{{ site.subdomain }}.jamiitek.com{% endif %}</b>
       </div>
-      {% if kind == 'template' %}<span class="co-tag">Inauzwa</span>{% endif %}
+      {% if kind == 'template' %}<span class="co-tag">One-time</span>{% endif %}
     </div>
     <div class="co-body">
       <div class="co-price">TSh {{ price|intcomma }}<small>{% if kind == 'renew' %}for 1 year{% else %}pay one time{% endif %}</small></div>
@@ -58,12 +58,13 @@ Airtel Money au kadi. Kiingereza rahisi; Kiswahili kwenye badge tu.
         {% endif %}
         <li>No JamiiTek logo on your site</li>
         <li>Use your own name (.co.tz / .com)</li>
-        <li>Free hosting for 1 year</li>
+        {% if renew_fee %}<li>Hosting for the first year included</li>
+        <li>From year 2: TSh {{ renew_fee|intcomma }} per year to stay online — we remind you 30 days before</li>{% else %}<li>Hosting included — no yearly fee</li>{% endif %}
         {% endif %}
       </ul>
       <form method="post">
         {% csrf_token %}
-        <button class="btn amber co-pay" type="submit">Pay now →</button>
+        <button class="btn amber co-pay" type="submit">Pay TSh {{ price|intcomma }} →</button>
       </form>
       <div class="co-ways"><span>M-Pesa</span><span>Tigo Pesa</span><span>Airtel Money</span><span>Card</span></div>
       <p class="co-note">You will pay on the secure Pesapal page. When the payment is done,

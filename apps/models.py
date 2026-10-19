@@ -1088,8 +1088,8 @@ class WebsiteTemplate(models.Model):
 
     @property
     def price_label(self):
-        """Maneno ya badge: "Bure" au "Inauzwa · TSh 80,000"."""
-        return f'Inauzwa · TSh {self.price:,}' if self.for_sale else 'Bure'
+        """Maneno ya badge: "Free" au "TSh 80,000 · one-time"."""
+        return f'TSh {self.price:,} · one-time' if self.for_sale else 'Free'
 
     def price_hosted_formatted(self):
         return f"{self.price_hosted_monthly:,}"

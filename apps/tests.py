@@ -168,15 +168,50 @@ class TemplateSeoTest(NoPingMixin, TestCase):
         bump()
         self.assertNotIn('jtp', Template('{% load template_promo %}{% template_promo %}').render(Context()))
 
-    def test_price_badge_bure_or_inauzwa_and_no_old_plans(self):
+    def test_buyer_sees_every_price_before_paying_in_one_language(self):
+        from builder.models import BuilderPricing
+        paid = _tpl(name='Paid Two', price=80000)
+        urls = (paid.get_absolute_url(), '/templates/preview/%d/' % paid.pk, '/templates/')
+        for url in urls:
+            page = self.client.get(url).content.decode()
+            for sw in ('Inauzwa', '>Bure<', '>Unahitaji tukutengenezee', 'Try it free'):   # lugha moja, kitufe kimoja
+                self.assertNotIn(sw, page, f'{url}: {sw}')
+            self.assertIn('Customize free', page, url)
+        detail = self.client.get(paid.get_absolute_url()).content.decode()
+        self.assertIn('Free to try — pay TSh 80,000 only when you publish.', detail)   # bei iko chini ya kitufe
+        self.assertIn('Have us build it', detail)
+        self.assertIn('Hosting included — no yearly fee', detail)     # ada ya mwaka = 0: hosting haiishi
+        self.assertNotIn('From year 2', detail)
+
+        # Ada ya mwaka ikiwekwa, inaonekana kila mahali KABLA ya kulipa — si mshangao mwaka ujao
+        p = BuilderPricing.get(); p.yearly_hosting_price = 40000; p.remove_logo_price = 20000; p.save()
+        detail = self.client.get(paid.get_absolute_url()).content.decode()
+        self.assertIn('Pay once. First year of hosting included.', detail)
+        self.assertIn('From year 2: TSh 40,000 per year to stay online', detail)
+        self.assertNotIn('No monthly fee', detail)
+        faq = dict(self.client.get(paid.get_absolute_url()).context['faq'])
+        self.assertIn('From the second year, hosting is TSh 40,000 per year.', faq['How much does it cost?'])
+        self.assertIn('from year 2: TSh 40,000/year hosting', self.client.get(urls[1]).content.decode())
+        self.assertIn('<b>1 year</b>hosting included', self.client.get('/templates/').content.decode())
+        free = _tpl(name='Free Two', is_free=True)
+        self.assertIn('Remove the logo later: TSh 20,000 once, then TSh 40,000 per year',
+                      self.client.get(free.get_absolute_url()).content.decode())
+
+    def test_market_card_leads_to_the_template_page(self):
+        tpl = _tpl(name='Card One', price=80000)
+        market = self.client.get('/templates/').content.decode()
+        self.assertIn(f'<a class="mk-btn p" href="{tpl.get_absolute_url()}">View template</a>', market)
+        self.assertIn('Have us build it', market)
+
+    def test_price_badge_free_or_one_time_and_no_old_plans(self):
         paid = _tpl(name='Paid One', price=80000)
         free = _tpl(name='Free One', is_free=True, price=50000)
-        self.assertEqual(paid.price_label, 'Inauzwa · TSh 80,000')
-        self.assertEqual(free.price_label, 'Bure')               # tiki ya Free inashinda bei
-        self.assertEqual(_tpl(name='No Price').price_label, 'Bure')
+        self.assertEqual(paid.price_label, 'TSh 80,000 · one-time')
+        self.assertEqual(free.price_label, 'Free')               # tiki ya Free inashinda bei
+        self.assertEqual(_tpl(name='No Price').price_label, 'Free')
         market = self.client.get('/templates/').content.decode()
-        self.assertIn('Inauzwa · TSh 80,000', market)
-        self.assertIn('>Bure<', market)
+        self.assertIn('TSh 80,000 · one-time', market)
+        self.assertIn('>Free<', market)
         for url in (paid.get_absolute_url(), '/templates/preview/%d/' % paid.pk, '/templates/'):
             page = self.client.get(url).content.decode()
             self.assertNotIn('Source code', page)
@@ -184,9 +219,9 @@ class TemplateSeoTest(NoPingMixin, TestCase):
             self.assertNotIn('Hosted —', page)
             for old in ('Get it on WhatsApp', 'Buy on WhatsApp', 'Choose Hosted', 'orderNow'):   # hakuna kununua kupitia WhatsApp
                 self.assertNotIn(old, page)
-            self.assertIn('Try it free', page)
+            self.assertIn('Customize free', page)
         detail = self.client.get(paid.get_absolute_url()).content.decode()
-        self.assertIn('Unahitaji tukutengenezee?', detail)
+        self.assertIn('Have us build it', detail)
         self.assertIn('TSh 80,000<small>one time</small>', detail)
         blocks = [json.loads(b) for b in re.findall(r'<script type="application/ld\+json">(.*?)</script>', detail, re.S)]
         product = next(b for b in blocks if b.get('@type') == 'Product')

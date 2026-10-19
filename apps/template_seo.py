@@ -161,15 +161,23 @@ def article(tpl):
     return paras
 
 
+def _renew_fee():
+    """Hosting ya kila mwaka kuanzia mwaka wa 2 (0 = haiishi) — FAQ isiseme uongo kwa kunyamaza."""
+    from builder.billing import pricing
+    return pricing().yearly_hosting_price
+
+
 def faq(tpl):
     info = cat_info(tpl)
+    renew = _renew_fee() if tpl.for_sale else 0
     return [
         (f'Can I customize the {tpl.name} template myself?',
-         f'Yes. Click “Customize in Builder”, create a free account and the {tpl.name} design opens in the JamiiTek '
+         f'Yes. Click “Customize free”, create a free account and the {tpl.name} design opens in the JamiiTek '
          f'Website Builder. You can change every text, image and color with drag & drop, code or AI, then publish.'),
         ('How much does it cost?',
          (f'{tpl.name} costs TSh {tpl.price:,}, paid one time. You can try it free in the Builder first. '
-          f'The price includes 1 year of hosting, connecting your own domain and no JamiiTek logo on your website.')
+          f'The price includes 1 year of hosting, connecting your own domain and no JamiiTek logo on your website.'
+          + (f' From the second year, hosting is TSh {renew:,} per year.' if renew else ''))
          if tpl.for_sale else
          (f'{tpl.name} is free. Build your website and put it online free on yourname.jamiitek.com. '
           f'Free websites show "Developed by JamiiTek" at the bottom.')),

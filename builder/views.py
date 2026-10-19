@@ -698,7 +698,8 @@ def checkout(request, site_id, kind):
     if request.method == 'POST':
         return billing.start(request, site, kind)
     return render(request, 'builder/checkout.html', {'site': site, 'kind': kind, 'tpl': tpl, 'price': price,
-                                                     'paused': billing.is_paused(site)})
+                                                     'paused': billing.is_paused(site),
+                                                     'renew_fee': billing.pricing().yearly_hosting_price})
 
 
 # ── Pages + Editor ──────────────────────────────────────
@@ -713,8 +714,10 @@ def page_editor(request, site_id, page_id):
         canvas_head = _canvas_head(page.raw_document)
     from .layouts import font_for
     font_href, font_body, font_head = font_for(site)
+    from .billing import needs_payment
     return render(request, 'builder/editor.html', {
         'site': site, 'page': page,
+        'pay_template': needs_payment(site),       # "Draft · publishing costs TSh X" juu
         'pages': site.pages.all(),                 # kuhamia ukurasa mwingine bila kutoka editor
         'collections': site.collections.all(),
         'canvas_head': canvas_head,

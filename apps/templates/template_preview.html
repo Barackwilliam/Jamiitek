@@ -7,7 +7,7 @@
 <title>Preview: {{ template.name }} — JamiiTek</title>
 <meta name="theme-color" content="#05060c">
 <meta property="og:title" content="{{ template.name }} — JamiiTek Templates">
-<meta property="og:description" content="See the {{ template.name }} website design by JamiiTek. {% if template.for_sale %}TSh {{ template.price|intcomma }}, pay one time.{% else %}Free to use.{% endif %} Try it free.">
+<meta property="og:description" content="See the {{ template.name }} website design by JamiiTek. {% if template.for_sale %}TSh {{ template.price|intcomma }}, pay one time.{% else %}Free to use.{% endif %} Customize it free.">
 <link rel="canonical" href="{{ canonical }}">
 <meta property="og:url" content="{{ canonical }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -233,7 +233,7 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke
   animation:dockIn .7s .4s var(--spring) both}
 @keyframes dockIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:none}}
 .dock .pr{flex:1;min-width:0;padding-left:6px}
-.dock .pr b{display:block;font-size:.84rem;white-space:nowrap}.dock .pr small{font-size:.66rem;color:var(--mut)}
+.dock .pr b{display:block;font-size:.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dock .pr small{font-size:.66rem;color:var(--mut)}
 .dock .btn{height:42px}
 .dock .tbtn{width:42px;padding:0}
 
@@ -294,7 +294,7 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke
   <div class="acts">
     <button type="button" class="btn share" onclick="openShare()" aria-label="Share"><svg class="i" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></button>
     <span class="tag-top hide-md {% if template.for_sale %}sale{% else %}free{% endif %}">{{ template.price_label }}</span>
-    <a class="btn go" href="{% url 'builder:from_template' template.pk %}">✨ Try it free</a>
+    <a class="btn go" href="{% url 'builder:from_template' template.pk %}">✨ Customize free</a>
   </div>
 </header>
 
@@ -345,13 +345,13 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke
       </div>
     </div>
     <div class="blk buy"><div class="kick">Price</div>
-      <div class="bigprice"><span class="tag-top {% if template.for_sale %}sale{% else %}free{% endif %}">{% if template.for_sale %}Inauzwa{% else %}Bure{% endif %}</span>
-        <b>{% if template.for_sale %}TSh {{ template.price|intcomma }}{% else %}TSh 0{% endif %}</b><small>{% if template.for_sale %}pay one time · no monthly fee{% else %}free to use{% endif %}</small></div>
+      <div class="bigprice"><span class="tag-top {% if template.for_sale %}sale{% else %}free{% endif %}">{% if template.for_sale %}One-time{% else %}Free{% endif %}</span>
+        <b>{% if template.for_sale %}TSh {{ template.price|intcomma }}{% else %}TSh 0{% endif %}</b><small>{% if template.for_sale %}{% if renew_fee %}pay one time · 1st year hosting included{% else %}pay one time · no monthly fee{% endif %}{% else %}free to use{% endif %}</small></div>
       <div class="ctas">
-        <a class="btn go" href="{% url 'builder:from_template' template.pk %}">✨ Try it free</a>
-        <a class="btn" href="{% if build_fee %}{% url 'build_for_me' template.slug %}{% else %}/proposals/?template={{ template.pk }}{% endif %}">Unahitaji tukutengenezee?</a>
+        <a class="btn go" href="{% url 'builder:from_template' template.pk %}">✨ Customize free</a>
+        <a class="btn" href="{% if build_fee %}{% url 'build_for_me' template.slug %}{% else %}/proposals/?template={{ template.pk }}{% endif %}">Have us build it</a>
       </div>
-      <div class="paynote">{% if template.for_sale %}You pay only when you put it online · M-Pesa · Tigo Pesa · Airtel Money · Card{% else %}Free websites show "Developed by JamiiTek" at the bottom{% endif %}</div>
+      <div class="paynote">{% if template.for_sale %}You pay only when you put it online{% if renew_fee %} · from year 2: TSh {{ renew_fee|intcomma }}/year hosting{% endif %} · M-Pesa · Tigo Pesa · Airtel Money · Card{% else %}Free websites show "Developed by JamiiTek" at the bottom{% endif %}</div>
       <a class="more" href="{{ template.get_absolute_url }}">Full details, FAQ &amp; features →</a>
     </div>
   </aside>
@@ -359,8 +359,8 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke
 
 <div class="dock">
   <button type="button" class="btn tbtn" data-tour aria-label="Auto tour"><svg class="i" viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg></button>
-  <div class="pr"><b>{{ template.price_label }}</b><small>Try it free first</small></div>
-  <a class="btn go" href="{% url 'builder:from_template' template.pk %}">✨ Customize</a>
+  <div class="pr"><b>{% if template.for_sale %}TSh {{ template.price|intcomma }}{% else %}Free{% endif %}</b><small>{% if template.for_sale %}One-time · pay when you publish{% else %}Free to publish{% endif %}</small></div>
+  <a class="btn go" href="{% url 'builder:from_template' template.pk %}">✨ Customize free</a>
 </div>
 
 <!-- Vifaa (vinanakiliwa ndani ya #dev) -->
