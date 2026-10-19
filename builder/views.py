@@ -684,6 +684,22 @@ def toggle_publish(request, site_id):
     return redirect('builder:site_dashboard', site_id=site.id)
 
 
+def unpaid_stop(request, token):
+    """Kusitisha email za "website yako iko tayari kwenda hewani" (builder_unpaid). GET inaonyesha
+    kitufe tu — scanner za email zinazofungua link zisisitishe ukumbusho bila mtu kutaka."""
+    from .management.commands.builder_unpaid import site_from_stop_token
+    site = site_from_stop_token(token)
+    if site is None:
+        raise Http404
+    done = False
+    if request.method == 'POST':
+        ts = dict(site.theme_settings or {})
+        ts['pay_reminders_off'] = True
+        ClientWebsite.objects.filter(pk=site.pk).update(theme_settings=ts)
+        done = True
+    return render(request, 'builder/unpaid_stop.html', {'site': site, 'done': done})
+
+
 def _funnel_checkout(site, tpl):
     """Hatua ya 3 ya mauzo: website hii imefika ukurasa wa malipo — inahesabiwa mara moja tu."""
     from apps import template_funnel

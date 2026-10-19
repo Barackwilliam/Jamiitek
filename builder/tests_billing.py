@@ -338,3 +338,95 @@ class PesapalRefusesTest(BillingBase):
         self.assertIn('350,000', notify.call_args[0][0])
         self.assertIn('exceeds limit', notify.call_args[0][0])
         self.assertEqual(PesapalTransaction.objects.get().status, 'failed')
+
+
+class UnpaidReminderTest(BillingBase):
+    """builder_unpaid: email siku 1 na siku 3 baada ya kuanza template inayouzwa bila kulipa."""
+
+    def run_cmd(self, **kw):
+        from io import StringIO
+        from django.core.management import call_command
+        call_command('builder_unpaid', stdout=StringIO(), **kw)
+
+    def age(self, site, **delta):
+        ClientWebsite.objects.filter(pk=site.pk).update(created_at=timezone.now() - timedelta(**delta))
+        site.refresh_from_db()
+
+    def test_day_one_then_day_three_then_silence(self):
+        from django.core import mail
+        site = self.make_site(price=80000)
+        self.age(site, hours=20)
+        self.run_cmd()
+        self.assertEqual(len(mail.outbox), 0)                             # bado mapema
+
+        self.age(site, hours=25)
+        self.run_cmd()
+        self.assertEqual(len(mail.outbox), 1)
+        m = mail.outbox[0]
+        self.assertEqual(m.to, ['mteja@example.com'])
+        self.assertEqual(m.subject, 'Your website Duka Letu is ready to go online')
+        self.assertIn('Put it online for TSh 80,000 (one time), hosting included.', m.body)
+        self.assertIn(f'https://www.jamiitek.com/builder/site/{site.id}/pay/template/', m.body)
+        self.assertIn('https://www.jamiitek.com/builder/reminders/stop/', m.body)
+        self.run_cmd()
+        self.assertEqual(len(mail.outbox), 1)                             # haurudiwi
+
+        self.age(site, days=3, hours=1)
+        self.run_cmd()
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertTrue(mail.outbox[1].subject.startswith('Last reminder:'))
+        self.assertIn('This is the last reminder we send about this website.', mail.outbox[1].body)
+        self.age(site, days=6)
+        self.run_cmd()
+        self.assertEqual(len(mail.outbox), 2)                             # kisha kimya
+
+    def test_late_start_sends_only_the_last_one(self):
+        from django.core import mail
+        site = self.make_site(price=80000)
+        self.age(site, days=4)
+        self.run_cmd()
+        self.run_cmd()
+        self.assertEqual([m.subject[:14] for m in mail.outbox], ['Last reminder:'])
+
+    def test_yearly_fee_is_in_the_email(self):
+        from django.core import mail
+        BuilderPricing.objects.update_or_create(pk=1, defaults={'yearly_hosting_price': 40000})
+        site = self.make_site(price=80000)
+        self.age(site, hours=25)
+        self.run_cmd()
+        self.assertIn('From year 2 hosting is TSh 40,000 per year', mail.outbox[0].body)
+
+    def test_no_email_when_paid_free_old_or_dry_run(self):
+        from django.core import mail
+        site = self.make_site(price=80000)
+        self.age(site, days=11)                                           # zamani mno
+        self.run_cmd()
+        self.age(site, hours=25)
+        self.run_cmd(dry_run=True)
+        self.assertEqual(len(mail.outbox), 0)
+        self.tpl.is_free = True                                           # hakuna cha kulipa
+        self.tpl.save()
+        self.run_cmd()
+        self.assertEqual(len(mail.outbox), 0)
+        self.tpl.is_free = False
+        self.tpl.save()
+        self.pay(site, 'template')                                        # amelipa → iko hewani
+        self.run_cmd()
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_stop_link_needs_a_click_and_stops_emails(self):
+        from django.core import mail
+        from builder.management.commands.builder_unpaid import stop_token
+        site = self.make_site(price=80000)
+        url = f'/builder/reminders/stop/{stop_token(site)}/'
+        anon = Client()
+        r = anon.get(url)                                                 # scanner ya email inafungua link
+        self.assertContains(r, 'Stop reminders')
+        site.refresh_from_db()
+        self.assertFalse(site.theme_settings.get('pay_reminders_off'))
+        r = anon.post(url)
+        self.assertContains(r, 'Reminders stopped')
+        self.age(site, hours=25)
+        self.run_cmd()
+        self.assertEqual(len(mail.outbox), 0)
+        self.assertEqual(anon.get('/builder/reminders/stop/bandia/').status_code, 404)

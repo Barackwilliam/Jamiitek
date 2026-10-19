@@ -40,6 +40,8 @@ urlpatterns = [
     path('site/<int:site_id>/settings/', views.site_settings_save, name='site_settings_save'),
     path('site/<int:site_id>/publish/', views.toggle_publish, name='toggle_publish'),
     path('site/<int:site_id>/pay/<slug:kind>/', views.checkout, name='checkout'),
+    # Kiungo cha "Stop these reminders" kwenye email za builder_unpaid (hakihitaji login)
+    path('reminders/stop/<str:token>/', views.unpaid_stop, name='unpaid_stop'),
     path('site/<int:site_id>/template/', views.change_template, name='change_template'),
 
     # Website Studio — hatua kwa hatua (builder/studio.py)
