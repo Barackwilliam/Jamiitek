@@ -129,6 +129,23 @@ class TemplateSeoTest(NoPingMixin, TestCase):
         self.assertIn('<link rel="canonical" href="https://www.jamiitek.com%s">' % tpl.get_absolute_url(), page)
         self.assertFalse(any('preview_html' in x['sql'] for x in q.captured_queries))
 
+    def test_promo_json_for_other_sites_and_drift_demo(self):
+        from apps.public_cache import bump
+        bump()
+        r = self.client.get('/templates/promo.json')
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r['Access-Control-Allow-Origin'], '*')
+        rows = r.json()['templates']
+        me = next(t for t in rows if t['name'] == self.tpl.name)
+        self.assertEqual(me['raw'], 'http://testserver/templates/preview/%d/raw/' % self.tpl.pk)
+        self.assertTrue(me['url'].startswith('http://testserver/templates/'))
+        self.assertEqual(set(me), {'name', 'url', 'raw', 'a', 'b'})          # data ya umma tu
+        raw = '/templates/preview/%d/raw/' % self.tpl.pk
+        self.assertNotIn('requestAnimationFrame', self.client.get(raw).content.decode())
+        drift = self.client.get(raw + '?drift=1')
+        self.assertIn('requestAnimationFrame(step)', drift.content.decode())
+        self.assertNotIn('X-Frame-Options', drift)                            # wILife inaweza kuiweka kwenye iframe
+
     def test_promo_phone_on_scroll_every_two_hours(self):
         from django.template import Context, Template
         html = Template('{% load template_promo %}{% template_promo %}').render(Context())

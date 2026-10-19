@@ -1,9 +1,9 @@
 """{% template_promo %} — simu ndogo ya tangazo: "Website hii inauzwa · Gusa kuitazama".
 
-Inaonyeshwa Home na kwenye makala za blog. Ni MARA MOJA tu kwa kila browser
-(localStorage; akifuta data ya site ataiona tena). Inatokea ~sekunde 1 baada ya
-ukurasa kuonekana, demo inajisogeza ndani ya simu, na haichukui nafasi kwenye
-ukurasa (position:fixed) — haizuii wala haisogezi maudhui.
+Inaonyeshwa Home na kwenye makala za blog. Inatokea mtu akianza ku-scroll, kisha
+inapumzika saa 2 kwenye browser hiyo (localStorage). Demo inajisogeza ndani ya simu,
+na haichukui nafasi kwenye ukurasa (position:fixed) — haizuii wala haisogezi maudhui.
+wILife inaonyesha simu hiyo hiyo kwa data ya /templates/promo.json.
 """
 import random
 
