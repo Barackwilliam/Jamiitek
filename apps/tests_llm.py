@@ -327,6 +327,8 @@ class JamiiBotModelChoiceTests(TestCase):
         r = self.client.get("/chatbot/config/")
         self.assertContains(r, "aistudio.google.com/apikey")
         self.assertContains(r, "Create API key")
+        self.assertContains(r, "Groq (Default)")
+        self.assertContains(r, "Gemini (Custom)")
         with mock.patch("requests.get", return_value=_http(200, {"models": []})):
             self.client.post("/chatbot/config/", {"section": "ai", "ai_engine": "gemini",
                                                   "gemini_api_key": " AIzaYangu999 "})
