@@ -355,7 +355,16 @@ class JamiiBotModelChoiceTests(TestCase):
         self.assertEqual(self.bot.ai_model, "gemini")
 
 
+def _clear_caches():
+    from django.core.cache import caches
+    for alias in caches:
+        caches[alias].clear()
+
+
 class JamiiLiteAnnouncementTests(TestCase):
+    def setUp(self):
+        _clear_caches()
+
     def test_homepage_shows_announcement_and_service(self):
         from apps.models import Service
         svc = Service.objects.get(service_type__startswith="JamiiLite")   # data migration 0057
@@ -366,3 +375,25 @@ class JamiiLiteAnnouncementTests(TestCase):
         self.assertContains(r, "Coming soon · JamiiLite 5G")
         self.assertContains(r, "subject=JamiiLite%205G")
         self.assertContains(r, svc.service_type)
+
+
+class HomepageServiceArtTests(TestCase):
+    def setUp(self):
+        _clear_caches()
+        self.addCleanup(_clear_caches)   # homepage imehifadhiwa (cache) — isivuje kwenye majaribio mengine
+
+    def test_first_service_card_uses_its_own_art(self):
+        from apps.models import Service
+        Service.objects.update(show_on_home=False)
+        Service.objects.create(service_type="Website Development", description="Websites", show_on_home=True, order=0)
+        body = self.client.get("/").content.decode()
+        self.assertIn('class="wb"', body)            # tovuti inajengwa live
+        self.assertNotIn('class="orb"', body)
+        Service.objects.update(show_on_home=False)
+        Service.objects.create(service_type="AI WhatsApp Bot", description="JamiiBot", icon="bot",
+                               show_on_home=True, order=0)
+        _clear_caches()
+        body = self.client.get("/").content.decode()
+        self.assertNotIn('class="wb"', body)
+        self.assertIn('class="svc__art"', body)       # mchoro wa huduma husika
+        self.assertIn("css/jt-art", body)
