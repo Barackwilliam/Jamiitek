@@ -812,6 +812,41 @@ def template_preview(request, pk):
 
 from django.views.decorators.clickjacking import xframe_options_exempt
 
+# ?drift=1 — demo inajisogeza yenyewe taratibu (juu → chini → inarudi juu). Kwa simu ya
+# tangazo kwenye tovuti nyingine (wILife): huko browser haziruhusu ukurasa mzazi kuscroll
+# iframe ya domain nyingine, kwa hiyo demo inajiscroll yenyewe.
+_DRIFT_JS = """<script>(function(){
+if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+var y=0,wait=600,last=0;
+function step(t){var dt=Math.min(64,t-(last||t)),max=document.documentElement.scrollHeight-innerHeight;last=t;
+if(wait>0)wait-=dt;else if(y>=max){y=0;wait=2000;scrollTo(0,0);}else{y=Math.min(max,y+110*dt/1000);scrollTo(0,y);}
+requestAnimationFrame(step);}
+addEventListener('load',function(){requestAnimationFrame(step);});
+})();</script>"""
+
+
+def templates_promo_json(request):
+    """Templates za tangazo la simu ("Website hii inauzwa") kwa tovuti nyingine (wILife).
+
+    Ni data ileile ya {% template_promo %} ya JamiiTek, na URL kamili. Ni ya umma
+    (jina, rangi na viungo vya kurasa za umma tu), kwa hiyo CORS iko wazi.
+    """
+    from django.http import JsonResponse
+    from .public_cache import get_or_build
+    from .templatetags.template_promo import _featured
+
+    pool = get_or_build('template-promo', _featured, ttl=600)
+    abs_ = request.build_absolute_uri
+    data = {'templates': [{'name': r['name'], 'url': abs_(r['url']), 'raw': abs_(r['raw']),
+                           'a': r['gradient_start'] or '#2E7BF6', 'b': r['gradient_end'] or '#0B1B3A'}
+                          for r in pool]}
+    resp = JsonResponse(data)
+    resp['Access-Control-Allow-Origin'] = '*'
+    resp['Cache-Control'] = 'public, max-age=600'
+    resp['X-Robots-Tag'] = 'noindex'
+    return resp
+
+
 @xframe_options_exempt
 def template_preview_raw(request, pk):
     """Serves the raw template HTML inside the iframe — exempt from X-Frame-Options"""
@@ -833,6 +868,8 @@ def template_preview_raw(request, pk):
     if not html.strip():
         resp = HttpResponse('<p style="font-family:sans-serif;padding:2rem;color:#999">Hakuna HTML iliyowekwa kwa template hii.</p>', content_type='text/html; charset=utf-8')
     else:
+        if request.GET.get('drift') == '1':
+            html += _DRIFT_JS
         resp = HttpResponse(html, content_type='text/html; charset=utf-8')
         resp['Cache-Control'] = 'public, max-age=300'
     # HTML ghafi ya demo isiingie Google kama ukurasa wake (maudhui ya mfano,
