@@ -109,9 +109,13 @@ def news_sitemap(request):
     xml = cache.get(key)
     if xml is None:
         since = timezone.now() - timedelta(days=2)
-        posts = (BlogPost.objects.filter(status='published', published_at__gte=since)
-                 .order_by('-published_at').only('slug', 'title', 'published_at', 'cover_image',
-                                                  'focus_keyword')[:1000])
+        fields = ('slug', 'title', 'published_at', 'cover_image', 'focus_keyword')
+        published = BlogPost.objects.filter(status='published').order_by('-published_at').only(*fields)
+        posts = list(published.filter(published_at__gte=since)[:1000])
+        # Siku 2 bila makala mpya: <urlset> tupu ni kosa kwa Search Console ("Missing XML tag: url"),
+        # kwa hiyo makala ya mwisho inabaki — Google News inapuuza tu iliyopita siku 2, si kosa.
+        if not posts:
+            posts = list(published[:1])
         items = []
         for p in posts:
             img = (f'<image:image><image:loc>{escape(p.cover_image)}</image:loc></image:image>'

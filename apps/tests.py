@@ -1064,3 +1064,33 @@ class RobotsCrawlBudgetTest(TestCase):
         for url in urls:
             path = _re.sub(r'^https?://[^/]+', '', url)
             self.assertTrue(self._allowed(robots, path), f'sitemap inaorodhesha URL iliyozuiwa: {url}')
+
+
+class NewsSitemapNeverEmptyTest(TestCase):
+    """Search Console: <urlset> tupu ni kosa ("Missing XML tag: url")."""
+
+    def setUp(self):
+        from django.core.cache import caches
+        for c in caches.all():
+            c.clear()
+
+    def _post(self, slug, days_ago):
+        from datetime import timedelta
+        from django.utils import timezone
+        from apps.models import BlogPost
+        p = BlogPost.objects.create(title=slug.title(), slug=slug, excerpt='x', body='<p>x</p>', status='published')
+        BlogPost.objects.filter(pk=p.pk).update(published_at=timezone.now() - timedelta(days=days_ago))
+
+    def test_quiet_days_keep_the_newest_post(self):
+        self._post('old-one', 10)
+        self._post('older-one', 20)
+        xml = self.client.get('/news-sitemap.xml').content.decode()
+        self.assertEqual(xml.count('<url>'), 1)
+        self.assertIn('/blog/old-one/', xml)
+
+    def test_recent_posts_only_when_there_are_some(self):
+        self._post('fresh-one', 0)
+        self._post('old-one', 10)
+        xml = self.client.get('/news-sitemap.xml').content.decode()
+        self.assertIn('/blog/fresh-one/', xml)
+        self.assertNotIn('/blog/old-one/', xml)
