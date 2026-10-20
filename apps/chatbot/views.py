@@ -1219,6 +1219,16 @@ def _process_message(bot: BotConfig, msg_data: dict, handler=None):
     #
     # Sasa: kimya kwa mteja (mmiliki anaona ujumbe kwenye simu yake na
     # anajibu mwenyewe), na taarifa MOJA kwa siku kwa mmiliki.
+    # ── MTEJA AMESIMAMISHA BOT (Pause kwenye dashboard) ────────────
+    # Kimya kwa wateja wake, kama huduma ikisimama: ujumbe umeshahifadhiwa
+    # hapo juu, mmiliki anauona kwenye simu yake na anajibu mwenyewe. Hakuna
+    # taarifa kwa mmiliki — ndiye aliyesimamisha. Chat ya tovuti (`paused`)
+    # inampa mgeni namba ya kupiga badala ya ukimya.
+    if bot.paused_at:
+        if hasattr(wa, 'paused'):
+            wa.paused = True
+        return
+
     sub = getattr(bot, 'subscription', None)
     if sub:
         sub.roll_period_if_due()
@@ -2022,6 +2032,26 @@ def _apply_session_status(bot, data):
         fields.append('last_seen_at')
     if fields:
         bot.save(update_fields=fields)
+
+
+@login_required(login_url='/chatbot/login/')
+def chatbot_pause(request):
+    """Kitufe cha Pause / Resume kwenye dashboard — mteja anasimamisha bot yake wakati wowote."""
+    if request.method != 'POST':
+        return redirect('chatbot_dashboard')
+    bot = _own_bot(request)
+    if not bot:
+        return redirect('chatbot_setup_wizard')
+    action = request.POST.get('action')
+    if action == 'pause' and not bot.paused_at:
+        bot.paused_at = timezone.now()
+        bot.save(update_fields=['paused_at', 'updated_at'])
+        messages.success(request, f"{bot.bot_name} is paused. It will not reply to customers until you resume it.")
+    elif action == 'resume' and bot.paused_at:
+        bot.paused_at = None
+        bot.save(update_fields=['paused_at', 'updated_at'])
+        messages.success(request, f"{bot.bot_name} is back on and replying to customers.")
+    return redirect('chatbot_dashboard')
 
 
 @login_required(login_url='/chatbot/login/')

@@ -14,6 +14,7 @@ urlpatterns = [
     # ── Portal ──
     path('dashboard/',                          views.chatbot_dashboard,           name='chatbot_dashboard'),
     path('config/',                             views.chatbot_config,              name='chatbot_config'),
+    path('pause/',                              views.chatbot_pause,               name='chatbot_pause'),
 
     # ── Maarifa ya bot ──
     path('knowledge/',                   views.chatbot_knowledge,        name='chatbot_knowledge'),

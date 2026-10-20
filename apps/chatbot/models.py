@@ -173,6 +173,12 @@ class BotConfig(models.Model):
     webhook_verify_token = models.CharField(max_length=100, blank=True, editable=False)
     status             = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft')
     is_active          = models.BooleanField(default=False)
+    # Mteja mwenyewe amesimamisha bot (Pause kwenye dashboard). Ni tofauti na 'suspended'
+    # ya admin/malipo: mteja akibonyeza Resume, hawezi kuwasha bot ambayo admin amesimamisha.
+    # WhatsApp inabaki imeunganishwa — Resume inafanya kazi papo hapo.
+    paused_at          = models.DateTimeField(
+        null=True, blank=True,
+        help_text="Mteja amesimamisha bot (Pause). Tupu = bot inajibu kama kawaida.")
     deployed_at        = models.DateTimeField(null=True, blank=True)
     created_at         = models.DateTimeField(auto_now_add=True)
     updated_at         = models.DateTimeField(auto_now=True)
