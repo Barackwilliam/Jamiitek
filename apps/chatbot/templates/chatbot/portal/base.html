@@ -207,8 +207,8 @@
     {% with bot=client.bots.first %}
     {% if bot %}
     <div class="sb-pulse">
-      <div class="sb-pulse-dot" style="background:{% if bot.status == 'active' %}var(--green){% else %}var(--yellow){% endif %}"></div>
-      <span class="sb-pulse-txt" style="color:{% if bot.status == 'active' %}var(--green){% else %}var(--yellow){% endif %}">{{ bot.bot_name }} — {{ bot.status|upper }}</span>
+      <div class="sb-pulse-dot" style="background:{% if bot.status == 'active' and not bot.paused_at %}var(--green){% else %}var(--yellow){% endif %}"></div>
+      <span class="sb-pulse-txt" style="color:{% if bot.status == 'active' and not bot.paused_at %}var(--green){% else %}var(--yellow){% endif %}">{{ bot.bot_name }} — {% if bot.paused_at %}PAUSED{% else %}{{ bot.status|upper }}{% endif %}</span>
     </div>
     {% endif %}
     {% endwith %}

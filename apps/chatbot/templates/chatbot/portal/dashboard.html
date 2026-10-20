@@ -25,6 +25,8 @@
 .li-active{background:rgba(0,220,130,.1);border:1px solid rgba(0,220,130,.25);color:var(--green)}
 .li-draft{background:var(--blue-d);border:1px solid rgba(59,130,246,.2);color:var(--blue)}
 .li-suspended{background:var(--red-d);border:1px solid rgba(239,68,68,.2);color:var(--red)}
+.li-paused{background:var(--yellow-d);border:1px solid rgba(245,158,11,.3);color:var(--yellow)}
+.li-paused .li-dot::after{display:none}
 .li-dot{width:8px;height:8px;border-radius:50%;background:currentColor;position:relative}
 .li-dot::after{content:'';position:absolute;inset:-2px;border-radius:50%;background:currentColor;animation:ping 1.5s cubic-bezier(0,0,.2,1) infinite;opacity:.4}
 
@@ -85,10 +87,14 @@
       <div class="bot-name">{{ bot.bot_name }}</div>
       <div class="bot-sub">{{ bot.business_name }} · {{ bot.get_language_display }}</div>
       <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        {% if bot.paused_at %}
+        <div class="live-indicator li-paused"><div class="li-dot"></div>PAUSED BY YOU</div>
+        {% else %}
         <div class="live-indicator li-{{ bot.status }}">
           <div class="li-dot"></div>
           {{ bot.get_status_display|upper }}
         </div>
+        {% endif %}
         {% if bot.deployed_at %}
         <span style="font-family:var(--mono);font-size:11px;color:var(--text-3)">Deployed {{ bot.deployed_at|date:"d M Y" }}</span>
         {% endif %}
@@ -98,11 +104,25 @@
       </div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
+      {# Pause / Resume — mteja anasimamisha bot yake wakati wowote (views.chatbot_pause) #}
+      <form method="post" action="{% url 'chatbot_pause' %}" style="margin:0"{% if not bot.paused_at %} onsubmit="return confirm('Pause {{ bot.bot_name|escapejs }}? It will stop replying to customers until you press Resume.')"{% endif %}>
+        {% csrf_token %}
+        {% if bot.paused_at %}
+        <button type="submit" name="action" value="resume" class="jt-btn btn-green" style="font-size:12px"><i class="fas fa-play"></i> Resume bot</button>
+        {% else %}
+        <button type="submit" name="action" value="pause" class="jt-btn btn-ghost" style="font-size:12px"><i class="fas fa-pause"></i> Pause bot</button>
+        {% endif %}
+      </form>
       <a href="{% url 'chatbot_config' %}" class="jt-btn btn-ghost" style="font-size:12px"><i class="fas fa-sliders"></i> Configure</a>
       <a href="{% url 'chatbot_conversations' %}" class="jt-btn btn-green" style="font-size:12px"><i class="fas fa-comments"></i> View Chats</a>
     </div>
   </div>
 </div>
+
+{% if bot.paused_at %}
+<div class="jt-alert jt-alert-warning f0 mb-3"><i class="fas fa-circle-pause" style="flex-shrink:0"></i><div>
+  <strong>Your bot is paused</strong> (since {{ bot.paused_at|date:"d M Y, H:i" }}). It is not replying to customers. Their messages are still saved here and on your phone — reply to them yourself, or press <strong>Resume bot</strong> any time.</div></div>
+{% endif %}
 
 <!-- SUSPENDED / TRIAL / PENDING ALERTS -->
 {% if bot.status == 'pending' %}

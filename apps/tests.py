@@ -1094,3 +1094,87 @@ class NewsSitemapNeverEmptyTest(TestCase):
         xml = self.client.get('/news-sitemap.xml').content.decode()
         self.assertIn('/blog/fresh-one/', xml)
         self.assertNotIn('/blog/old-one/', xml)
+
+
+class BotPauseResumeTest(NoPingMixin, TestCase):
+    """Mteja anasimamisha (Pause) na kuwasha (Resume) bot yake mwenyewe kwenye dashboard."""
+
+    def setUp(self):
+        super().setUp()
+        from django.core.cache import cache
+        from django.contrib.auth.models import User
+        from apps.chatbot.models import BotConfig, BotSubscription, ChatbotClient, SubscriptionPlan
+        cache.clear()
+        plan = SubscriptionPlan.objects.filter(is_active=True).order_by('price_tzs').first()
+        self.user = User.objects.create_user('duka2', 'd2@x.com', 'Sahihi-Kabisa-2026')
+        cl = ChatbotClient.objects.create(user=self.user, full_name='Mama Duka',
+                                          business_name='Duka', email='d2@x.com')
+        self.bot = BotConfig.objects.create(client=cl, bot_name='DukaBot', business_name='Duka',
+                                            description='Duka', status='active', is_active=True,
+                                            owner_whatsapp='255754111226', collect_name=False)
+        BotSubscription.objects.create(bot=self.bot, plan=plan, status='active')
+        self.client.force_login(self.user)
+
+    def _incoming(self, text='Habari', msg_id='m1'):
+        from apps.chatbot.views import _process_message
+        wa = mock.MagicMock()
+        wa.paused = False
+        _process_message(self.bot, {'from': '255700000001', 'text': text, 'message_id': msg_id,
+                                    'jid': '255700000001@s.whatsapp.net'}, handler=wa)
+        return wa
+
+    def test_pause_and_resume_from_dashboard(self):
+        page = self.client.get('/chatbot/dashboard/').content.decode()
+        self.assertIn('value="pause"', page)
+        self.assertNotIn('Your bot is paused', page)
+
+        self.assertEqual(self.client.get('/chatbot/pause/').status_code, 302)    # GET haibadilishi kitu
+        self.bot.refresh_from_db()
+        self.assertIsNone(self.bot.paused_at)
+
+        self.client.post('/chatbot/pause/', {'action': 'pause'})
+        self.bot.refresh_from_db()
+        self.assertIsNotNone(self.bot.paused_at)
+        page = self.client.get('/chatbot/dashboard/').content.decode()
+        self.assertIn('PAUSED BY YOU', page)
+        self.assertIn('DukaBot — PAUSED', page)                                   # menyu ya pembeni pia
+        self.assertIn('Your bot is paused', page)
+        self.assertIn('value="resume"', page)
+
+        self.client.post('/chatbot/pause/', {'action': 'resume'})
+        self.bot.refresh_from_db()
+        self.assertIsNone(self.bot.paused_at)
+        self.assertIn('value="pause"', self.client.get('/chatbot/dashboard/').content.decode())
+
+    def test_paused_bot_is_silent_but_keeps_the_message(self):
+        from apps.chatbot.models import Message
+        self.client.post('/chatbot/pause/', {'action': 'pause'})
+        self.bot.refresh_from_db()
+        wa = self._incoming('Bei ya mkate?')
+        wa.send_text.assert_not_called()
+        self.assertTrue(wa.paused)
+        self.assertTrue(Message.objects.filter(conversation__bot=self.bot, content='Bei ya mkate?').exists())
+
+        self.client.post('/chatbot/pause/', {'action': 'resume'})
+        self.bot.refresh_from_db()
+        with mock.patch('apps.chatbot.views.ai_engine', create=True):
+            wa = self._incoming('Habari tena', msg_id='m2')
+        self.assertFalse(wa.paused)
+        sent = [c for c in wa.method_calls if c[0].startswith('send_')]
+        self.assertTrue(sent, wa.method_calls)                                  # imerudi: inajibu tena
+
+    def test_web_chat_visitor_gets_a_polite_reply_while_paused(self):
+        from django.utils import timezone
+        self.bot.paused_at = timezone.now()
+        self.bot.save()
+        r = self.client.post(f'/chatbot/web/{self.bot.id}/', json.dumps(
+            {'visitor': 'wvisitor123', 'message': 'Habari'}), content_type='application/json')
+        self.assertIn('Asante kwa ujumbe wako', r.content.decode())
+
+    def test_resume_cannot_undo_an_admin_suspension(self):
+        self.bot.status, self.bot.admin_suspended_reason = 'suspended', 'abuse'
+        self.bot.save()
+        self.client.post('/chatbot/pause/', {'action': 'pause'})
+        self.client.post('/chatbot/pause/', {'action': 'resume'})
+        self.bot.refresh_from_db()
+        self.assertEqual(self.bot.status, 'suspended')
