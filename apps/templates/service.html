@@ -108,7 +108,7 @@
       {% if svc.summary and svc.description and svc.description|striptags|truncatewords:12 != svc.summary|truncatewords:12 %}<p>{{ svc.description|striptags|truncatewords:45 }}</p>{% endif %}
       <div class="acts">
         <a class="btn btn--navy" href="{% url 'contact' %}?subject={{ svc.service_type|urlencode }}">Discuss this service</a>
-        {% if svc.link_url %}<a class="btn btn--line" href="{{ svc.link_url }}">{{ svc.link_label|default:"Learn more" }}</a>{% endif %}
+        {% if svc.link_url %}<a class="btn btn--line" href="{{ svc.link_url }}"{% if svc.link_url|slice:":4" == "http" %} target="_blank" rel="noopener"{% endif %}>{{ svc.link_label|default:"Learn more" }}</a>{% endif %}
       </div>
     </div>
   </article>
