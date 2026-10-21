@@ -149,6 +149,7 @@ def website_list(request):
 
 @staff_required
 def website_detail(request, pk):
+    from . import site_guard
     website = get_object_or_404(ManagedWebsite.objects.select_related('client'), pk=pk)
     return render(request, 'management/website_detail.html', {
         'title': website.name,
@@ -159,6 +160,8 @@ def website_detail(request, pk):
         'notifications': ClientNotification.objects.filter(website=website).order_by('-sent_at')[:30],
         'action_types': ScheduledAction.ACTION_TYPES,
         'notification_types': ClientNotification.NOTIFICATION_TYPES,
+        'guard_host': site_guard.host_of(website.url),
+        'guard_htaccess': site_guard.HTACCESS,
     })
 
 
@@ -503,6 +506,38 @@ def site_status_api(request, api_key):
     resp['Access-Control-Allow-Origin'] = '*'
     resp['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
     resp['Cache-Control'] = 'no-store, no-cache'
+    return resp
+
+
+def _guard_response(website):
+    from . import site_guard
+    resp = JsonResponse(site_guard.payload(website))
+    resp['Cache-Control'] = 'no-store'        # Worker / PHP zinahifadhi wenyewe (dakika 5)
+    resp['X-Robots-Tag'] = 'noindex'
+    return resp
+
+
+@require_GET
+def site_guard_api(request, api_key):
+    """Kwa jamiitek-guard.php (cPanel): hali + ukurasa wa 'Suspended' ulio tayari."""
+    return _guard_response(ManagedWebsite.objects.filter(api_key=api_key).first())
+
+
+@require_GET
+def site_guard_host_api(request, host):
+    """Kwa Cloudflare Worker moja ya wateja wote: website inatambuliwa kwa domain yake."""
+    from . import site_guard
+    return _guard_response(site_guard.find_by_host(host))
+
+
+@staff_required
+def guard_php_download(request, pk):
+    """jamiitek-guard.php ya website hii (API yake tayari ndani) — kwa static site ya cPanel."""
+    from . import site_guard
+    website = get_object_or_404(ManagedWebsite, pk=pk)
+    api = request.build_absolute_uri(f'/api/site-guard/{website.api_key}/')
+    resp = HttpResponse(site_guard.php_guard(website, api), content_type='application/x-httpd-php; charset=utf-8')
+    resp['Content-Disposition'] = 'attachment; filename="jamiitek-guard.php"'
     return resp
 
 
