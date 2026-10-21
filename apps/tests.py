@@ -1178,3 +1178,65 @@ class BotPauseResumeTest(NoPingMixin, TestCase):
         self.client.post('/chatbot/pause/', {'action': 'resume'})
         self.bot.refresh_from_db()
         self.assertEqual(self.bot.status, 'suspended')
+
+
+class StaticSiteGuardTest(TestCase):
+    """Status Guard ya server kwa static sites (apps/site_guard.py): Worker + PHP."""
+
+    def setUp(self):
+        import datetime
+        from django.contrib.auth.models import User
+        from django.utils import timezone
+        from apps.models import Client, ManagedWebsite
+        today = timezone.now().date()
+        owner = User.objects.create_user('mteja-static', 's@x.com', 'p')
+        cl = Client.objects.create(user=owner, name='Duka', email='s@x.com')
+        self.site = ManagedWebsite.objects.create(
+            client=cl, name='Duka la Juma', url='https://www.dukalajuma.co.tz/', site_type='static',
+            status='active', monthly_cost=20000, hosting_start_date=today - datetime.timedelta(days=30),
+            hosting_end_date=today + datetime.timedelta(days=30))
+
+    def _set(self, status, message=''):
+        from apps.models import ManagedWebsite
+        ManagedWebsite.objects.filter(pk=self.site.pk).update(status=status, suspension_message=message)
+
+    def test_active_site_passes(self):
+        r = self.client.get(f'/api/site-guard/{self.site.api_key}/')
+        self.assertEqual(r.json(), {'active': True, 'status': 'active'})
+        self.assertEqual(r['Cache-Control'], 'no-store')
+
+    def test_suspended_site_gets_a_ready_block_page(self):
+        self._set('suspended', 'Hosting imeisha <b>leo</b>.')
+        data = self.client.get(f'/api/site-guard/{self.site.api_key}/').json()
+        self.assertFalse(data['active'])
+        self.assertIn('Service Suspended', data['html'])
+        self.assertIn('Hosting imeisha &lt;b&gt;leo&lt;/b&gt;.', data['html'])        # ujumbe umesafishwa
+        self.assertIn('<meta name="robots" content="noindex">', data['html'])
+        self._set('maintenance', 'Tunarekebisha.')
+        self.assertIn('Under Maintenance', self.client.get(f'/api/site-guard/{self.site.api_key}/').json()['html'])
+
+    def test_worker_finds_the_site_by_domain_with_or_without_www(self):
+        self._set('suspended')
+        for host in ('dukalajuma.co.tz', 'www.dukalajuma.co.tz', 'DukaLaJuma.co.tz'):
+            self.assertFalse(self.client.get(f'/api/site-guard/host/{host}/').json()['active'], host)
+        for host in ('dukalajuma.co.tz.evil.com', 'juma.co.tz', 'haipo.com'):                # fail-open
+            self.assertTrue(self.client.get(f'/api/site-guard/host/{host}/').json()['active'], host)
+        self.assertTrue(self.client.get('/api/site-guard/key-isiyokuwepo/').json()['active'])
+
+    def test_php_guard_download_is_staff_only_and_carries_this_sites_api(self):
+        from django.contrib.auth.models import User
+        url = f'/manage/websites/{self.site.pk}/guard.php'
+        self.assertNotEqual(self.client.get(url).status_code, 200)
+        staff = User.objects.create_user('admin-static', 'a@x.com', 'p', is_staff=True)
+        self.client.force_login(staff)
+        with mock.patch.dict('os.environ', {'STAFF_2FA_REQUIRED': 'false'}):
+            r = self.client.get(url)
+            page = self.client.get(f'/manage/websites/{self.site.pk}/').content.decode()
+        self.assertEqual(r.status_code, 200)
+        self.assertIn('attachment; filename="jamiitek-guard.php"', r['Content-Disposition'])
+        php = r.content.decode()
+        self.assertIn(f"$JT_API = 'http://testserver/api/site-guard/{self.site.api_key}/';", php)
+        self.assertIn('Duka la Juma', php)
+        self.assertIn('SERVER GUARD', page)
+        self.assertIn('dukalajuma.co.tz/*', page)
+        self.assertIn('RewriteRule ^ jamiitek-guard.php [L,QSA]', page)

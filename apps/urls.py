@@ -195,6 +195,7 @@ urlpatterns = [
     path('manage/websites/<int:pk>/notify/', management_views.send_notification, name='send_notification'),
     path('manage/websites/<int:pk>/schedule/', management_views.schedule_action, name='schedule_action'),
     path('manage/websites/<int:pk>/api-key/regenerate/', management_views.regenerate_api_key, name='regenerate_api_key'),
+    path('manage/websites/<int:pk>/guard.php', management_views.guard_php_download, name='guard_php_download'),
     path('manage/actions/<int:action_pk>/cancel/', management_views.cancel_scheduled_action, name='cancel_scheduled_action'),
     path('manage/clients/', management_views.client_list, name='client_list'),
     path('manage/clients/<int:pk>/', management_views.client_detail_admin, name='client_detail_admin'),
@@ -240,6 +241,9 @@ urlpatterns = [
     # ── PUBLIC API ─────────────────────────────────────────
     path('api/site-status/<str:api_key>/', management_views.site_status_api, name='site_status_api'),
     path('api/js/<str:api_key>/', management_views.get_js_snippet, name='get_js_snippet'),
+    # Status Guard ya server kwa static sites (apps/site_guard.py): Cloudflare Worker + cPanel PHP
+    path('api/site-guard/host/<str:host>/', management_views.site_guard_host_api, name='site_guard_host_api'),
+    path('api/site-guard/<str:api_key>/', management_views.site_guard_api, name='site_guard_api'),
 
     # ── INFRASTRUCTURE (staff-only) ──
     path('manage/infra/', infra_views.infra_overview, name='infra_overview'),
