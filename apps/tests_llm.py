@@ -372,9 +372,14 @@ class JamiiLiteAnnouncementTests(TestCase):
         self.assertEqual(svc.icon, "network")
         r = self.client.get("/")
         self.assertContains(r, 'id="jamiilite"')
-        self.assertContains(r, "Coming soon · JamiiLite 5G")
-        self.assertContains(r, "subject=JamiiLite%205G")
+        self.assertContains(r, "Now live · JamiiLite 5G")
+        self.assertContains(r, 'href="https://jamiilite.onrender.com/jisajili/"')
+        self.assertNotContains(r, "Notify me at launch")
         self.assertContains(r, svc.service_type)
+        # data migration 0060: kadi ya huduma inapeleka kwenye kujisajili
+        self.assertEqual(svc.link_label, "Start free")
+        self.assertEqual(svc.link_url, "https://jamiilite.onrender.com/jisajili/")
+        self.assertNotIn("Coming soon", svc.summary)
 
 
 class HomepageServiceArtTests(TestCase):

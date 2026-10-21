@@ -16,6 +16,9 @@
 .jl__ul li{display:flex;gap:10px;align-items:flex-start}
 .jl__ul li::before{content:"";flex:none;width:7px;height:7px;margin-top:.5em;border-radius:50%;background:var(--gold)}
 .jl__st{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
+.jl__acts{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px}
+.jl__more{color:var(--t-l);font-weight:600;text-decoration:underline;text-underline-offset:4px}
+.jl__more:hover{color:#fff}
 .jl__st span{font:600 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:8px 11px;border-radius:999px;border:1px solid var(--line-l);color:var(--m-l);animation:12s infinite both}
 .jl__st span:nth-child(1){animation-name:jlS1}.jl__st span:nth-child(2){animation-name:jlS2}.jl__st span:nth-child(3){animation-name:jlS3}
 .jl__viz{position:relative;width:100%;max-width:560px;margin-inline:auto;aspect-ratio:530/510;order:-1}
@@ -62,7 +65,7 @@
 <div class="jl" id="jamiilite">
     <div class="jl__card rv">
       <div>
-        <span class="jl__tag"><i></i>Coming soon · JamiiLite 5G</span>
+        <span class="jl__tag"><i></i>Now live · JamiiLite 5G</span>
         <h3>Your WiFi, <em>selling itself</em> — street by street, region by region.</h3>
         <p>JamiiLite 5G is a WiFi hotspot billing system for MikroTik router owners. Customers choose a package, pay by mobile money and get online instantly — and are disconnected automatically when their time runs out.</p>
         <ul class="jl__ul">
@@ -72,8 +75,11 @@
           <li>See your routers online and restart them remotely</li>
         </ul>
         <div class="jl__st" aria-hidden="true"><span>Street by street</span><span>Region by region</span><span>Nationwide</span></div>
-        <a class="btn btn--gold" href="{% url 'contact' %}?subject=JamiiLite%205G">Notify me at launch
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M4 11h12.2l-4.6-4.6L13 5l7 7-7 7-1.4-1.4 4.6-4.6H4z"/></svg></a>
+        <div class="jl__acts">
+          <a class="btn btn--gold" href="https://jamiilite.onrender.com/jisajili/" target="_blank" rel="noopener">Start free — 14 days
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M4 11h12.2l-4.6-4.6L13 5l7 7-7 7-1.4-1.4 4.6-4.6H4z"/></svg></a>
+          <a class="jl__more" href="https://jamiilite.onrender.com/" target="_blank" rel="noopener">See how it works</a>
+        </div>
       </div>
       <div class="jl__viz">
       <svg class="jl-map" viewBox="-10 -10 530 510" role="img" aria-label="Map of Tanzania: the JamiiLite 5G WiFi network spreading from one street to every region">
