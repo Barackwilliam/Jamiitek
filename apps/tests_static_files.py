@@ -169,6 +169,7 @@ class StaticFilesTest(TestCase):
         self.client.force_login(self.owner)
         detail = self.client.get(f'/portal/websites/{self.site.pk}/').content.decode()
         self.assertIn(self.url, detail)
+        self.assertIn(self.url, self.client.get('/portal/websites/').content.decode())
         page = self.client.get(self.url).content.decode()
         self.assertIn('index.html', page)
         self.assertIn('style.css', page)
