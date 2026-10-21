@@ -1,0 +1,132 @@
+{% extends 'portal/base.html' %}
+{% block title %}Files — {{ website.name }}{% endblock %}
+{% block content %}
+{% comment %}
+  Mafaili ya website ya static (apps/static_files_views.py). Kila badiliko ni commit moja
+  kwenye repo ya website, na Render inaichapisha ndani ya dakika 1–2.
+{% endcomment %}
+<style>
+.sf-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+.sf-title{font-family:var(--head);font-size:21px;font-weight:800;color:var(--text);margin:0}
+.sf-sub{font-family:var(--mono);font-size:12px;color:var(--text-3);margin-top:3px;word-break:break-all}
+.sf-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:16px}
+.sf-card-h{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sf-card-t{font-family:var(--head);font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
+.sf-card-b{padding:16px 18px}
+.sf-row{display:flex;align-items:center;gap:12px;padding:10px 18px;border-bottom:1px solid var(--border)}
+.sf-row:last-child{border-bottom:none}
+.sf-row:target{background:rgba(0,212,255,.06)}
+.sf-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:rgba(255,255,255,.05);color:var(--text-2);font-size:13px}
+.sf-name{font-size:13px;font-weight:600;color:var(--text);word-break:break-all;min-width:0}
+.sf-meta{font-family:var(--mono);font-size:10.5px;color:var(--text-3);margin-top:2px}
+.sf-acts{display:flex;gap:6px;margin-left:auto;flex-shrink:0}
+.sf-step{font-family:var(--mono);font-size:10px;color:var(--text-3);letter-spacing:1px;text-transform:uppercase;margin:0 0 7px}
+.sf-hint{font-size:12px;color:var(--text-3);line-height:1.55;margin-top:6px}
+.sf-sep{height:1px;background:var(--border);margin:16px 0}
+.sf-check{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;color:var(--text-2);line-height:1.5;margin:10px 0 12px;cursor:pointer}
+.sf-check input{margin-top:3px;flex-shrink:0}
+</style>
+
+<div class="sf-head">
+  <div style="display:flex;gap:10px;align-items:flex-start;min-width:0">
+    <a href="{% url 'portal_website_detail' website.pk %}" class="jt-btn btn-ghost btn-icon" style="flex-shrink:0" aria-label="Back"><i class="fas fa-arrow-left"></i></a>
+    <div style="min-width:0">
+      <h1 class="sf-title">Website Files</h1>
+      <div class="sf-sub">{{ website.name }} · {{ website.url }}</div>
+    </div>
+  </div>
+  <a href="{{ website.url }}" target="_blank" rel="noopener" class="jt-btn btn-ghost" style="font-size:12px"><i class="fas fa-arrow-up-right-from-square"></i> View website</a>
+</div>
+
+{% if locked %}
+<div class="jt-alert jt-alert-danger mb-3"><i class="fas fa-lock" style="flex-shrink:0"></i>
+  <div><strong>Files are read-only.</strong> Your hosting is {{ website.status }}. <a href="{% url 'portal_billing' %}" style="color:var(--red);font-weight:700;text-decoration:underline">Renew hosting →</a></div>
+</div>
+{% endif %}
+{% if error %}
+<div class="jt-alert jt-alert-danger mb-3"><i class="fas fa-triangle-exclamation" style="flex-shrink:0"></i><div>{{ error }}</div></div>
+{% endif %}
+
+<div class="row g-3">
+  <!-- FILES -->
+  <div class="col-lg-8">
+    <div class="sf-card">
+      <div class="sf-card-h">
+        <span class="sf-card-t"><i class="fas fa-folder-open" style="color:var(--cyan)"></i> {{ files|length }} file{{ files|length|pluralize }} · {{ total_size|filesizeformat }}</span>
+        {% if site_repo.last_commit_at %}
+        <span class="sf-meta" title="{{ site_repo.last_commit_message }}">Last change {{ site_repo.last_commit_at|timesince }} ago</span>
+        {% endif %}
+      </div>
+      {% for f in files %}
+      <div class="sf-row" id="{{ f.path }}">
+        <div class="sf-ico">
+          {% if f.editable %}<i class="fas fa-file-code"></i>{% elif f.path|slice:"-4:" == ".pdf" %}<i class="fas fa-file-pdf"></i>{% else %}<i class="fas fa-file-image"></i>{% endif %}
+        </div>
+        <div style="min-width:0">
+          <div class="sf-name">{{ f.path }}{% if f.protected %} <span class="sf-meta" style="margin-left:4px">· home page</span>{% endif %}</div>
+          <div class="sf-meta">{{ f.size|filesizeformat }}</div>
+        </div>
+        <div class="sf-acts">
+          <a href="{{ f.url }}" target="_blank" rel="noopener" class="jt-btn btn-ghost btn-icon" title="Open on the website" aria-label="Open {{ f.path }}"><i class="fas fa-eye"></i></a>
+          {% if f.editable and not locked %}
+          <a href="{% url 'portal_site_file_edit' website.pk %}?path={{ f.path|urlencode }}" class="jt-btn btn-ghost btn-icon" title="Edit" aria-label="Edit {{ f.path }}"><i class="fas fa-pen"></i></a>
+          {% endif %}
+          {% if not f.protected and not locked %}
+          <form method="post" style="margin:0" onsubmit="return confirm('Delete {{ f.path|escapejs }} from your website?')">
+            {% csrf_token %}<input type="hidden" name="action" value="delete"><input type="hidden" name="path" value="{{ f.path }}">
+            <button type="submit" class="jt-btn btn-icon btn-red" title="Delete" aria-label="Delete {{ f.path }}"><i class="fas fa-trash"></i></button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      {% empty %}
+      {% if not error %}<div class="jt-empty"><div class="ei">📁</div><p>No files yet — upload your website below.</p></div>{% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="col-lg-4">
+    {% if not locked %}
+    <div class="sf-card">
+      <div class="sf-card-h"><span class="sf-card-t"><i class="fas fa-cloud-arrow-up" style="color:var(--green)"></i> Add or update files</span></div>
+      <div class="sf-card-b">
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}<input type="hidden" name="action" value="upload">
+          <div class="sf-step">Upload files</div>
+          <input type="file" name="files" multiple required class="f-input" accept="{{ accept }}">
+          <input type="text" name="folder" class="f-input" style="margin-top:8px" placeholder="Folder (optional), e.g. images">
+          <div class="sf-hint">A file with the same name replaces the old one. Max 10 MB each.</div>
+          <button type="submit" class="jt-btn btn-primary" style="width:100%;justify-content:center;margin-top:10px"><i class="fas fa-upload"></i> Upload</button>
+        </form>
+
+        <div class="sf-sep"></div>
+
+        <form method="get" action="{% url 'portal_site_file_edit' website.pk %}">
+          <div class="sf-step">New page or file</div>
+          <input type="text" name="path" required class="f-input" placeholder="e.g. about.html or css/style.css">
+          <button type="submit" class="jt-btn btn-ghost" style="width:100%;justify-content:center;margin-top:10px"><i class="fas fa-file-circle-plus"></i> Create &amp; edit</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="sf-card">
+      <div class="sf-card-h"><span class="sf-card-t"><i class="fas fa-file-zipper" style="color:var(--yellow)"></i> Upload a whole website</span></div>
+      <div class="sf-card-b">
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}<input type="hidden" name="action" value="zip">
+          <input type="file" name="zipfile" accept=".zip" required class="f-input">
+          <label class="sf-check"><input type="checkbox" name="replace" id="replaceAll">
+            <span><b>Replace everything</b> — remove files that are not in the .zip. The .zip must contain index.html.</span></label>
+          <button type="submit" class="jt-btn btn-ghost" style="width:100%;justify-content:center"
+                  onclick="return !document.getElementById('replaceAll').checked || confirm('Replace your whole website with this .zip? Files not in the .zip will be removed.')"><i class="fas fa-file-zipper"></i> Upload .zip</button>
+          <div class="sf-hint">Max 25 MB. A single top folder inside the .zip is removed automatically.</div>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="sf-hint" style="padding:0 4px"><i class="fas fa-circle-info" style="color:var(--cyan)"></i> Every change is published automatically and appears on {{ website.url }} in 1–2 minutes.</div>
+  </div>
+</div>
+{% endblock %}

@@ -36,7 +36,7 @@ from .models import (
     ManagedWebsite, HostingPayment, WebsiteFeature,
     ScheduledAction, ClientNotification, Client,
     DomainRecord, DomainRenewalPayment,
-    EmailHostingPlan, EmailHostingPayment,
+    EmailHostingPlan, EmailHostingPayment, StaticSiteRepo,
 )
 
 
@@ -162,6 +162,7 @@ def website_detail(request, pk):
         'notification_types': ClientNotification.NOTIFICATION_TYPES,
         'guard_host': site_guard.host_of(website.url),
         'guard_htaccess': site_guard.HTACCESS,
+        'static_repo': StaticSiteRepo.objects.filter(website=website).first(),
     })
 
 

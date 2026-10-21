@@ -15,6 +15,7 @@ from .views import templates_marketplace, template_preview, template_preview_raw
 from . import management_views
 from . import infra_views
 from . import client_portal_views as portal
+from . import static_files_views
 from builder import views as builder_views
 from . import domain_views
 from . import receipt_views, receipt_confirm
@@ -195,6 +196,7 @@ urlpatterns = [
     path('manage/websites/<int:pk>/notify/', management_views.send_notification, name='send_notification'),
     path('manage/websites/<int:pk>/schedule/', management_views.schedule_action, name='schedule_action'),
     path('manage/websites/<int:pk>/api-key/regenerate/', management_views.regenerate_api_key, name='regenerate_api_key'),
+    path('manage/websites/<int:pk>/files-repo/', static_files_views.static_repo_save, name='static_repo_save'),
     path('manage/websites/<int:pk>/guard.php', management_views.guard_php_download, name='guard_php_download'),
     path('manage/actions/<int:action_pk>/cancel/', management_views.cancel_scheduled_action, name='cancel_scheduled_action'),
     path('manage/clients/', management_views.client_list, name='client_list'),
@@ -222,6 +224,8 @@ urlpatterns = [
     path('portal/register/', portal.portal_register, name='portal_register'),
     path('portal/websites/', portal.portal_website_list, name='portal_website_list'),
     path('portal/websites/<int:pk>/', portal.portal_website_detail, name='portal_website_detail'),
+    path('portal/websites/<int:pk>/files/', static_files_views.portal_site_files, name='portal_site_files'),
+    path('portal/websites/<int:pk>/files/edit/', static_files_views.portal_site_file_edit, name='portal_site_file_edit'),
     path('portal/billing/', portal.portal_billing, name='portal_billing'),
     path('portal/billing/submit/', portal.portal_submit_payment, name='portal_submit_payment'),
     path('portal/billing/invoice/', portal.portal_request_invoice, name='portal_request_invoice'),

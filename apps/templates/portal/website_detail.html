@@ -78,6 +78,9 @@
       </div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      {% if website.site_type == 'static' and website.static_repo %}
+      <a href="{% url 'portal_site_files' website.pk %}" class="jt-btn btn-primary" style="font-size:12px"><i class="fas fa-folder-open"></i> Files</a>
+      {% endif %}
       <a href="{% url 'portal_hosting_config' website.pk %}" class="jt-btn btn-ghost" style="font-size:12px;border-color:rgba(0,212,255,.2);color:var(--cyan)"><i class="fas fa-server"></i> Hosting Panel</a>
       {% with domain=website.domains.first %}{% if domain %}
       <a href="{% url 'portal_dns_manager' domain.pk %}" class="jt-btn btn-ghost" style="font-size:12px;border-color:rgba(139,92,246,.2);color:#a78bfa"><i class="fas fa-network-wired"></i> DNS</a>

@@ -8,6 +8,7 @@ from django.utils import timezone
 from .receipt_models import DevelopmentReceipt  
 
 from .integration_models import ResolverMixin
+from .crypto import EncryptedJSONField
 import secrets
 from .site_content import HeroSlide, PortfolioItem, Testimonial  # noqa: F401
 from .pesapal_models import PesapalTransaction  # noqa: F401
@@ -2117,3 +2118,27 @@ class AIConfig(models.Model):
     @classmethod
     def load(cls):
         return cls.objects.order_by('pk').first() or cls.objects.create()
+
+
+class StaticSiteRepo(models.Model):
+    """
+    Repo ya GitHub ya website ya static ya mteja (Render inaichapisha kila commit).
+
+    Mteja anasimamia mafaili kwenye Portal → My Websites → Files (apps/static_files.py);
+    JamiiTek inaandika kwenye repo hii kwa token iliyosimbwa. Mteja haoni GitHub wala Render.
+    """
+    website = models.OneToOneField(ManagedWebsite, on_delete=models.CASCADE, related_name='static_repo')
+    repo = models.CharField(max_length=200, help_text='owner/name, mf. dukalajuma/website')
+    branch = models.CharField(max_length=100, default='main')
+    credentials = EncryptedJSONField(help_text='{"token": ...} — GitHub token yenye ruhusa ya Contents: write')
+    last_commit_sha = models.CharField(max_length=40, blank=True)
+    last_commit_at = models.DateTimeField(null=True, blank=True)
+    last_commit_message = models.CharField(max_length=200, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.repo}@{self.branch}'
+
+    @property
+    def token(self):
+        return (self.credentials or {}).get('token', '')
