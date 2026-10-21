@@ -145,6 +145,48 @@
         <a href="/api/site-status/{{ website.api_key }}/" target="_blank" class="jt-btn btn-ghost" style="width:100%;justify-content:center;margin-top:12px;font-size:12px"><i class="fas fa-vial"></i> Test API Endpoint</a>
       </div>
     </div>
+    {% if website.site_type == 'static' %}
+    {% comment %}
+      Files (GitHub): mteja anasimamia mafaili kwenye Portal → Files (apps/static_files.py).
+      Token: GitHub → Settings → Developer settings → Fine-grained tokens → repo hii tu → Contents: Read and write.
+    {% endcomment %}
+    <div class="jt-card mb-3" id="files">
+      <div class="jt-card-head">
+        <span class="jt-card-title"><i class="fas fa-folder-open" style="color:var(--cyan)"></i> Files (GitHub)</span>
+        {% if static_repo %}<span class="jt-badge b-active" style="font-size:10px">Connected</span>{% endif %}
+      </div>
+      <div class="jt-card-body">
+        {% if static_repo %}
+        <div style="font-size:12.5px;color:var(--text-2);line-height:1.6;margin-bottom:10px">
+          The client manages files in <b>Portal → My Websites → Files</b>. Each change is a commit to
+          <a href="https://github.com/{{ static_repo.repo }}/commits/{{ static_repo.branch }}" target="_blank" rel="noopener" style="font-family:var(--mono)">{{ static_repo.repo }}@{{ static_repo.branch }}</a>; Render publishes it.
+          {% if static_repo.last_commit_at %}<br><span style="font-family:var(--mono);font-size:11px;color:var(--text-3)">Last: {{ static_repo.last_commit_message }} · {{ static_repo.last_commit_at|timesince }} ago</span>{% endif %}
+        </div>
+        {% else %}
+        <div style="font-size:12.5px;color:var(--text-2);line-height:1.6;margin-bottom:10px">
+          Connect the GitHub repo that Render deploys, so the client can upload, edit and delete files from the portal.
+          Token: GitHub → Settings → Developer settings → <b>Fine-grained tokens</b> → only this repo → <b>Contents: Read and write</b>.
+        </div>
+        {% endif %}
+        <form method="post" action="{% url 'static_repo_save' website.pk %}">
+          {% csrf_token %}
+          <label class="f-label">Repo</label>
+          <input type="text" name="repo" class="f-input" value="{{ static_repo.repo }}" placeholder="owner/name" required>
+          <label class="f-label" style="margin-top:10px">Branch</label>
+          <input type="text" name="branch" class="f-input" value="{{ static_repo.branch|default:'main' }}">
+          <label class="f-label" style="margin-top:10px">GitHub token</label>
+          <input type="password" name="token" class="f-input" autocomplete="off" placeholder="{% if static_repo %}Saved — leave empty to keep{% else %}github_pat_…{% endif %}" {% if not static_repo %}required{% endif %}>
+          <button type="submit" class="jt-btn btn-cyan" style="width:100%;justify-content:center;margin-top:12px"><i class="fas fa-plug"></i> {% if static_repo %}Check &amp; save{% else %}Check &amp; connect{% endif %}</button>
+        </form>
+        {% if static_repo %}
+        <form method="post" action="{% url 'static_repo_save' website.pk %}" onsubmit="return confirm('Disconnect the repo? The client will lose the Files page.')" style="margin-top:8px">
+          {% csrf_token %}<input type="hidden" name="remove" value="1">
+          <button type="submit" class="jt-btn btn-ghost" style="width:100%;justify-content:center;font-size:12px"><i class="fas fa-link-slash"></i> Disconnect</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
   </div>
 
   <!-- COL 2: Features + Scheduled Actions -->
