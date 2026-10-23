@@ -317,7 +317,7 @@ def portal_dashboard(request):
 @client_required
 def portal_website_list(request):
     client = request.client_profile
-    websites = ManagedWebsite.objects.filter(client=client).order_by('name')
+    websites = ManagedWebsite.objects.filter(client=client).select_related('static_repo').order_by('name')
     return render(request, 'portal/website_list.html', {
         'title': 'My Websites',
         'client': client,
