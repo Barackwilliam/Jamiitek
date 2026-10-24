@@ -226,7 +226,7 @@
       <i class="fas fa-comments"></i> Conversations
     </a>
     <a href="{% url 'chatbot_connect' %}" class="sb-link {% if 'connect' in request.resolver_match.url_name %}active{% endif %}">
-      <i class="fab fa-whatsapp"></i> Unganisha WhatsApp
+      <i class="fab fa-whatsapp"></i> Connect WhatsApp
       {% if bot.connection_status == 'connected' %}
         <span style="margin-left:auto;width:7px;height:7px;border-radius:50%;background:var(--green)"></span>
       {% else %}
@@ -237,7 +237,7 @@
       <i class="fas fa-code"></i> Add to Website
     </a>
     <a href="{% url 'chatbot_knowledge' %}" class="sb-link {% if 'knowledge' in request.resolver_match.url_name %}active{% endif %}">
-      <i class="fas fa-graduation-cap"></i> Maarifa ya bot
+      <i class="fas fa-graduation-cap"></i> Bot Knowledge
       {% with n=bot.knowledge_gaps.all|length %}{% endwith %}
     </a>
     <a href="{% url 'chatbot_shop' %}" class="sb-link {% if request.resolver_match.url_name == 'chatbot_shop' %}active{% endif %}">
