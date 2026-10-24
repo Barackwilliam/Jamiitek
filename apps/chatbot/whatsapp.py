@@ -66,6 +66,22 @@ class WhatsAppHandler:
             logger.error(f"WA network error: {e}")
             return {'success': False, 'error': str(e)}
 
+    def send_image(self, to: str, url: str, caption: str = '', jid=None) -> dict:
+        """Picha kwa link (bidhaa za duka)."""
+        if not self.is_configured():
+            return {'success': False, 'error': 'Not configured'}
+        try:
+            resp = requests.post(f"{WA_API_BASE}/{self.phone_id}/messages", json={
+                "messaging_product": "whatsapp", "recipient_type": "individual", "to": to,
+                "type": "image", "image": {"link": url, "caption": caption[:1024]},
+            }, headers={"Authorization": f"Bearer {self.token}"}, timeout=10)
+            data = resp.json()
+        except (requests.RequestException, ValueError) as e:
+            return {'success': False, 'error': str(e)}
+        if resp.status_code == 200:
+            return {'success': True, 'message_id': data.get('messages', [{}])[0].get('id', '')}
+        return {'success': False, 'error': data.get('error', {}).get('message', 'Unknown')}
+
     def send_interactive_list(self, to: str, header: str, body: str, button_text: str, sections: list) -> dict:
         """Send interactive list message (menu)."""
         if not self.is_configured():

@@ -191,6 +191,22 @@ class BaileysHandler:
                          self.bot.bot_name, jid or to, data.get('error'))
         return data
 
+    def send_image(self, to, url, caption='', jid=None):
+        """
+        Picha + maelezo (bidhaa za duka). `text` inatumwa pia: bridge ya zamani
+        isiyojua `image_url` inatuma maelezo kama maandishi badala ya kushindwa.
+        """
+        if not self.is_configured():
+            return {'success': False, 'error': 'Not configured'}
+        payload = {'session': self.session, 'to': to, 'text': caption or ' ', 'image_url': url}
+        if jid:
+            payload['jid'] = jid
+        data = _request('POST', '/send', json=payload)
+        if not data.get('success'):
+            logger.error('Bot %s: picha kwa %s imeshindwa — %s',
+                         self.bot.bot_name, jid or to, data.get('error'))
+        return data
+
     def send_interactive_list(self, to, header, body, button_text, sections):
         """
         Baileys: orodha inaandikwa kama maandishi yenye namba.

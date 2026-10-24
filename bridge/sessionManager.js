@@ -489,6 +489,17 @@ class Session {
         return res?.key?.id || '';
     }
 
+    async sendImage(to, url, caption) {
+        if (!this.sock || this.status !== 'connected') {
+            throw new Error(`session ${this.name} haijaunganishwa (${this.status})`);
+        }
+        const jid = this.constructor.toJid(to);
+        const res = await this.sock.sendMessage(jid, { image: { url: String(url) }, caption: String(caption || '').trim() });
+        await this.sendPresence(jid, 'paused').catch(() => {});
+        log(this.name, `  -> picha imetumwa kwa ${jid}`);
+        return res?.key?.id || '';
+    }
+
     static toJid(to) {
         const v = String(to || '').trim();
         if (v.includes('@')) return v;                 // tayari ni JID

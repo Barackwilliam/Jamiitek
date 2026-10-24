@@ -1,0 +1,121 @@
+{% extends 'chatbot/portal/base.html' %}
+{% block title %}Bidhaa{% endblock %}
+{% block page_title %}Bidhaa{% endblock %}
+{% block breadcrumb %}{{ bot.bot_name }} / Bidhaa{% endblock %}
+
+{% block extra_css %}
+<style>
+.shop-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 22px;margin-bottom:18px}
+.shop-h{font-family:var(--head);font-size:16px;color:var(--text);margin:0 0 6px;display:flex;align-items:center;gap:9px}
+.shop-p{font-size:13px;color:var(--text-2);line-height:1.7;margin:0 0 14px}
+.switch{display:flex;align-items:center;gap:11px;font-size:13.5px;color:var(--text);cursor:pointer;margin-bottom:14px}
+.switch input{width:18px;height:18px;accent-color:var(--gold)}
+.hint{font-size:11.5px;color:var(--text-3);line-height:1.6;margin-top:7px}
+.hint a{color:var(--gold)}
+.demo{background:rgba(0,0,0,.25);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;
+  font-family:var(--mono);font-size:11.5px;color:var(--text-2);line-height:1.75;white-space:pre-line}
+.prod{display:flex;align-items:center;gap:13px;padding:12px 0;border-top:1px solid var(--border)}
+.prod:first-child{border-top:none}
+.thumb{width:52px;height:52px;border-radius:10px;object-fit:cover;background:var(--card-s);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;color:var(--text-3)}
+.p-name{font-size:14px;font-weight:600;color:var(--text)}
+.p-meta{font-family:var(--mono);font-size:11px;color:var(--text-3);margin-top:3px}
+.p-price{font-family:var(--head);font-weight:800;color:var(--gold);white-space:nowrap}
+.tag{font-family:var(--mono);font-size:10px;border-radius:99px;padding:2px 8px;border:1px solid var(--border);color:var(--text-3)}
+.tag-out{color:var(--red);border-color:rgba(239,68,68,.3)}
+.acts{display:flex;gap:6px;margin-left:auto;flex-shrink:0}
+.acts form{margin:0}
+.empty{text-align:center;padding:34px 16px;color:var(--text-3);font-size:13.5px;line-height:1.7}
+@media(max-width:560px){.prod{flex-wrap:wrap}.acts{width:100%;justify-content:flex-end}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-lg-7">
+    <!-- BIDHAA -->
+    <div class="shop-card">
+      <h2 class="shop-h"><i class="fas fa-store" style="color:var(--gold)"></i> Bidhaa zako ({{ active_count }})</h2>
+      <p class="shop-p">Wateja wakiandika <b>bidhaa</b> kwenye WhatsApp au chat ya tovuti, bot inawaonyesha hizi kwa namba, wanachagua, wanaagiza — bila wewe kuguswa.</p>
+      {% for p in products %}
+      <div class="prod">
+        {% if p.image_url %}<img class="thumb" src="{{ p.image_url }}" alt="" loading="lazy">{% else %}<div class="thumb"><i class="fas fa-image"></i></div>{% endif %}
+        <div style="min-width:0;flex:1">
+          <div class="p-name">{{ p.name }}</div>
+          <div class="p-meta">{% if p.category %}{{ p.category }} · {% endif %}{% if not p.in_stock %}<span class="tag tag-out">Imeisha</span>{% else %}<span class="tag">Ipo</span>{% endif %}</div>
+        </div>
+        <div class="p-price">TZS {{ p.price|floatformat:"0g" }}</div>
+        <div class="acts">
+          <form method="post" action="{% url 'chatbot_product_save' %}">{% csrf_token %}
+            <input type="hidden" name="product_id" value="{{ p.id }}"><input type="hidden" name="action" value="stock">
+            <button class="jt-btn btn-ghost btn-icon" title="{% if p.in_stock %}Weka imeisha{% else %}Weka ipo{% endif %}" aria-label="Badilisha stock ya {{ p.name }}"><i class="fas {% if p.in_stock %}fa-box{% else %}fa-box-open{% endif %}"></i></button>
+          </form>
+          <a href="?edit={{ p.id }}#form" class="jt-btn btn-ghost btn-icon" title="Hariri" aria-label="Hariri {{ p.name }}"><i class="fas fa-pen"></i></a>
+          <form method="post" action="{% url 'chatbot_product_save' %}" onsubmit="return confirm('Ondoa {{ p.name|escapejs }}?')">{% csrf_token %}
+            <input type="hidden" name="product_id" value="{{ p.id }}"><input type="hidden" name="action" value="delete">
+            <button class="jt-btn btn-red btn-icon" title="Ondoa" aria-label="Ondoa {{ p.name }}"><i class="fas fa-trash"></i></button>
+          </form>
+        </div>
+      </div>
+      {% empty %}
+      <div class="empty"><i class="fas fa-box-open" style="font-size:30px;opacity:.35;display:block;margin-bottom:10px"></i>Bado hujaweka bidhaa. Ongeza ya kwanza upande wa kulia.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <!-- ONGEZA / HARIRI -->
+    <div class="shop-card" id="form">
+      <h2 class="shop-h"><i class="fas {% if edit %}fa-pen{% else %}fa-plus{% endif %}" style="color:var(--green)"></i> {% if edit %}Hariri {{ edit.name }}{% else %}Ongeza bidhaa{% endif %}</h2>
+      <form method="post" action="{% url 'chatbot_product_save' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% if edit %}<input type="hidden" name="product_id" value="{{ edit.id }}">{% endif %}
+        <label class="f-label">Jina la bidhaa *</label>
+        <input name="name" class="f-input" required maxlength="120" value="{{ edit.name|default:'' }}" placeholder="mf. Viatu vya ngozi">
+        <div class="row g-2" style="margin-top:2px">
+          <div class="col-6"><label class="f-label" style="margin-top:10px">Bei (TZS) *</label>
+            <input name="price" class="f-input" required inputmode="numeric" value="{{ edit.price|default:'' }}" placeholder="25000"></div>
+          <div class="col-6"><label class="f-label" style="margin-top:10px">Kundi</label>
+            <input name="category" class="f-input" list="cats" maxlength="60" value="{{ edit.category|default:'' }}" placeholder="mf. Viatu">
+            <datalist id="cats">{% for c in categories %}<option value="{{ c }}">{% endfor %}</datalist></div>
+        </div>
+        <label class="f-label" style="margin-top:10px">Maelezo mafupi</label>
+        <input name="description" class="f-input" maxlength="300" value="{{ edit.description|default:'' }}" placeholder="mf. Size 38–45, rangi nyeusi na kahawia">
+        <label class="f-label" style="margin-top:10px">Picha</label>
+        <input type="file" name="image" class="f-input" accept="image/jpeg,image/png,image/webp">
+        <input name="image_url" class="f-input" style="margin-top:6px" value="{{ edit.image_url|default:'' }}" placeholder="au link ya picha: https://…">
+        <label class="switch" style="margin:12px 0 0"><input type="checkbox" name="in_stock" {% if not edit or edit.in_stock %}checked{% endif %}> Ipo stoo</label>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button class="jt-btn btn-primary" style="flex:1;justify-content:center"><i class="fas fa-check"></i> Hifadhi</button>
+          {% if edit %}<a href="{% url 'chatbot_shop' %}" class="jt-btn btn-ghost">Acha</a>{% endif %}
+        </div>
+      </form>
+    </div>
+
+    <!-- MIPANGILIO -->
+    <div class="shop-card">
+      <h2 class="shop-h"><i class="fas fa-sliders" style="color:var(--gold)"></i> Duka na malipo</h2>
+      <form method="post" action="{% url 'chatbot_shop_settings' %}">
+        {% csrf_token %}
+        <label class="switch"><input type="checkbox" name="shop_enabled" {% if bot.shop_enabled %}checked{% endif %}> Washa duka kwenye chat</label>
+        <label class="f-label">Jinsi ya kulipa</label>
+        <textarea name="payment_instructions" class="f-input" style="min-height:92px" maxlength="1000" placeholder="mf. Lipa Namba: (namba yako) — M-Pesa&#10;Jina: (jina la biashara)">{{ bot.payment_instructions }}</textarea>
+        <div class="hint">Inaonyeshwa kwa mteja baada ya kuthibitisha oda. Pesa inakuja moja kwa moja kwako; mteja anatuma namba ya muamala na wewe unathibitisha kwenye <a href="{% url 'chatbot_orders' %}">Oda</a>. Ukiacha tupu, mteja anaambiwa utawasiliana naye.</div>
+        <button class="jt-btn btn-primary" style="width:100%;justify-content:center;margin-top:14px"><i class="fas fa-floppy-disk"></i> Hifadhi</button>
+      </form>
+    </div>
+
+    <div class="shop-card">
+      <h2 class="shop-h"><i class="fas fa-comments" style="color:var(--green)"></i> Mteja anavyoona</h2>
+      <div class="demo">Mteja: bidhaa
+Bot: 🛍️ Bidhaa za {{ bot.business_name|default:bot.bot_name }}
+  1. …  2. …  — Andika namba
+Mteja: 1  →  picha + bei, "Unataka ngapi?"
+Mteja: 2  →  kikapu: 1. Ongeza  2. Maliza  3. Ghairi
+Mteja: 2  →  "Tupe mahali" → muhtasari → 1. Thibitisha
+Bot: ✅ Oda #K7Q2 imepokelewa + jinsi ya kulipa</div>
+      <div class="hint">Unapata ujumbe WhatsApp kila oda mpya na kila mteja anaposema amelipa.</div>
+    </div>
+  </div>
+</div>
+{% endblock %}
