@@ -82,6 +82,16 @@ class WebHandler:
         # `to` si mtembeleaji => ni taarifa ya mmiliki (handoff)
         return self._notify_owner(message)
 
+    def send_image(self, to, url, caption='', jid=None):
+        """Picha ya bidhaa: widget inaigeuza `[[img:URL]]` kuwa <img> (https pekee)."""
+        if str(to) != self.customer_key:
+            return self._notify_owner(caption)
+        if url and str(url).startswith('https://'):
+            self.replies.append(f"[[img:{url}]]\n{caption}".strip())
+        elif caption:
+            self.replies.append(caption)
+        return {'success': True, 'message_id': f'web_{len(self.replies)}'}
+
     def send_interactive_list(self, to, header, body, button_text, sections):
         """Orodha ya huduma inakuwa maandishi — browser haina UI ya WhatsApp."""
         lines = [f'*{header}*', '', body, '']
@@ -596,7 +606,10 @@ _WIDGET_JS = r"""
   function addBubble(text, dir) {
     var b = document.createElement('div');
     b.className = 'jt-msg ' + dir;
-    b.innerHTML = '<div class="jt-bubble">' + fmt(text) + '<span class="jt-time">' + now() + '</span></div>';
+    // Picha ya bidhaa: "[[img:https://...]]\nmaelezo" (WebHandler.send_image)
+    var img = '', m = /^\[\[img:(https:\/\/[^\]\s"'<>]+)\]\]\n?/.exec(text);
+    if (m) { img = '<img class="jt-pic" src="' + esc(m[1]) + '" alt="" loading="lazy">'; text = text.slice(m[0].length); }
+    b.innerHTML = '<div class="jt-bubble">' + img + fmt(text) + '<span class="jt-time">' + now() + '</span></div>';
     body.appendChild(b);
     scroll();
     if (dir === 'in' && !opened) {
@@ -713,6 +726,7 @@ _WIDGET_JS = r"""
     + '.jt-msg{display:flex;max-width:82%}'
     + '.jt-msg.in{align-self:flex-start}'
     + '.jt-msg.out{align-self:flex-end}'
+    + '.jt-pic{display:block;width:100%;max-width:240px;border-radius:6px;margin:-2px 0 6px;background:#111B21}'
     + '.jt-bubble{position:relative;padding:7px 10px 18px;border-radius:9px;font-size:14.5px;line-height:1.42;color:#E9EDEF;'
     +   'box-shadow:0 1px 1px rgba(0,0,0,.25);word-wrap:break-word;overflow-wrap:anywhere;white-space:pre-wrap;animation:jt-in .18s ease}'
     + '.jt-msg.in .jt-bubble{background:#202C33;border-top-left-radius:2px}'

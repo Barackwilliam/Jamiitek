@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from . import webchat
+from . import shop_views
 
 urlpatterns = [
     # ── Auth ──
@@ -19,6 +20,13 @@ urlpatterns = [
     # ── Maarifa ya bot ──
     path('knowledge/',                   views.chatbot_knowledge,        name='chatbot_knowledge'),
     path('knowledge/<int:gap_id>/',      views.chatbot_knowledge_action, name='chatbot_knowledge_action'),
+
+    # ── Duka: bidhaa, oda, malipo (shop.py + shop_views.py) ──
+    path('shop/',                        shop_views.chatbot_shop,          name='chatbot_shop'),
+    path('shop/settings/',               shop_views.chatbot_shop_settings, name='chatbot_shop_settings'),
+    path('shop/product/',                shop_views.chatbot_product_save,  name='chatbot_product_save'),
+    path('orders/',                      shop_views.chatbot_orders,        name='chatbot_orders'),
+    path('orders/<int:order_id>/',       shop_views.chatbot_order_status,  name='chatbot_order_status'),
 
     # ── Mteja anajiunganisha mwenyewe ──
     path('connect/',        views.chatbot_connect,        name='chatbot_connect'),

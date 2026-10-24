@@ -1,0 +1,74 @@
+{% extends 'chatbot/portal/base.html' %}
+{% block title %}Oda{% endblock %}
+{% block page_title %}Oda{% endblock %}
+{% block breadcrumb %}{{ bot.bot_name }} / Oda{% endblock %}
+
+{% block extra_css %}
+<style>
+.tabs{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.tab{padding:8px 15px;border-radius:99px;border:1px solid var(--border);color:var(--text-2);font-size:13px;text-decoration:none}
+.tab.on{background:var(--gold-d);border-color:rgba(245,166,35,.35);color:var(--gold)}
+.tab b{font-family:var(--mono);font-size:11px;margin-left:5px}
+.ord{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:17px 20px;margin-bottom:12px}
+.ord-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.ord-code{font-family:var(--head);font-size:16px;font-weight:800;color:var(--text)}
+.st{font-family:var(--mono);font-size:10.5px;border-radius:99px;padding:3px 10px;border:1px solid var(--border);color:var(--text-2)}
+.st-new{color:var(--gold);border-color:rgba(245,166,35,.35);background:var(--gold-d)}
+.st-payment_sent{color:#60a5fa;border-color:rgba(96,165,250,.35);background:rgba(96,165,250,.08)}
+.st-paid,.st-delivered{color:var(--green);border-color:rgba(0,220,130,.3);background:var(--green-d)}
+.st-cancelled{color:var(--text-3)}
+.when{font-family:var(--mono);font-size:11px;color:var(--text-3);margin-left:auto}
+.who{font-size:13.5px;color:var(--text);margin-bottom:8px}
+.who small{color:var(--text-3);font-family:var(--mono);font-size:11px;margin-left:6px}
+.items{font-size:13px;color:var(--text-2);line-height:1.8;margin:0 0 8px;padding-left:18px}
+.tot{font-family:var(--head);font-weight:800;color:var(--gold)}
+.kv{font-size:12.5px;color:var(--text-2);margin-top:4px;word-break:break-word}
+.kv b{color:var(--text-3);font-weight:600;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;margin-right:6px}
+.ref{font-family:var(--mono);color:#60a5fa}
+.acts{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}
+.acts form{margin:0}
+.lnk,.empty a,.kv a{color:var(--gold)}
+.lnk{font-size:12px;margin-left:8px}
+.empty{text-align:center;padding:52px 20px;color:var(--text-3);font-size:13.5px;line-height:1.7}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tabs">
+  <a class="tab {% if tab == 'open' %}on{% endif %}" href="?tab=open">Zinazoendelea<b>{{ counts.open }}</b></a>
+  <a class="tab {% if tab == 'done' %}on{% endif %}" href="?tab=done">Zimekamilika<b>{{ counts.done }}</b></a>
+  <a class="tab {% if tab == 'cancelled' %}on{% endif %}" href="?tab=cancelled">Zimeghairiwa<b>{{ counts.cancelled }}</b></a>
+</div>
+
+{% for o in orders %}
+<div class="ord">
+  <div class="ord-top">
+    <span class="ord-code">#{{ o.code }}</span>
+    <span class="st st-{{ o.status }}">{{ o.get_status_display }}</span>
+    <span class="tot">TZS {{ o.total|floatformat:"0g" }}</span>
+    <span class="when">{{ o.created_at|date:"d M, H:i" }}</span>
+  </div>
+  <div class="who"><i class="fas fa-user fa-xs" style="color:var(--text-3)"></i> {{ o.customer_name|default:"Mteja" }}
+    {% if o.phone_display %}<small>{{ o.phone_display }}</small>{% endif %}
+    {% if o.conversation_id %}<a class="lnk" href="{% url 'chatbot_conversation_detail' o.conversation_id %}">Fungua mazungumzo</a>{% endif %}</div>
+  <ul class="items">{% for i in o.items %}<li>{{ i.qty }} × {{ i.name }} — TZS {% widthratio i.price 1 i.qty as line %}{{ line|floatformat:"0g" }}</li>{% endfor %}</ul>
+  {% if o.delivery %}<div class="kv"><b>Mahali</b>{{ o.delivery|urlize }}</div>{% endif %}
+  {% if o.payment_ref %}<div class="kv"><b>Muamala</b><span class="ref">{{ o.payment_ref }}</span></div>{% endif %}
+  {% if o.status != 'delivered' and o.status != 'cancelled' %}
+  <div class="acts">
+    {% if o.status != 'paid' %}
+    <form method="post" action="{% url 'chatbot_order_status' o.id %}">{% csrf_token %}<input type="hidden" name="status" value="paid"><input type="hidden" name="tab" value="{{ tab }}">
+      <button class="jt-btn btn-green"><i class="fas fa-circle-check"></i> Imelipwa</button></form>
+    {% endif %}
+    <form method="post" action="{% url 'chatbot_order_status' o.id %}">{% csrf_token %}<input type="hidden" name="status" value="delivered"><input type="hidden" name="tab" value="{{ tab }}">
+      <button class="jt-btn btn-ghost"><i class="fas fa-box"></i> Imekamilika</button></form>
+    <form method="post" action="{% url 'chatbot_order_status' o.id %}" onsubmit="return confirm('Ghairi oda #{{ o.code }}?')">{% csrf_token %}<input type="hidden" name="status" value="cancelled"><input type="hidden" name="tab" value="{{ tab }}">
+      <button class="jt-btn btn-red"><i class="fas fa-xmark"></i> Ghairi</button></form>
+  </div>
+  {% endif %}
+</div>
+{% empty %}
+<div class="empty"><i class="fas fa-receipt" style="font-size:32px;opacity:.35;display:block;margin-bottom:12px"></i>
+  {% if tab == 'open' %}Hakuna oda inayoendelea.{% if not bot.shop_enabled %} Washa duka na uweke bidhaa kwenye <a href="{% url 'chatbot_shop' %}">Bidhaa</a>.{% endif %}{% else %}Hakuna oda hapa bado.{% endif %}</div>
+{% endfor %}
+{% endblock %}

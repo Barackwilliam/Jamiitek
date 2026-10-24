@@ -265,7 +265,7 @@ app.post('/sessions/:name/ping', auth, async (req, res) => {
 });
 
 app.post('/send', auth, async (req, res) => {
-    const { session, to, text, jid } = req.body || {};
+    const { session, to, text, jid, image_url } = req.body || {};
 
     // `jid` inatangulia `to`. Django inahifadhi JID halisi iliyopokea,
     // na hiyo ndiyo sahihi daima — hasa kwa LID, ambayo haiwezi
@@ -280,7 +280,19 @@ app.post('/send', auth, async (req, res) => {
     if (!s) return res.status(404).json({ success: false, error: 'Session haipo' });
 
     try {
-        const id = await s.sendText(target, text);
+        // Picha ya bidhaa (duka la JamiiBot): `text` ni maelezo yake. Ikishindwa
+        // kupakuliwa, maelezo yanatumwa kama maandishi ili mteja apate bei hata hivyo.
+        let id;
+        if (image_url && /^https:\/\//.test(image_url)) {
+            try {
+                id = await s.sendImage(target, image_url, text);
+            } catch (e) {
+                console.error(`[${session}] picha imeshindwa, natuma maandishi:`, e.message);
+                id = await s.sendText(target, text);
+            }
+        } else {
+            id = await s.sendText(target, text);
+        }
         res.json({ success: true, message_id: id });
     } catch (e) {
         console.error(`[${session}] /send imeshindwa:`, e.message);

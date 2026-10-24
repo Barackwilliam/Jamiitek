@@ -77,6 +77,7 @@
     .sb-nav::-webkit-scrollbar{display:none}
     .sb-section{font-family:var(--mono);font-size:9px;font-weight:600;color:var(--text-3);letter-spacing:2.5px;text-transform:uppercase;padding:16px 18px 6px}
     .sb-link{display:flex;align-items:center;gap:10px;padding:9px 12px;margin:1px 10px;border-radius:10px;color:var(--text-2);font-size:13.5px;font-weight:500;transition:background .15s cubic-bezier(.22,.61,.36,1),border-color .15s cubic-bezier(.22,.61,.36,1),color .15s cubic-bezier(.22,.61,.36,1);position:relative;cursor:pointer}
+    .sb-count{margin-left:auto;min-width:19px;height:19px;padding:0 6px;border-radius:99px;background:var(--gold);color:var(--bg);font-size:10.5px;font-weight:800;display:inline-flex;align-items:center;justify-content:center}
     .sb-link i{width:16px;text-align:center;font-size:13px;flex-shrink:0}
     .sb-link:hover{color:var(--text);background:var(--card-s)}
     .sb-link.active{color:var(--gold);background:var(--gold-d);border:1px solid rgba(245,166,35,.32)}
@@ -238,6 +239,13 @@
     <a href="{% url 'chatbot_knowledge' %}" class="sb-link {% if 'knowledge' in request.resolver_match.url_name %}active{% endif %}">
       <i class="fas fa-graduation-cap"></i> Maarifa ya bot
       {% with n=bot.knowledge_gaps.all|length %}{% endwith %}
+    </a>
+    <a href="{% url 'chatbot_shop' %}" class="sb-link {% if request.resolver_match.url_name == 'chatbot_shop' %}active{% endif %}">
+      <i class="fas fa-store"></i> Bidhaa
+    </a>
+    <a href="{% url 'chatbot_orders' %}" class="sb-link {% if request.resolver_match.url_name == 'chatbot_orders' %}active{% endif %}">
+      <i class="fas fa-receipt"></i> Oda
+      {% with n=bot.open_orders_count %}{% if n %}<span class="sb-count">{{ n }}</span>{% endif %}{% endwith %}
     </a>
     <div class="sb-section">Bot Settings</div>
     <a href="{% url 'chatbot_config' %}" class="sb-link {% if 'config' in request.resolver_match.url_name %}active{% endif %}">

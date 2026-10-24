@@ -167,6 +167,16 @@ class BotConfig(models.Model):
         help_text="LID ya mmiliki, imetafsiriwa kutoka namba. "
                   "WhatsApp inatumia LID badala ya namba kwa wateja wengi.")
 
+    # ── Duka: katalogi, oda na malipo (apps/chatbot/shop.py) ──
+    # Mteja anaandika "bidhaa" -> orodha -> idadi -> mahali -> oda. Hakuna AI.
+    # Malipo yanaenda MOJA KWA MOJA kwa mmiliki (Lipa Namba / M-Pesa yake);
+    # JamiiTek haishiki pesa za wateja wa biashara.
+    shop_enabled       = models.BooleanField(
+        default=False, help_text="Wateja wanaweza kuona bidhaa na kuagiza kwenye chat")
+    payment_instructions = models.TextField(
+        blank=True,
+        help_text="Jinsi ya kulipa, inaonyeshwa baada ya oda. Mfano: Lipa Namba 123456 (M-Pesa) — Jina: Duka la Juma")
+
     # ── Meta (zimebaki kwa bot za zamani; hazitumiki tena) ────
     whatsapp_phone_id  = models.CharField(max_length=50, blank=True, help_text="Meta Phone Number ID (legacy)")
     whatsapp_token     = models.CharField(max_length=500, blank=True, help_text="WhatsApp Cloud API token (legacy)")
@@ -251,6 +261,11 @@ class BotConfig(models.Model):
         """Namba ya mmiliki kama tarakimu pekee, kwa kulinganisha."""
         import re as _re
         return _re.sub(r'\D', '', self.owner_whatsapp or '')
+
+    @property
+    def open_orders_count(self):
+        """Oda zinazomsubiri mmiliki (mpya / mteja amesema amelipa) — beji ya menyu."""
+        return self.orders.filter(status__in=('new', 'payment_sent')).count() if self.pk else 0
 
     def is_owner(self, sender):
         """
@@ -885,3 +900,61 @@ class BotAnalytics(models.Model):
 
     def __str__(self):
         return f"{self.bot.bot_name} — {self.date}"
+
+# ─────────────────────────────────────────────
+# DUKA — bidhaa na oda (apps/chatbot/shop.py)
+# ─────────────────────────────────────────────
+class Product(models.Model):
+    bot         = models.ForeignKey(BotConfig, on_delete=models.CASCADE, related_name='products')
+    name        = models.CharField(max_length=120)
+    price       = models.PositiveIntegerField(help_text="Bei kwa TZS")
+    description = models.CharField(max_length=300, blank=True)
+    image_url   = models.URLField(max_length=500, blank=True)
+    category    = models.CharField(max_length=60, blank=True, help_text="Mfano: Viatu, Nguo")
+    in_stock    = models.BooleanField(default=True)
+    is_active   = models.BooleanField(default=True)
+    sort_order  = models.PositiveSmallIntegerField(default=0)
+    created_at  = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['sort_order', 'name']
+
+    def __str__(self):
+        return f"{self.name} ({self.bot.bot_name})"
+
+
+class Order(models.Model):
+    STATUS_CHOICES = [
+        ('new',          'Mpya'),
+        ('payment_sent', 'Mteja amesema amelipa'),
+        ('paid',         'Imelipwa'),
+        ('delivered',    'Imekamilika'),
+        ('cancelled',    'Imeghairiwa'),
+    ]
+    bot            = models.ForeignKey(BotConfig, on_delete=models.CASCADE, related_name='orders')
+    conversation   = models.ForeignKey(Conversation, on_delete=models.SET_NULL, null=True, blank=True,
+                                       related_name='orders')
+    code           = models.CharField(max_length=8, help_text="Namba fupi ya oda, mf. K7Q2")
+    customer_name  = models.CharField(max_length=120, blank=True)
+    customer_phone = models.CharField(max_length=40, blank=True)
+    items          = models.JSONField(default=list, help_text="[{product_id, name, price, qty}]")
+    total          = models.PositiveIntegerField(default=0)
+    delivery       = models.CharField(max_length=300, blank=True, help_text="Mahali pa kupeleka")
+    status         = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
+    payment_ref    = models.CharField(max_length=60, blank=True, help_text="Namba ya muamala aliyotuma mteja")
+    created_at     = models.DateTimeField(auto_now_add=True)
+    updated_at     = models.DateTimeField(auto_now=True)
+    paid_at        = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [models.UniqueConstraint(fields=['bot', 'code'], name='chatbot_order_unique_code')]
+
+    def __str__(self):
+        return f"Oda #{self.code} ({self.bot.bot_name})"
+
+    @property
+    def phone_display(self):
+        """Namba halisi tu — si kitambulisho cha chat ya tovuti wala LID (tarakimu 15+)."""
+        p = self.customer_phone or ''
+        return p if p.lstrip('+').isdigit() and 9 <= len(p.lstrip('+')) <= 14 else ''

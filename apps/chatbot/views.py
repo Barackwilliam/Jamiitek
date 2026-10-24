@@ -39,6 +39,7 @@ from .bridge import BaileysHandler
 from . import handoff
 from . import knowledge
 from . import ratelimit
+from . import shop
 from apps.security import same_site_logout
 
 logger = logging.getLogger('chatbot.views')
@@ -1374,6 +1375,12 @@ def _process_message(bot: BotConfig, msg_data: dict, handler=None):
 
     # ── State: CHAT (normal AI flow) ──────────────────────────────
 
+    # ── DUKA: katalogi, oda na malipo (apps/chatbot/shop.py) ───────
+    # Kabla ya picha/sauti: picha ya ujumbe wa malipo na `location` ya
+    # kupelekea oda ni majibu ya hatua za duka. Hakuna AI, hakuna kikomo.
+    if shop.handle(bot, wa, conv, from_phone, text, msg_data):
+        return
+
     # Subscription imeshakaguliwa juu kabisa (lango la "HUDUMA IMESIMAMA").
     sub = getattr(bot, 'subscription', None)
 
@@ -1608,10 +1615,15 @@ def simulate_message(request, bot_id):
     from .bridge import BaileysHandler as _BH
 
     original_send_text = _BH.send_text
-    def fake_send_text(self, to, message):
+    def fake_send_text(self, to, message, jid=None):
         sent_messages.append(message)
         return {'success': True, 'message_id': 'sim_' + str(len(sent_messages))}
     _BH.send_text = fake_send_text
+
+    # Picha za bidhaa za duka nazo zinanaswa (zisiende kwa bridge)
+    original_send_image = _BH.send_image
+    _BH.send_image = lambda self, to, url, caption='', jid=None: fake_send_text(
+        self, to, f"[Picha: {url}]\n{caption}")
 
     original_mark_read = _BH.mark_as_read
     _BH.mark_as_read = lambda self, msg_id: {'success': True}
@@ -1639,6 +1651,7 @@ def simulate_message(request, bot_id):
         return JsonResponse({'error': str(e)}, status=500)
     finally:
         _BH.send_text     = original_send_text
+        _BH.send_image    = original_send_image
         _BH.mark_as_read  = original_mark_read
 
     return JsonResponse({
@@ -2099,6 +2112,7 @@ def chatbot_knowledge(request):
 
     gaps = bot.knowledge_gaps.exclude(status='dismissed')
     return render(request, 'chatbot/portal/knowledge.html', {
+        'client': bot.client,    # menyu ya pembeni inahitaji client (bila hiyo: "Complete Setup")
         'bot': bot,
         'open_gaps':   gaps.filter(status__in=['open', 'drafted']),
         'answered':    gaps.filter(status='answered')[:20],
