@@ -241,10 +241,10 @@
       {% with n=bot.knowledge_gaps.all|length %}{% endwith %}
     </a>
     <a href="{% url 'chatbot_shop' %}" class="sb-link {% if request.resolver_match.url_name == 'chatbot_shop' %}active{% endif %}">
-      <i class="fas fa-store"></i> Bidhaa
+      <i class="fas fa-store"></i> Products
     </a>
     <a href="{% url 'chatbot_orders' %}" class="sb-link {% if request.resolver_match.url_name == 'chatbot_orders' %}active{% endif %}">
-      <i class="fas fa-receipt"></i> Oda
+      <i class="fas fa-receipt"></i> Orders
       {% with n=bot.open_orders_count %}{% if n %}<span class="sb-count">{{ n }}</span>{% endif %}{% endwith %}
     </a>
     <div class="sb-section">Bot Settings</div>

@@ -172,10 +172,10 @@ class BotConfig(models.Model):
     # Malipo yanaenda MOJA KWA MOJA kwa mmiliki (Lipa Namba / M-Pesa yake);
     # JamiiTek haishiki pesa za wateja wa biashara.
     shop_enabled       = models.BooleanField(
-        default=False, help_text="Wateja wanaweza kuona bidhaa na kuagiza kwenye chat")
+        default=False, help_text="Customers can browse products and order in the chat")
     payment_instructions = models.TextField(
         blank=True,
-        help_text="Jinsi ya kulipa, inaonyeshwa baada ya oda. Mfano: Lipa Namba 123456 (M-Pesa) — Jina: Duka la Juma")
+        help_text="How to pay, shown after an order. E.g. Lipa Namba (M-Pesa) and business name")
 
     # ── Meta (zimebaki kwa bot za zamani; hazitumiki tena) ────
     whatsapp_phone_id  = models.CharField(max_length=50, blank=True, help_text="Meta Phone Number ID (legacy)")
@@ -907,10 +907,10 @@ class BotAnalytics(models.Model):
 class Product(models.Model):
     bot         = models.ForeignKey(BotConfig, on_delete=models.CASCADE, related_name='products')
     name        = models.CharField(max_length=120)
-    price       = models.PositiveIntegerField(help_text="Bei kwa TZS")
+    price       = models.PositiveIntegerField(help_text="Price in TZS")
     description = models.CharField(max_length=300, blank=True)
     image_url   = models.URLField(max_length=500, blank=True)
-    category    = models.CharField(max_length=60, blank=True, help_text="Mfano: Viatu, Nguo")
+    category    = models.CharField(max_length=60, blank=True, help_text="E.g. Shoes, Clothes")
     in_stock    = models.BooleanField(default=True)
     is_active   = models.BooleanField(default=True)
     sort_order  = models.PositiveSmallIntegerField(default=0)
@@ -925,26 +925,27 @@ class Product(models.Model):
 
 class Order(models.Model):
     STATUS_CHOICES = [
-        ('new',          'Mpya'),
-        ('payment_sent', 'Mteja amesema amelipa'),
-        ('paid',         'Imelipwa'),
-        ('delivered',    'Imekamilika'),
-        ('cancelled',    'Imeghairiwa'),
+        ('new',          'New'),
+        ('payment_sent', 'Customer says paid'),
+        ('paid',         'Paid'),
+        ('delivered',    'Completed'),
+        ('cancelled',    'Cancelled'),
     ]
     bot            = models.ForeignKey(BotConfig, on_delete=models.CASCADE, related_name='orders')
     conversation   = models.ForeignKey(Conversation, on_delete=models.SET_NULL, null=True, blank=True,
                                        related_name='orders')
-    code           = models.CharField(max_length=8, help_text="Namba fupi ya oda, mf. K7Q2")
+    code           = models.CharField(max_length=8, help_text="Short order number, e.g. K7Q2")
     customer_name  = models.CharField(max_length=120, blank=True)
     customer_phone = models.CharField(max_length=40, blank=True)
     items          = models.JSONField(default=list, help_text="[{product_id, name, price, qty}]")
     total          = models.PositiveIntegerField(default=0)
-    delivery       = models.CharField(max_length=300, blank=True, help_text="Mahali pa kupeleka")
+    delivery       = models.CharField(max_length=300, blank=True, help_text="Delivery place")
     status         = models.CharField(max_length=20, choices=STATUS_CHOICES, default='new')
-    payment_ref    = models.CharField(max_length=60, blank=True, help_text="Namba ya muamala aliyotuma mteja")
+    payment_ref    = models.CharField(max_length=60, blank=True, help_text="Transaction number sent by the customer")
     created_at     = models.DateTimeField(auto_now_add=True)
     updated_at     = models.DateTimeField(auto_now=True)
     paid_at        = models.DateTimeField(null=True, blank=True)
+    lang           = models.CharField(max_length=2, blank=True, help_text="Customer's language: sw / en")
 
     class Meta:
         ordering = ['-created_at']
