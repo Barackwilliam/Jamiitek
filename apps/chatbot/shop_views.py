@@ -54,9 +54,9 @@ def chatbot_shop_settings(request):
     bot.payment_instructions = request.POST.get('payment_instructions', '').strip()[:1000]
     bot.save(update_fields=['shop_enabled', 'payment_instructions'])
     if bot.shop_enabled and not bot.products.filter(is_active=True).exists():
-        messages.warning(request, "Duka limewashwa, lakini ongeza angalau bidhaa moja ili wateja waione.")
+        messages.warning(request, "Shop is on, but add at least one product so customers can see it.")
     else:
-        messages.success(request, "Mipangilio ya duka imehifadhiwa.")
+        messages.success(request, "Shop settings saved.")
     return redirect('chatbot_shop')
 
 
@@ -71,7 +71,7 @@ def chatbot_product_save(request):
 
     if request.POST.get('action') == 'delete' and pid:
         product.delete()
-        messages.success(request, "Bidhaa imeondolewa.")
+        messages.success(request, "Product removed.")
         return redirect('chatbot_shop')
     if request.POST.get('action') == 'stock' and pid:
         product.in_stock = not product.in_stock
@@ -81,7 +81,7 @@ def chatbot_product_save(request):
     name = request.POST.get('name', '').strip()[:120]
     price = _price(request.POST.get('price'))
     if not name or price is None:
-        messages.error(request, "Weka jina la bidhaa na bei (namba tu, mf. 25000).")
+        messages.error(request, "Enter a product name and a price (numbers only, e.g. 25000).")
         return redirect(reverse('chatbot_shop') + (f'?edit={pid}' if pid else ''))
 
     image_url = request.POST.get('image_url', '').strip()[:500]
@@ -90,11 +90,11 @@ def chatbot_product_save(request):
         from apps import storage
         res = storage.upload(upload, folder='products')
         if not res.get('success'):
-            messages.error(request, f"Picha haikupakiwa: {res.get('error')}")
+            messages.error(request, f"Image upload failed: {res.get('error')}")
             return redirect('chatbot_shop')
         image_url = res['url']
     if image_url and not image_url.startswith('https://'):
-        messages.error(request, "Link ya picha lazima ianze na https://")
+        messages.error(request, "The image link must start with https://")
         return redirect('chatbot_shop')
 
     product.name = name
@@ -104,7 +104,7 @@ def chatbot_product_save(request):
     product.image_url = image_url
     product.in_stock = request.POST.get('in_stock', 'on') == 'on'
     product.save()
-    messages.success(request, f"{name} imehifadhiwa.")
+    messages.success(request, f"{name} saved.")
     return redirect('chatbot_shop')
 
 
@@ -140,5 +140,5 @@ def chatbot_order_status(request, order_id):
     if status not in dict(Order.STATUS_CHOICES):
         return redirect('chatbot_orders')
     shop.mark(order, status)
-    messages.success(request, f"Oda #{order.code}: {order.get_status_display()}.")
+    messages.success(request, f"Order #{order.code}: {order.get_status_display()}.")
     return redirect(reverse('chatbot_orders') + f"?tab={request.POST.get('tab', 'open')}")

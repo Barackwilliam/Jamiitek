@@ -1,7 +1,7 @@
 {% extends 'chatbot/portal/base.html' %}
-{% block title %}Oda{% endblock %}
-{% block page_title %}Oda{% endblock %}
-{% block breadcrumb %}{{ bot.bot_name }} / Oda{% endblock %}
+{% block title %}Orders{% endblock %}
+{% block page_title %}Orders{% endblock %}
+{% block breadcrumb %}{{ bot.bot_name }} / Orders{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -35,9 +35,9 @@
 
 {% block content %}
 <div class="tabs">
-  <a class="tab {% if tab == 'open' %}on{% endif %}" href="?tab=open">Zinazoendelea<b>{{ counts.open }}</b></a>
-  <a class="tab {% if tab == 'done' %}on{% endif %}" href="?tab=done">Zimekamilika<b>{{ counts.done }}</b></a>
-  <a class="tab {% if tab == 'cancelled' %}on{% endif %}" href="?tab=cancelled">Zimeghairiwa<b>{{ counts.cancelled }}</b></a>
+  <a class="tab {% if tab == 'open' %}on{% endif %}" href="?tab=open">Open<b>{{ counts.open }}</b></a>
+  <a class="tab {% if tab == 'done' %}on{% endif %}" href="?tab=done">Completed<b>{{ counts.done }}</b></a>
+  <a class="tab {% if tab == 'cancelled' %}on{% endif %}" href="?tab=cancelled">Cancelled<b>{{ counts.cancelled }}</b></a>
 </div>
 
 {% for o in orders %}
@@ -48,27 +48,27 @@
     <span class="tot">TZS {{ o.total|floatformat:"0g" }}</span>
     <span class="when">{{ o.created_at|date:"d M, H:i" }}</span>
   </div>
-  <div class="who"><i class="fas fa-user fa-xs" style="color:var(--text-3)"></i> {{ o.customer_name|default:"Mteja" }}
+  <div class="who"><i class="fas fa-user fa-xs" style="color:var(--text-3)"></i> {{ o.customer_name|default:"Customer" }}
     {% if o.phone_display %}<small>{{ o.phone_display }}</small>{% endif %}
-    {% if o.conversation_id %}<a class="lnk" href="{% url 'chatbot_conversation_detail' o.conversation_id %}">Fungua mazungumzo</a>{% endif %}</div>
+    {% if o.conversation_id %}<a class="lnk" href="{% url 'chatbot_conversation_detail' o.conversation_id %}">Open conversation</a>{% endif %}</div>
   <ul class="items">{% for i in o.items %}<li>{{ i.qty }} × {{ i.name }} — TZS {% widthratio i.price 1 i.qty as line %}{{ line|floatformat:"0g" }}</li>{% endfor %}</ul>
-  {% if o.delivery %}<div class="kv"><b>Mahali</b>{{ o.delivery|urlize }}</div>{% endif %}
-  {% if o.payment_ref %}<div class="kv"><b>Muamala</b><span class="ref">{{ o.payment_ref }}</span></div>{% endif %}
+  {% if o.delivery %}<div class="kv"><b>Delivery</b>{{ o.delivery|urlize }}</div>{% endif %}
+  {% if o.payment_ref %}<div class="kv"><b>Transaction</b><span class="ref">{{ o.payment_ref }}</span></div>{% endif %}
   {% if o.status != 'delivered' and o.status != 'cancelled' %}
   <div class="acts">
     {% if o.status != 'paid' %}
     <form method="post" action="{% url 'chatbot_order_status' o.id %}">{% csrf_token %}<input type="hidden" name="status" value="paid"><input type="hidden" name="tab" value="{{ tab }}">
-      <button class="jt-btn btn-green"><i class="fas fa-circle-check"></i> Imelipwa</button></form>
+      <button class="jt-btn btn-green"><i class="fas fa-circle-check"></i> Mark paid</button></form>
     {% endif %}
     <form method="post" action="{% url 'chatbot_order_status' o.id %}">{% csrf_token %}<input type="hidden" name="status" value="delivered"><input type="hidden" name="tab" value="{{ tab }}">
-      <button class="jt-btn btn-ghost"><i class="fas fa-box"></i> Imekamilika</button></form>
-    <form method="post" action="{% url 'chatbot_order_status' o.id %}" onsubmit="return confirm('Ghairi oda #{{ o.code }}?')">{% csrf_token %}<input type="hidden" name="status" value="cancelled"><input type="hidden" name="tab" value="{{ tab }}">
-      <button class="jt-btn btn-red"><i class="fas fa-xmark"></i> Ghairi</button></form>
+      <button class="jt-btn btn-ghost"><i class="fas fa-box"></i> Completed</button></form>
+    <form method="post" action="{% url 'chatbot_order_status' o.id %}" onsubmit="return confirm('Cancel order #{{ o.code }}?')">{% csrf_token %}<input type="hidden" name="status" value="cancelled"><input type="hidden" name="tab" value="{{ tab }}">
+      <button class="jt-btn btn-red"><i class="fas fa-xmark"></i> Cancel</button></form>
   </div>
   {% endif %}
 </div>
 {% empty %}
 <div class="empty"><i class="fas fa-receipt" style="font-size:32px;opacity:.35;display:block;margin-bottom:12px"></i>
-  {% if tab == 'open' %}Hakuna oda inayoendelea.{% if not bot.shop_enabled %} Washa duka na uweke bidhaa kwenye <a href="{% url 'chatbot_shop' %}">Bidhaa</a>.{% endif %}{% else %}Hakuna oda hapa bado.{% endif %}</div>
+  {% if tab == 'open' %}No open orders.{% if not bot.shop_enabled %} Turn on the shop and add products under <a href="{% url 'chatbot_shop' %}">Products</a>.{% endif %}{% else %}No orders here yet.{% endif %}</div>
 {% endfor %}
 {% endblock %}

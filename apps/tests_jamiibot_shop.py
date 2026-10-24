@@ -179,12 +179,15 @@ class JamiiBotShopTest(TestCase):
         self.client.post('/chatbot/shop/product/', {'name': 'Kofia', 'price': '7,500', 'category': 'Nguo'})
         self.assertEqual(Product.objects.get(name='Kofia').price, 7500)
         r = self.client.post('/chatbot/shop/product/', {'name': 'Bila bei', 'price': 'bure'}, follow=True)
+        self.assertIn('Enter a product name and a price', ' '.join(str(m) for m in r.context['messages']))
         self.assertFalse(Product.objects.filter(name='Bila bei').exists())
         self.client.post('/chatbot/shop/settings/', {'payment_instructions': 'Lipa Namba 999'})
         self.bot.refresh_from_db()
         self.assertEqual((self.bot.shop_enabled, self.bot.payment_instructions), (False, 'Lipa Namba 999'))
         page = self.client.get('/chatbot/shop/').content.decode()
         self.assertIn('Kofia', page)
+        self.assertIn('Your products', page)
+        self.assertIn('<i class="fas fa-receipt"></i> Orders', page)
 
         # Oda ya mteja wa WhatsApp: mmiliki anathibitisha malipo, mteja anaarifiwa
         self.bot.shop_enabled = True
@@ -211,3 +214,41 @@ class JamiiBotShopTest(TestCase):
         self.assertEqual(self.client.post(f'/chatbot/orders/{order.id}/', {'status': 'cancelled'}).status_code, 302)
         order.refresh_from_db()
         self.assertEqual(order.status, 'paid')
+
+    def test_replies_follow_the_bot_language(self):
+        from apps.chatbot.models import Order
+        # Swahili + English: lugha aliyotumia mteja kufungua duka
+        wa = self.say('products')
+        self.assertIn('Duka la Mama — products', wa.to_customer()[-1])
+        self.assertIn('Reply with a *number*', wa.to_customer()[-1])
+        wa = self.say('1')
+        self.assertIn('How many would you like', wa.to_customer()[-1])
+        for t in ('two', '2', 'pickup', '1'):
+            wa = self.say(t)
+        order = Order.objects.get()
+        self.assertEqual((order.lang, order.delivery), ('en', 'Atakuja kuchukua mwenyewe'))
+        self.assertIn(f'Order #{order.code} received', wa.to_customer()[-1])
+        self.assertIn('How to pay', wa.to_customer()[-1])
+        self.assertIn('Oda mpya', wa.to_owner()[0])                          # mmiliki: lugha ya bot
+
+        # English only: hata "bidhaa" inajibiwa kwa English, na mmiliki pia
+        self.bot.language = 'en'
+        self.bot.save()
+        Order.objects.all().delete()
+        self.bot.conversations.all().delete()
+        wa = self.say('bidhaa')
+        self.assertIn('— products', wa.to_customer()[-1])
+        for t in ('1', '1', '2', 'Mbezi', '1'):
+            wa = self.say(t)
+        self.assertIn('New order #', wa.to_owner()[0])
+        wa = self.say('cancel')                     # baada ya kuthibitisha: oda inaghairiwa kweli
+        self.assertIn('the order is cancelled', wa.to_customer()[-1])
+        self.assertEqual(Order.objects.get().status, 'cancelled')
+        self.assertIn('Order #', wa.to_owner()[0])
+        self.assertIn('was cancelled', wa.to_owner()[0])
+
+        # Swahili only: "products" inajibiwa kwa Kiswahili
+        self.bot.language = 'sw'
+        self.bot.save()
+        wa = self.say('products')
+        self.assertIn('Bidhaa za Duka la Mama', wa.to_customer()[-1])
