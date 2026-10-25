@@ -44,17 +44,71 @@ def clean_reply(text: str) -> str:
 GROQ_API_URL  = "https://api.groq.com/openai/v1/chat/completions"
 DEFAULT_MODEL = os.getenv('GROQ_MODEL', 'llama-3.3-70b-versatile')
 
-# BotConfig.ai_model == GEMINI -> bot hii inajibu kwa Gemini Flash (Kiswahili bora) kwa
-# KEY YA MTEJA mwenyewe (BotConfig.ai_secrets). Key ikikosekana, au Gemini ikishindwa
-# (kikomo, mtandao), inajibu kwa Groq kama kawaida.
+# BotConfig.ai_model == GEMINI/OPENAI/DEEPSEEK/CLAUDE -> bot hii inajibu kwa AI hiyo kwa
+# KEY YA MTEJA mwenyewe (BotConfig.ai_secrets). Key ikikosekana, au AI hiyo ikishindwa
+# (kikomo, salio, mtandao), inajibu kwa Groq kama kawaida.
 GEMINI = 'gemini'
+OPENAI = 'openai'
+DEEPSEEK = 'deepseek'
+CLAUDE = 'claude'
+
+# secret: jina ndani ya ai_secrets. verify: GET ya bure (orodha ya model) kukagua key.
+PROVIDERS = {
+    GEMINI:   {'label': 'Gemini',   'secret': 'gemini_api_key',    'prefix': 'AIza',
+               'verify': 'https://generativelanguage.googleapis.com/v1beta/models'},
+    OPENAI:   {'label': 'OpenAI',   'secret': 'openai_api_key',    'prefix': 'sk-',
+               'verify': 'https://api.openai.com/v1/models',
+               'chat': 'https://api.openai.com/v1/chat/completions', 'model': 'gpt-4o-mini',
+               'max_field': 'max_completion_tokens'},
+    DEEPSEEK: {'label': 'DeepSeek', 'secret': 'deepseek_api_key',  'prefix': 'sk-',
+               'verify': 'https://api.deepseek.com/models',
+               'chat': 'https://api.deepseek.com/chat/completions', 'model': 'deepseek-chat',
+               'max_field': 'max_tokens'},
+    CLAUDE:   {'label': 'Claude',   'secret': 'anthropic_api_key', 'prefix': 'sk-ant-',
+               'model': 'claude-opus-5-5'},
+}
+
 MODEL_CHOICES = [
     ('', 'Groq (default ya mfumo)'),
     (GEMINI, 'Gemini Flash — key ya mteja (Groq akiba)'),
+    (OPENAI, 'OpenAI — key ya mteja (Groq akiba)'),
+    (DEEPSEEK, 'DeepSeek — key ya mteja (Groq akiba)'),
+    (CLAUDE, 'Claude — key ya mteja (Groq akiba)'),
     ('llama-3.3-70b-versatile', 'Groq · Llama 3.3 70B'),
     ('openai/gpt-oss-120b', 'Groq · GPT-OSS 120B'),
     ('openai/gpt-oss-20b', 'Groq · GPT-OSS 20B'),
 ]
+
+# Sheria za mmiliki zikiwepo, AI inapunguziwa "ubunifu" ili izifuate kikamilifu.
+RULES_TEMPERATURE = 0.3
+
+
+def verify_provider_key(provider, key, timeout=10):
+    """(ok, ujumbe) — inakagua key kwa kuomba orodha ya model (haitumii salio la mteja)."""
+    info = PROVIDERS[provider]
+    if provider == CLAUDE:
+        import anthropic
+        try:
+            anthropic.Anthropic(api_key=key, timeout=timeout, max_retries=0).models.list(limit=1)
+        except (anthropic.AuthenticationError, anthropic.PermissionDeniedError):
+            return False, f"{info['label']} rejected this key. Copy the full key (starts with {info['prefix']})."
+        except anthropic.APIConnectionError:
+            return True, 'Saved — could not be checked right now (network).'
+        except anthropic.APIStatusError as exc:
+            return True, f"Saved — {info['label']} replied HTTP {exc.status_code}; it will be retried on the next reply."
+        return True, f"{info['label']} key accepted."
+    try:
+        if provider == GEMINI:
+            r = requests.get(info['verify'], params={'key': key}, timeout=timeout)
+        else:
+            r = requests.get(info['verify'], headers={'Authorization': f'Bearer {key}'}, timeout=timeout)
+    except requests.RequestException:
+        return True, 'Saved — could not be checked right now (network).'
+    if r.status_code == 200:
+        return True, f"{info['label']} key accepted."
+    if r.status_code in (400, 401, 403):
+        return False, f"{info['label']} rejected this key. Copy the full key (starts with {info['prefix']})."
+    return True, f"Saved — {info['label']} replied HTTP {r.status_code}; it will be retried on the next reply."
 
 
 # Hitilafu ya kiufundi (mtandao, Groq) — si kosa la mteja. Tofauti na
@@ -70,29 +124,83 @@ class BotAIEngine:
         self.api_key = getattr(settings, 'GROQ_API_KEY', '')
 
     @property
+    def provider(self):
+        """AI ya key ya mteja ('gemini'/'openai'/'deepseek'/'claude'), au '' kwa Groq."""
+        chosen = (getattr(self.bot, 'ai_model', '') or '').strip()
+        return chosen if chosen in PROVIDERS else ''
+
+    @property
     def uses_gemini(self):
-        return (getattr(self.bot, 'ai_model', '') or '').strip() == GEMINI
+        return self.provider == GEMINI
 
     @property
     def model(self):
-        """Model ya Groq ya bot hii. Ikiwa tupu (au ni Gemini), tunatumia ya mfumo mzima."""
+        """Model ya Groq ya bot hii. Ikiwa tupu (au ni AI ya key ya mteja), tunatumia ya mfumo mzima."""
         chosen = (getattr(self.bot, 'ai_model', '') or '').strip()
-        return DEFAULT_MODEL if chosen in ('', GEMINI) else chosen
+        return DEFAULT_MODEL if chosen == '' or chosen in PROVIDERS else chosen
 
-    def _gemini_reply(self, messages, start_time):
-        """Jibu la Gemini Flash kwa key ya MTEJA mwenyewe, au None (basi Groq inajibu)."""
-        from apps import llm
-        key = getattr(self.bot, 'gemini_key', '')
+    @property
+    def temperature(self):
+        t = float(getattr(self.bot, 'ai_temperature', 0.7))
+        if (getattr(self.bot, 'custom_rules', '') or '').strip():
+            t = min(t, RULES_TEMPERATURE)
+        return t
+
+    def _provider_reply(self, messages, start_time):
+        """Jibu kwa AI ya key ya MTEJA mwenyewe, au None (basi Groq inajibu)."""
+        provider = self.provider
+        key = self.bot.ai_key(provider) if hasattr(self.bot, 'ai_key') else ''
         if not key:
             return None
         try:
-            text, _ = llm.gemini_chat(messages, 500, float(getattr(self.bot, 'ai_temperature', 0.7)),
-                                      timeout=25, model=llm.flash_model(), api_key=key)
-        except llm.LLMError as exc:
-            logger.warning("Gemini imeshindwa kwa bot %s (%s) — natumia Groq", self.bot.id, exc)
+            if provider == GEMINI:
+                text, tokens = self._gemini(messages, key), 0
+            elif provider == CLAUDE:
+                text, tokens = self._claude(messages, key)
+            else:
+                text, tokens = self._openai_compatible(provider, messages, key)
+        except Exception as exc:
+            logger.warning("%s imeshindwa kwa bot %s (%s) — natumia Groq", provider, self.bot.id, exc)
             return None
-        return {'success': True, 'content': clean_reply(text), 'tokens': 0,
-                'latency_ms': int((time.time() - start_time) * 1000), 'model': GEMINI, 'is_handoff': False}
+        if not (text or '').strip():
+            return None
+        return {'success': True, 'content': clean_reply(text.strip()), 'tokens': tokens,
+                'latency_ms': int((time.time() - start_time) * 1000), 'model': provider, 'is_handoff': False}
+
+    def _gemini(self, messages, key):
+        from apps import llm
+        text, _ = llm.gemini_chat(messages, 500, self.temperature, timeout=25,
+                                  model=llm.flash_model(), api_key=key)
+        return text
+
+    def _openai_compatible(self, provider, messages, key):
+        """OpenAI na DeepSeek zinatumia muundo uleule wa chat/completions."""
+        info = PROVIDERS[provider]
+        r = requests.post(info['chat'], headers={'Authorization': f'Bearer {key}'}, timeout=25,
+                          json={'model': info['model'], 'messages': messages,
+                                'temperature': self.temperature, info['max_field']: 500})
+        if r.status_code != 200:
+            raise RuntimeError(f'HTTP {r.status_code}')
+        data = r.json()
+        return data['choices'][0]['message']['content'] or '', data.get('usage', {}).get('total_tokens', 0)
+
+    def _claude(self, messages, key):
+        """Claude (Anthropic SDK). System prompt ni sehemu yake, si ujumbe."""
+        import anthropic
+        system = '\n\n'.join(m['content'] for m in messages if m['role'] == 'system')
+        chat = [{'role': m['role'], 'content': m['content']} for m in messages if m['role'] != 'system']
+        while chat and chat[0]['role'] != 'user':     # mazungumzo lazima yaanze na mteja
+            chat.pop(0)
+        client = anthropic.Anthropic(api_key=key, timeout=40, max_retries=1)
+        # fallbacks="default": Claude ikikataa ombi (refusal), API inajaribu model nyingine yenyewe.
+        response = client.beta.messages.create(
+            model=PROVIDERS[CLAUDE]['model'], max_tokens=2000, system=system, messages=chat,
+            output_config={'effort': 'low'},
+            betas=['server-side-fallback-2026-07-01'], fallbacks='default')
+        if response.stop_reason == 'refusal':
+            raise RuntimeError('refusal')
+        text = ''.join(b.text for b in response.content if b.type == 'text')
+        return text, response.usage.input_tokens + response.usage.output_tokens
 
     def build_messages(self, conversation, new_user_message: str) -> list:
         messages = []
@@ -151,8 +259,8 @@ class BotAIEngine:
             return {'success': True, 'content': self.bot.human_handoff_msg,
                     'tokens': 0, 'latency_ms': 0, 'is_handoff': True}
 
-        if self.uses_gemini:
-            reply = self._gemini_reply(self.build_messages(conversation, user_message), start_time)
+        if self.provider:
+            reply = self._provider_reply(self.build_messages(conversation, user_message), start_time)
             if reply:
                 return reply
 
@@ -166,7 +274,7 @@ class BotAIEngine:
             payload = {
                 "model":       self.model,
                 "messages":    messages,
-                "temperature": float(getattr(self.bot, 'ai_temperature', 0.7)),
+                "temperature": self.temperature,
                 "max_tokens":  500,
                 "top_p":       0.9,
             }

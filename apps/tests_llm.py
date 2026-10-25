@@ -402,3 +402,178 @@ class HomepageServiceArtTests(TestCase):
         self.assertNotIn('class="wb"', body)
         self.assertIn('class="svc__art"', body)       # mchoro wa huduma husika
         self.assertIn("css/jt-art", body)
+
+
+OPENAI_OK = {"choices": [{"message": {"content": "Jibu la OpenAI"}}], "usage": {"total_tokens": 12}}
+
+
+@override_settings(GEMINI_API_KEY="system-key", GROQ_API_KEY="q")
+class JamiiBotOwnKeyProvidersTests(TestCase):
+    """OpenAI, DeepSeek na Claude kwa key ya mteja + Bot Rules za mmiliki."""
+
+    def setUp(self):
+        from django.core.cache import cache
+        from django.contrib.auth.models import User
+        from apps.chatbot.models import BotConfig, ChatbotClient, Conversation
+        cache.clear()
+        _with_fernet(self)
+        self.owner = User.objects.create_user("mteja2", "m2@x.com", "x")
+        cl = ChatbotClient.objects.create(user=self.owner, full_name="B", business_name="Biz", email="m2@x.com")
+        self.bot = BotConfig.objects.create(client=cl, bot_name="DukaBot", business_name="Duka",
+                                            status="active", is_active=True)
+        self.conv = Conversation.objects.create(bot=self.bot, customer_phone="255700000001")
+
+    def _set(self, provider, key):
+        with mock.patch("requests.get", return_value=_http(200, {"data": []})) as get:
+            ok, _ = self.bot.set_ai_key(provider, key)
+        self.assertTrue(ok)
+        self.bot.ai_model = provider
+        self.bot.save()
+        self.bot.refresh_from_db()
+        return get
+
+    def _reply(self, post_side_effect):
+        from apps.chatbot.ai_engine import BotAIEngine
+        with mock.patch("requests.post", side_effect=post_side_effect) as post:
+            return BotAIEngine(self.bot).get_response(self.conv, "Bei ya website ni ngapi?"), post
+
+    def test_openai_uses_the_clients_key(self):
+        get = self._set("openai", "sk-proj-mteja1")
+        self.assertEqual(get.call_args.kwargs["headers"]["Authorization"], "Bearer sk-proj-mteja1")
+        self.assertEqual(self.bot.ai_key("openai"), "sk-proj-mteja1")
+        res, post = self._reply([_http(200, OPENAI_OK)])
+        self.assertEqual(res["content"], "Jibu la OpenAI")
+        self.assertEqual(res["model"], "openai")
+        self.assertEqual(post.call_args.args[0], "https://api.openai.com/v1/chat/completions")
+        self.assertEqual(post.call_args.kwargs["headers"]["Authorization"], "Bearer sk-proj-mteja1")
+        self.assertEqual(post.call_args.kwargs["json"]["messages"][0]["role"], "system")
+
+    def test_deepseek_failure_falls_back_to_groq(self):
+        self._set("deepseek", "sk-deep1")
+        res, post = self._reply([_http(402, {"error": "Insufficient Balance"}), _http(200, GROQ_OK)])
+        self.assertEqual(res["content"], "Jibu la Groq")
+        self.assertEqual(post.call_args_list[0].args[0], "https://api.deepseek.com/chat/completions")
+        self.assertIn("groq.com", post.call_args.args[0])
+
+    def test_bad_openai_key_is_rejected(self):
+        with mock.patch("requests.get", return_value=_http(401, {"error": "invalid"})):
+            ok, msg = self.bot.set_ai_key("openai", "sk-mbaya")
+        self.assertFalse(ok)
+        self.assertIn("rejected", msg)
+        self.bot.refresh_from_db()
+        self.assertEqual(self.bot.ai_key("openai"), "")
+
+    def _claude_client(self, text="Jibu la Claude", stop="end_turn"):
+        resp = mock.Mock(stop_reason=stop, content=[mock.Mock(type="text", text=text)],
+                         usage=mock.Mock(input_tokens=5, output_tokens=7))
+        client = mock.Mock()
+        client.beta.messages.create.return_value = resp
+        return client
+
+    def test_claude_uses_the_clients_key_and_system_prompt(self):
+        from apps.chatbot.models import Message
+        with mock.patch("anthropic.Anthropic") as cls:
+            cls.return_value.models.list.return_value = []
+            ok, _ = self.bot.set_ai_key("claude", "sk-ant-mteja1")
+        self.assertTrue(ok)
+        self.bot.ai_model = "claude"
+        self.bot.save()
+        # mazungumzo yanaanza na salamu ya bot — Claude inahitaji ujumbe wa kwanza uwe wa mteja
+        Message.objects.create(conversation=self.conv, role="assistant", content="Karibu!")
+        client = self._claude_client()
+        with mock.patch("anthropic.Anthropic", return_value=client) as cls:
+            res, post = self._reply([])
+        self.assertEqual(res["content"], "Jibu la Claude")
+        self.assertEqual(res["model"], "claude")
+        self.assertEqual(res["tokens"], 12)
+        self.assertEqual(post.call_count, 0)
+        self.assertEqual(cls.call_args.kwargs["api_key"], "sk-ant-mteja1")
+        kw = client.beta.messages.create.call_args.kwargs
+        self.assertEqual(kw["model"], "claude-opus-5-5")
+        self.assertIn("DukaBot", kw["system"])
+        self.assertEqual(kw["messages"][0]["role"], "user")
+        self.assertNotIn("temperature", kw)
+        self.assertEqual(kw["fallbacks"], "default")
+
+    def test_claude_refusal_falls_back_to_groq(self):
+        with mock.patch("anthropic.Anthropic") as cls:
+            cls.return_value.models.list.return_value = []
+            self.bot.set_ai_key("claude", "sk-ant-mteja1")
+        self.bot.ai_model = "claude"
+        self.bot.save()
+        with mock.patch("anthropic.Anthropic", return_value=self._claude_client("", "refusal")):
+            res, _ = self._reply([_http(200, GROQ_OK)])
+        self.assertEqual(res["content"], "Jibu la Groq")
+
+    def test_bad_claude_key_is_rejected(self):
+        import anthropic
+        err = anthropic.AuthenticationError("invalid x-api-key", response=mock.Mock(status_code=401, headers={}),
+                                            body=None)
+        with mock.patch("anthropic.Anthropic") as cls:
+            cls.return_value.models.list.side_effect = err
+            ok, msg = self.bot.set_ai_key("claude", "sk-ant-mbaya")
+        self.assertFalse(ok)
+        self.assertIn("sk-ant-", msg)
+
+    def test_owner_rules_lead_the_prompt_and_lower_temperature(self):
+        from apps.chatbot.ai_engine import BotAIEngine
+        self.bot.ai_temperature = 0.9
+        self.bot.custom_rules = "- Salimia kwa 'Karibu Duka Letu!'\n- Jibu kwa sentensi 2 tu."
+        self.bot.save()
+        prompt = self.bot.build_system_prompt()
+        self.assertTrue(prompt.startswith("SHERIA ZA MMILIKI"))
+        self.assertIn("Karibu Duka Letu!", prompt)
+        self.assertIn("SHERIA ZA MMILIKI NDIZO ZINASHINDA", prompt)
+        self.assertTrue(prompt.rstrip().endswith("Zinashinda kila kitu kingine."))
+        self.assertEqual(BotAIEngine(self.bot).temperature, 0.3)
+        res, post = self._reply([_http(200, GROQ_OK)])
+        self.assertEqual(post.call_args.kwargs["json"]["temperature"], 0.3)
+
+    def test_no_rules_keeps_prompt_unchanged(self):
+        from apps.chatbot.ai_engine import BotAIEngine
+        prompt = self.bot.build_system_prompt()
+        self.assertTrue(prompt.startswith("Wewe ni DukaBot"))
+        self.assertNotIn("SHERIA ZA MMILIKI", prompt)
+        self.assertEqual(BotAIEngine(self.bot).temperature, 0.7)
+
+    def test_knowledge_page_saves_rules(self):
+        self.client.force_login(self.owner)
+        r = self.client.get("/chatbot/knowledge/")
+        self.assertContains(r, "Bot Rules")
+        self.assertContains(r, "What DukaBot didn")
+        r = self.client.post("/chatbot/knowledge/", {"action": "save_rules",
+                                                     "custom_rules": " Never offer discounts.\r\n"})
+        self.assertRedirects(r, "/chatbot/knowledge/#rules", fetch_redirect_response=False)
+        self.bot.refresh_from_db()
+        self.assertEqual(self.bot.custom_rules, "Never offer discounts.")
+        self.client.post("/chatbot/knowledge/", {"action": "save_rules", "custom_rules": "x" * 9000})
+        self.bot.refresh_from_db()
+        self.assertEqual(self.bot.custom_rules, "Never offer discounts.")   # ndefu mno — haikuhifadhiwa
+        self.assertContains(self.client.get("/chatbot/knowledge/"), "Never offer discounts.")
+
+    def test_portal_ai_tab_offers_each_provider(self):
+        self.client.force_login(self.owner)
+        r = self.client.get("/chatbot/config/")
+        for text in ("platform.openai.com/api-keys", "platform.deepseek.com/api_keys",
+                     "console.anthropic.com/settings/keys", "OpenAI (Custom)", "DeepSeek (Custom)",
+                     "Claude (Custom)"):
+            self.assertContains(r, text)
+        with mock.patch("requests.get", return_value=_http(200, {"data": []})):
+            self.client.post("/chatbot/config/", {"section": "ai", "ai_engine": "deepseek",
+                                                  "deepseek_api_key": "sk-deepYangu1"})
+        self.bot.refresh_from_db()
+        self.assertEqual(self.bot.ai_model, "deepseek")
+        self.assertEqual(self.bot.ai_key("deepseek"), "sk-deepYangu1")
+        r = self.client.get("/chatbot/config/")
+        self.assertNotContains(r, "sk-deepYangu1")
+        self.assertContains(r, "✓ in use")
+        # key mbaya: AI haibadiliki
+        with mock.patch("requests.get", return_value=_http(401, {})):
+            self.client.post("/chatbot/config/", {"section": "ai", "ai_engine": "openai",
+                                                  "openai_api_key": "sk-mbaya"})
+        self.bot.refresh_from_db()
+        self.assertEqual(self.bot.ai_model, "deepseek")
+        self.client.post("/chatbot/config/", {"section": "ai", "ai_engine": "groq", "delete_deepseek": "on"})
+        self.bot.refresh_from_db()
+        self.assertEqual(self.bot.ai_model, "")
+        self.assertEqual(self.bot.ai_key("deepseek"), "")
