@@ -167,7 +167,32 @@ def chatbot_orders(request):
         'tab': tab if tab in groups else 'open',
         'orders': groups.get(tab, groups['open'])[:200],
         'counts': {k: v.count() for k, v in groups.items()},
+        'sales': shop.sales_summary(bot),
     })
+
+
+@login_required(login_url=LOGIN)
+def chatbot_orders_export(request):
+    """Oda zote kama CSV (Excel) — kwa hesabu za mmiliki."""
+    import csv
+    from django.http import HttpResponse
+    from django.utils import timezone
+    bot, go = _bot_or_wizard(request)
+    if go:
+        return go
+    resp = HttpResponse(content_type='text/csv; charset=utf-8')
+    resp['Content-Disposition'] = f'attachment; filename="orders-{timezone.localdate():%Y-%m-%d}.csv"'
+    resp.write('\ufeff')                      # BOM: Excel inasoma herufi kama "—" sawasawa
+    w = csv.writer(resp)
+    w.writerow(['Order', 'Date', 'Customer', 'Phone', 'Items', 'Total (TZS)', 'Status',
+                'Transaction', 'Paid at', 'Delivery'])
+    local = timezone.localtime
+    for o in bot.orders.all():
+        w.writerow([o.code, f"{local(o.created_at):%Y-%m-%d %H:%M}", o.customer_name, o.phone_display,
+                    '; '.join(f"{i.get('qty')} x {i.get('name')}" for i in o.items), o.total,
+                    o.get_status_display(), o.payment_ref,
+                    f"{local(o.paid_at):%Y-%m-%d %H:%M}" if o.paid_at else '', o.delivery])
+    return resp
 
 
 @login_required(login_url=LOGIN)

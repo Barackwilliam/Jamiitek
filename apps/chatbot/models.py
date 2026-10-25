@@ -988,6 +988,9 @@ class Order(models.Model):
     updated_at     = models.DateTimeField(auto_now=True)
     paid_at        = models.DateTimeField(null=True, blank=True)
     lang           = models.CharField(max_length=2, blank=True, help_text="Customer's language: sw / en")
+    claimed_at     = models.DateTimeField(null=True, blank=True, help_text="When the customer said they paid")
+    # Kumbusho zilizokwisha tumwa (shop.send_reminders): 'pay1', 'pay24', 'owner'
+    reminders      = models.JSONField(default=list, blank=True)
 
     class Meta:
         ordering = ['-created_at']
