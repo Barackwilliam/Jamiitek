@@ -7,6 +7,7 @@ dj-database-url==2.3.0
 redis==5.0.8
 python-dotenv==1.0.1
 requests==2.32.3
+anthropic==2.3.0         # JamiiBot: Claude kwa key ya mteja (apps/chatbot/ai_engine.py)
 dnspython==2.7.0          # apps/domain_checker.py (kutafuta domain)
 urllib3==2.5.0
 charset-normalizer==3.4.1

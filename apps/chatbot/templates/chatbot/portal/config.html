@@ -239,32 +239,48 @@
 <!-- ══ AI TAB ═══════════════════════════════════════════ -->
 <div class="tab-pane" id="tab-ai">
   <div class="jt-card f1" style="max-width:640px">
-    <div class="jt-card-head"><span class="jt-card-title"><i class="fas fa-wand-magic-sparkles" style="color:#8b5cf6"></i> AI ya bot yako</span></div>
+    <div class="jt-card-head"><span class="jt-card-title"><i class="fas fa-wand-magic-sparkles" style="color:#8b5cf6"></i> Your bot's AI</span></div>
     <div class="jt-card-body">
+      <p class="ts mb-3" style="color:var(--text2);line-height:1.7">Groq is free and included. To use another AI, choose it and paste your own API key. If your key fails, the bot replies with Groq.</p>
       <form method="post" autocomplete="off">{% csrf_token %}<input type="hidden" name="section" value="ai">
         <div class="toggle-block mb-3">
           <label class="toggle-row" style="cursor:pointer">
             <div class="tl">Groq (Default)</div>
-            <input type="radio" name="ai_engine" value="groq" {% if not ai_is_gemini %}checked{% endif %}>
+            <input type="radio" name="ai_engine" value="groq" {% if ai_engine == 'groq' %}checked{% endif %}>
           </label>
+          {% for e in ai_engines %}
           <label class="toggle-row" style="cursor:pointer">
-            <div class="tl">Gemini (Custom){% if ai_is_gemini and bot.gemini_key %} <span style="color:var(--green);font-size:11px">✓ inatumika</span>{% endif %}</div>
-            <input type="radio" name="ai_engine" value="gemini" {% if ai_is_gemini %}checked{% endif %}>
+            <div class="tl">{{ e.label }} (Custom){% if ai_engine == e.id and e.key %} <span style="color:var(--green);font-size:11px">✓ in use</span>{% elif e.key %} <span style="color:var(--text3);font-size:11px">key saved</span>{% endif %}</div>
+            <input type="radio" name="ai_engine" value="{{ e.id }}" {% if ai_engine == e.id %}checked{% endif %}>
           </label>
+          {% endfor %}
         </div>
-        <div id="gemini-box"{% if not ai_is_gemini %} hidden{% endif %}>
+        {% for e in ai_engines %}
+        <div class="ai-box" data-engine="{{ e.id }}"{% if ai_engine != e.id %} hidden{% endif %}>
           <ol style="font-size:12.5px;color:var(--text2);line-height:1.8;padding-left:18px;margin:4px 0 12px">
-            <li>Fungua <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--cyan)">aistudio.google.com/apikey</a> uingie kwa Gmail yako.</li>
-            <li>Bonyeza <strong>Create API key</strong>.</li>
-            <li>Nakili key (inaanza na <code>AIza</code>) uibandike hapa chini.</li>
+            {% if e.id == 'gemini' %}
+            <li>Open <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--cyan)">aistudio.google.com/apikey</a> and sign in with Gmail.</li>
+            <li>Click <strong>Create API key</strong>.</li>
+            {% elif e.id == 'openai' %}
+            <li>Open <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener" style="color:var(--cyan)">platform.openai.com/api-keys</a> and sign in.</li>
+            <li>Click <strong>Create new secret key</strong>. Add credit under <strong>Billing</strong>.</li>
+            {% elif e.id == 'deepseek' %}
+            <li>Open <a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener" style="color:var(--cyan)">platform.deepseek.com/api_keys</a> and sign in.</li>
+            <li>Click <strong>Create new API key</strong>. Top up your balance first.</li>
+            {% elif e.id == 'claude' %}
+            <li>Open <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" style="color:var(--cyan)">console.anthropic.com/settings/keys</a> and sign in.</li>
+            <li>Click <strong>Create Key</strong>. Add credit under <strong>Billing</strong>.</li>
+            {% endif %}
+            <li>Copy the key (starts with <code>{{ e.prefix }}</code>) and paste it below.</li>
           </ol>
-          <input type="password" name="gemini_api_key" class="f-input mb-2" autocomplete="new-password"
-                 placeholder="{% if bot.gemini_key %}{{ bot.gemini_key_masked }}{% else %}AIza…{% endif %}">
-          {% if bot.gemini_key %}
-          <label class="ts mb-2" style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" name="delete_key"> Futa key</label>
+          <input type="password" name="{{ e.id }}_api_key" class="f-input mb-2" autocomplete="new-password"
+                 placeholder="{% if e.key %}{{ e.masked }}{% else %}{{ e.prefix }}…{% endif %}">
+          {% if e.key %}
+          <label class="ts mb-2" style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" name="delete_{{ e.id }}"> Delete key</label>
           {% endif %}
         </div>
-        <button type="submit" class="jt-btn btn-green mt-2"><i class="fas fa-check"></i> Hifadhi</button>
+        {% endfor %}
+        <button type="submit" class="jt-btn btn-green mt-2"><i class="fas fa-check"></i> Save</button>
       </form>
     </div>
   </div>
@@ -273,7 +289,7 @@
 <script>
 function showTab(id,btn){document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.cfg-tab').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+id).classList.add('active');btn.classList.add('active')}
 // Show tab from URL hash
-document.querySelectorAll('input[name=ai_engine]').forEach(r=>r.addEventListener('change',()=>{document.getElementById('gemini-box').hidden=document.querySelector('input[name=ai_engine]:checked').value!=='gemini'}));
+document.querySelectorAll('input[name=ai_engine]').forEach(r=>r.addEventListener('change',()=>{const v=document.querySelector('input[name=ai_engine]:checked').value;document.querySelectorAll('.ai-box').forEach(b=>{b.hidden=b.dataset.engine!==v})}));
 const h=location.hash.replace('#','');if(h){const b=document.querySelector(`[onclick*="${h}"]`);if(b){b.click()}}
 </script>
 {% endblock %}

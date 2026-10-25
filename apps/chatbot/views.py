@@ -670,37 +670,48 @@ def chatbot_config(request):
             messages.success(request, "FAQ imefutwa.")
 
         elif section == 'ai':
-            from .ai_engine import GEMINI
-            key = request.POST.get('gemini_api_key', '').strip()
-            key_ok = True
-            if request.POST.get('delete_key'):
-                _, msg = bot.set_gemini_key('')
-                messages.info(request, msg)
-            elif key:
-                key_ok, msg = bot.set_gemini_key(key)
-                (messages.success if key_ok else messages.error)(request, msg)
-            if request.POST.get('ai_engine') == 'gemini':
-                if key_ok:
-                    bot.ai_model = GEMINI
+            from .ai_engine import PROVIDERS
+            failed = set()
+            for provider, info in PROVIDERS.items():
+                key = request.POST.get(f'{provider}_api_key', '').strip()
+                if request.POST.get(f'delete_{provider}') or (provider == 'gemini' and request.POST.get('delete_key')):
+                    _, msg = bot.set_ai_key(provider, '')
+                    messages.info(request, msg)
+                elif key:
+                    ok, msg = bot.set_ai_key(provider, key)
+                    (messages.success if ok else messages.error)(request, msg)
+                    if not ok:
+                        failed.add(provider)
+            engine = request.POST.get('ai_engine', 'groq')
+            if engine in PROVIDERS:
+                if engine not in failed:
+                    bot.ai_model = engine
                     bot.save(update_fields=['ai_model'])
-                    if bot.gemini_key:
-                        messages.success(request, "Bot yako sasa inajibu kwa Gemini Flash.")
+                    label = PROVIDERS[engine]['label']
+                    if bot.ai_key(engine):
+                        messages.success(request, f"Your bot now replies with {label}.")
                     else:
-                        messages.warning(request, "Weka Gemini API key yako — mpaka hapo bot inajibu kwa Groq.")
-            elif bot.ai_model == GEMINI:
+                        messages.warning(request, f"Add your {label} API key — until then the bot replies with Groq.")
+            elif bot.ai_model in PROVIDERS:
                 bot.ai_model = ''
                 bot.save(update_fields=['ai_model'])
-                messages.success(request, "Bot yako sasa inajibu kwa Groq.")
+                messages.success(request, "Your bot now replies with Groq.")
             from django.urls import reverse
             return redirect(reverse('chatbot_config') + '#ai')
 
         return redirect('chatbot_config')
 
-    from .ai_engine import GEMINI
+    from .ai_engine import PROVIDERS
+    engine = bot.ai_model if bot.ai_model in PROVIDERS else 'groq'
+    ai_engines = [
+        {'id': p, 'label': info['label'], 'prefix': info['prefix'],
+         'key': bool(bot.ai_key(p)), 'masked': bot.ai_key_masked(p)}
+        for p, info in PROVIDERS.items()
+    ]
     return render(request, 'chatbot/portal/config.html', {
         'client': client, 'bot': bot,
         'services': bot.services.all(), 'faqs': bot.faqs.all(),
-        'ai_is_gemini': bot.ai_model == GEMINI,
+        'ai_engine': engine, 'ai_engines': ai_engines,
     })
 
 
@@ -2110,8 +2121,21 @@ def chatbot_knowledge(request):
     if not bot:
         return redirect('chatbot_setup_wizard')
 
+    if request.method == 'POST' and request.POST.get('action') == 'save_rules':
+        rules = request.POST.get('custom_rules', '').replace('\r\n', '\n').strip()
+        if len(rules) > RULES_MAX:
+            messages.error(request, f"Rules are too long ({len(rules)} characters). Keep them under {RULES_MAX}.")
+        else:
+            bot.custom_rules = rules
+            bot.save(update_fields=['custom_rules'])
+            messages.success(request, "Rules saved — your bot follows them from the next message."
+                             if rules else "Rules cleared.")
+        from django.urls import reverse
+        return redirect(reverse('chatbot_knowledge') + '#rules')
+
     gaps = bot.knowledge_gaps.exclude(status='dismissed')
     return render(request, 'chatbot/portal/knowledge.html', {
+        'rules_max': RULES_MAX,
         'client': bot.client,    # menyu ya pembeni inahitaji client (bila hiyo: "Complete Setup")
         'bot': bot,
         'open_gaps':   gaps.filter(status__in=['open', 'drafted']),
@@ -2119,6 +2143,9 @@ def chatbot_knowledge(request):
         'open_count':  gaps.filter(status__in=['open', 'drafted']).count(),
         'answered_count': gaps.filter(status='answered').count(),
     })
+
+
+RULES_MAX = 8000
 
 
 @login_required(login_url='/chatbot/login/')
@@ -2144,15 +2171,15 @@ def chatbot_knowledge_action(request, gap_id):
             gap.status = 'drafted'
             gap.save(update_fields=['suggested_answer', 'status'])
             return JsonResponse({'success': True, 'answer': text})
-        return JsonResponse({'success': False, 'error': 'Haikuweza kuandika rasimu'}, status=502)
+        return JsonResponse({'success': False, 'error': 'Could not write a draft. Please try again.'}, status=502)
 
     if action == 'approve':
         answer = request.POST.get('answer', '').strip()
         if not answer:
-            messages.error(request, "Jibu haliwezi kuwa tupu.")
+            messages.error(request, "The answer cannot be empty.")
             return redirect('chatbot_knowledge')
         knowledge.approve(gap, answer)
-        messages.success(request, "Bot sasa inajua jibu hili.")
+        messages.success(request, "Saved — the bot now knows this answer.")
         return redirect('chatbot_knowledge')
 
     if action == 'dismiss':

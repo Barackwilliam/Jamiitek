@@ -53,6 +53,12 @@ textarea::placeholder{color:var(--text-3)}
 .done-q{font-size:13px;color:var(--text);margin-bottom:5px}
 .done-a{font-size:12.5px;color:var(--text-2);line-height:1.6}
 
+.rules{border-color:rgba(245,166,35,.3)}
+.rules textarea{min-height:190px}
+.rules-n{font-family:var(--mono);font-size:10.5px;color:var(--text-3);margin-left:auto}
+.on{font-family:var(--mono);font-size:10.5px;color:var(--green);background:var(--green-d);
+  border-radius:99px;padding:3px 10px;margin-left:8px;vertical-align:middle}
+
 .sect{font-family:var(--mono);font-size:10.5px;color:var(--text-3);text-transform:uppercase;
   letter-spacing:1.1px;margin:30px 0 13px}
 .empty{text-align:center;padding:52px 20px;color:var(--text-3)}
@@ -63,15 +69,34 @@ textarea::placeholder{color:var(--text-3)}
 
 {% block content %}
 
-<div class="lead">
-  <h2>Yale {{ bot.bot_name }} isiyoyajua</h2>
+<div class="lead rules" id="rules">
+  <h2>Bot Rules{% if bot.custom_rules %}<span class="on">Active</span>{% endif %}</h2>
   <p>
-    Kila mteja anapouliza kitu bot isiloweza kulijibu, swali linaingia hapa.
-    Ukilijibu mara moja, bot inalijua milele.
+    Tell {{ bot.bot_name }} exactly how to answer your customers. It follows every rule,
+    on every message, before any default style.
+  </p>
+  <form method="post" style="margin-top:14px">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save_rules">
+    <textarea name="custom_rules" id="rules-box" maxlength="{{ rules_max }}"
+              placeholder="One rule per line, for example:&#10;- Always greet with &quot;Karibu Duka Letu!&quot;&#10;- Keep answers under 3 sentences.&#10;- Never offer discounts.&#10;- For delivery questions, say delivery takes 2 days in Dar es Salaam.">{{ bot.custom_rules }}</textarea>
+    <div class="hint">Write clear, specific rules. Customers cannot change them.</div>
+    <div class="row">
+      <button type="submit" class="b b-go"><i class="fas fa-check"></i> Save rules</button>
+      <span class="rules-n"><span id="rules-n">{{ bot.custom_rules|length }}</span> / {{ rules_max }}</span>
+    </div>
+  </form>
+</div>
+
+<div class="lead">
+  <h2>What {{ bot.bot_name }} didn't know</h2>
+  <p>
+    Every question the bot couldn't answer lands here.
+    Answer it once and the bot knows it from then on.
   </p>
   <div class="tally">
-    <div><div class="tl-n">{{ open_count }}</div><div class="tl-l">Yanasubiri</div></div>
-    <div><div class="tl-n">{{ answered_count }}</div><div class="tl-l">Umeshajibu</div></div>
+    <div><div class="tl-n">{{ open_count }}</div><div class="tl-l">Waiting</div></div>
+    <div><div class="tl-n">{{ answered_count }}</div><div class="tl-l">Answered</div></div>
   </div>
 </div>
 
@@ -81,17 +106,17 @@ textarea::placeholder{color:var(--text-3)}
     <div class="gap-top">
       <div class="gap-q">{{ g.question }}</div>
       {% if g.times_asked > 1 %}
-        <span class="gap-n">mara {{ g.times_asked }}</span>
+        <span class="gap-n">{{ g.times_asked }} times</span>
       {% endif %}
     </div>
 
     <div class="gap-meta">
-      {{ g.get_source_display }} · mara ya mwisho {{ g.last_asked_at|timesince }} zilizopita
+      {{ g.get_source_display }} · last asked {{ g.last_asked_at|timesince }} ago
     </div>
 
     {% if g.bot_reply %}
     <div class="said">
-      <div class="said-l">Bot ilijibu hivi</div>
+      <div class="said-l">The bot replied</div>
       <div class="said-t">{{ g.bot_reply|truncatechars:220 }}</div>
     </div>
     {% endif %}
@@ -99,23 +124,23 @@ textarea::placeholder{color:var(--text-3)}
     <form method="post" action="{% url 'chatbot_knowledge_action' g.id %}">
       {% csrf_token %}
       <textarea name="answer" id="a{{ g.id }}"
-                placeholder="Andika jibu sahihi hapa…">{{ g.suggested_answer }}</textarea>
+                placeholder="Write the correct answer here…">{{ g.suggested_answer }}</textarea>
       {% if g.suggested_answer %}
       <div class="hint">
-        Hii ni rasimu ya AI — isome kwa makini. Popote penye <strong>[mabano]</strong>,
-        AI haikuwa na taarifa; jaza wewe.
+        This is an AI draft — read it carefully. Wherever you see <strong>[brackets]</strong>,
+        the AI had no information; fill it in yourself.
       </div>
       {% endif %}
       <div class="row">
         <button type="button" class="b b-ai" data-draft="{{ g.id }}">
           <i class="fas fa-wand-magic-sparkles"></i>
-          {% if g.suggested_answer %}Andika upya{% else %}Nipe rasimu{% endif %}
+          {% if g.suggested_answer %}Rewrite{% else %}Draft for me{% endif %}
         </button>
         <button type="submit" name="action" value="approve" class="b b-go">
-          <i class="fas fa-check"></i> Hifadhi — bot ijue
+          <i class="fas fa-check"></i> Save — teach the bot
         </button>
         <button type="submit" name="action" value="dismiss" class="b b-x">
-          Si muhimu
+          Not important
         </button>
       </div>
     </form>
@@ -125,14 +150,14 @@ textarea::placeholder{color:var(--text-3)}
   <div class="empty">
     <i class="fas fa-circle-check"></i>
     <p>
-      Hakuna swali linalosubiri. Bot inajibu kila kitu wateja wanaouliza —
-      likitokea jipya, litaonekana hapa.
+      No questions waiting. The bot is answering everything customers ask —
+      if something new comes up, it will appear here.
     </p>
   </div>
 {% endif %}
 
 {% if answered %}
-  <div class="sect">Bot imeshajifunza haya</div>
+  <div class="sect">The bot has learned</div>
   {% for g in answered %}
   <div class="done">
     <div class="done-q">{{ g.question }}</div>
@@ -147,13 +172,15 @@ textarea::placeholder{color:var(--text-3)}
 <script>
 (function () {
   const csrf = '{{ csrf_token }}';
+  const rules = document.getElementById('rules-box'), n = document.getElementById('rules-n');
+  if (rules && n) rules.addEventListener('input', () => { n.textContent = rules.value.length; });
   document.querySelectorAll('[data-draft]').forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.dataset.draft;
       const box = document.getElementById('a' + id);
       const original = btn.innerHTML;
       btn.disabled = true;
-      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Inaandika…';
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Writing…';
 
       fetch(`/chatbot/knowledge/${id}/`, {
         method: 'POST',
@@ -163,9 +190,9 @@ textarea::placeholder{color:var(--text-3)}
         .then(r => r.json())
         .then(d => {
           if (d.success) { box.value = d.answer; box.focus(); }
-          else { alert(d.error || 'Haikufanikiwa.'); }
+          else { alert(d.error || 'Something went wrong.'); }
         })
-        .catch(() => alert('Haikufanikiwa. Jaribu tena.'))
+        .catch(() => alert('Something went wrong. Please try again.'))
         .finally(() => { btn.disabled = false; btn.innerHTML = original; });
     });
   });
