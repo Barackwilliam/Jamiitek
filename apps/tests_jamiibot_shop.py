@@ -252,3 +252,208 @@ class JamiiBotShopTest(TestCase):
         self.bot.save()
         wa = self.say('products')
         self.assertIn('Bidhaa za Duka la Mama', wa.to_customer()[-1])
+
+
+class JamiiBotPaymentMethodsTest(TestCase):
+    """Njia za malipo zilizopangwa: Lipa Namba, namba za simu, benki. Mmiliki anathibitisha mwenyewe."""
+    setUp = JamiiBotShopTest.setUp
+    say = JamiiBotShopTest.say
+    conv = JamiiBotShopTest.conv
+
+    def test_clean_method_validates_each_kind(self):
+        from apps.chatbot.shop import clean_method
+        m, err = clean_method('mobile', 'airtel', '+255 688 123 456', ' Asha  Juma ')
+        self.assertIsNone(err)
+        self.assertEqual(m, {'kind': 'mobile', 'provider': 'airtel', 'number': '0688 123 456', 'name': 'Asha Juma'})
+        self.assertEqual(clean_method('lipa', 'mpesa', '555 777', 'Duka')[0]['number'], '555777')
+        self.assertEqual(clean_method('bank', 'CRDB', '0150 1234 5678', 'Duka Ltd')[0]['provider'], 'CRDB')
+        for bad in (('mobile', 'airtel', '12345', 'A'), ('lipa', 'mpesa', 'abc', 'A'),
+                    ('lipa', 'tpesa', '555777', 'A'), ('bank', '', '01501234', 'A'),
+                    ('mobile', 'mpesa', '0754123456', ''), ('card', 'mpesa', '1', 'A')):
+            self.assertIsNone(clean_method(*bad)[0], bad)
+
+    def test_customer_sees_every_method_and_owner_confirms(self):
+        from apps.chatbot.models import Order
+        self.bot.payment_instructions = ''
+        self.bot.payment_methods = [
+            {'kind': 'lipa', 'provider': 'mpesa', 'number': '555777', 'name': 'Duka la Mama'},
+            {'kind': 'mobile', 'provider': 'airtel', 'number': '0688 123 456', 'name': 'Asha Juma'},
+            {'kind': 'bank', 'provider': 'CRDB', 'number': '0150 1234 5678', 'name': 'Duka la Mama Ltd'},
+        ]
+        self.bot.save()
+        for t in ('bidhaa', '2', '1', '2', 'nitachukua'):
+            self.say(t)
+        wa = self.say('1')
+        order = Order.objects.get()
+        reply = wa.to_customer()[-1]
+        for text in ('Jinsi ya kulipa — TZS 15,000', '1️⃣ *Lipa Namba (M-Pesa)*', '*555777*',
+                     '2️⃣ *Airtel Money — namba ya simu*', '*0688 123 456*', 'Jina: Asha Juma',
+                     '3️⃣ *Benki — CRDB*', '*0150 1234 5678*', f'*{order.code}*', 'namba ya muamala'):
+            self.assertIn(text, reply)
+        self.say('Nimelipa QWE12345RT')
+        order.refresh_from_db()
+        self.assertEqual(order.status, 'payment_sent')        # mteja amesema — si "paid" mpaka mmiliki athibitishe
+
+    def test_note_only_still_works(self):
+        self.bot.payment_methods = []
+        self.bot.save()
+        for t in ('bidhaa', '2', '1', '2', 'nitachukua'):
+            self.say(t)
+        reply = self.say('1').to_customer()[-1]
+        self.assertIn('Lipa Namba: 555777 (M-Pesa)', reply)
+        self.assertNotIn('Kwenye maelezo ya malipo', reply)
+
+    def test_dashboard_adds_and_removes_methods(self):
+        self.client.force_login(self.user)
+        r = self.client.post('/chatbot/shop/payment/', {'kind': 'mobile', 'network': 'mpesa',
+                                                        'number': '0754 111 222', 'name': 'Mama Duka'})
+        self.assertRedirects(r, '/chatbot/shop/#pay', fetch_redirect_response=False)
+        self.client.post('/chatbot/shop/payment/', {'kind': 'bank', 'bank': 'NMB',
+                                                    'number': '2041 0000 111', 'name': 'Duka la Mama'})
+        r = self.client.post('/chatbot/shop/payment/', {'kind': 'mobile', 'network': 'mpesa',
+                                                        'number': '999', 'name': 'X'}, follow=True)
+        self.assertIn('valid phone number', ' '.join(str(m) for m in r.context['messages']))
+        self.bot.refresh_from_db()
+        self.assertEqual([m['provider'] for m in self.bot.payment_methods], ['mpesa', 'NMB'])
+        page = self.client.get('/chatbot/shop/').content.decode()
+        self.assertIn('M-Pesa — phone number', page)
+        self.assertIn('Bank — NMB', page)
+        self.assertIn('How to pay — TZS 45,000', page)          # muonekano kwa mteja
+        self.client.post('/chatbot/shop/payment/', {'action': 'delete', 'index': '0'})
+        self.bot.refresh_from_db()
+        self.assertEqual([m['provider'] for m in self.bot.payment_methods], ['NMB'])
+        self.client.post('/chatbot/shop/payment/', {'action': 'delete', 'index': '9'})   # haipo — hakuna kosa
+        self.bot.refresh_from_db()
+        self.assertEqual(len(self.bot.payment_methods), 1)
+
+
+class JamiiBotRemindersAndSalesTest(TestCase):
+    """Kumbusho za oda zisizolipwa / malipo yasiyothibitishwa, na ripoti ya mauzo."""
+    setUp = JamiiBotShopTest.setUp
+    say = JamiiBotShopTest.say
+    conv = JamiiBotShopTest.conv
+
+    def _order(self):
+        from apps.chatbot.models import Order
+        for t in ('bidhaa', '2', '1', '2', 'nitachukua', '1'):
+            self.say(t)
+        return Order.objects.get()
+
+    def _at(self, hour, days=0):
+        import datetime
+        from django.utils import timezone
+        local = timezone.localtime().replace(hour=hour, minute=0, second=0, microsecond=0)
+        return local + datetime.timedelta(days=days)
+
+    def _run(self, now):
+        from apps.chatbot import shop
+        handler = mock.Mock()
+        handler.return_value.send_text.return_value = {'success': True}
+        with mock.patch('apps.chatbot.bridge.BaileysHandler', handler):
+            return shop.send_reminders(now), handler.return_value.send_text.call_args_list
+
+    def test_customer_reminded_after_1h_and_24h_then_never_again(self):
+        import datetime
+        from apps.chatbot.models import Order
+        order = self._order()
+        now = self._at(10)
+        Order.objects.filter(pk=order.pk).update(created_at=now - datetime.timedelta(minutes=30))
+        self.assertEqual(self._run(now)[0], {'customers': 0, 'owners': 0})         # bado mapema
+
+        Order.objects.filter(pk=order.pk).update(created_at=now - datetime.timedelta(hours=2))
+        self.say('Asante')                                                           # amerudi kwenye chat
+        sent, calls = self._run(now)
+        self.assertEqual(sent['customers'], 1)
+        text = calls[0].args[1]
+        self.assertIn(f'oda *#{order.code}* bado inasubiri malipo', text)
+        self.assertIn('Lipa Namba: 555777', text)
+        self.assertEqual(self.conv().metadata['state'], 'shop_payref')             # jibu lake litanaswa
+        self.assertEqual(self._run(now)[0]['customers'], 0)                          # mara moja tu
+
+        Order.objects.filter(pk=order.pk).update(created_at=now - datetime.timedelta(hours=25))
+        self.assertEqual(self._run(now)[0]['customers'], 1)
+        self.assertEqual(self._run(now)[0]['customers'], 0)
+        order.refresh_from_db()
+        self.assertEqual((order.status, order.reminders), ('new', ['pay1', 'pay24']))   # haighairiwi yenyewe
+
+    def test_late_order_gets_one_reminder_not_two(self):
+        import datetime
+        from apps.chatbot.models import Order
+        order = self._order()
+        now = self._at(10)
+        Order.objects.filter(pk=order.pk).update(created_at=now - datetime.timedelta(hours=30))
+        sent, calls = self._run(now)
+        self.assertEqual((sent['customers'], len(calls)), (1, 1))
+        order.refresh_from_db()
+        self.assertEqual(order.reminders, ['pay1', 'pay24'])
+
+    def test_no_reminders_at_night_or_for_old_orders(self):
+        import datetime
+        from apps.chatbot.models import Order
+        order = self._order()
+        night = self._at(23)
+        Order.objects.filter(pk=order.pk).update(created_at=night - datetime.timedelta(hours=2))
+        self.assertEqual(self._run(night)[0], {'customers': 0, 'owners': 0})
+        now = self._at(10)
+        Order.objects.filter(pk=order.pk).update(created_at=now - datetime.timedelta(days=5))
+        self.assertEqual(self._run(now)[0], {'customers': 0, 'owners': 0})
+
+    def test_owner_reminded_to_check_a_claimed_payment(self):
+        import datetime
+        from apps.chatbot.models import Order
+        order = self._order()
+        self.say('Nimelipa QWE12345RT')
+        order.refresh_from_db()
+        self.assertEqual(order.status, 'payment_sent')
+        self.assertIsNotNone(order.claimed_at)
+        now = self._at(10)
+        Order.objects.filter(pk=order.pk).update(claimed_at=now - datetime.timedelta(hours=1))
+        self.assertEqual(self._run(now)[0]['owners'], 0)
+        Order.objects.filter(pk=order.pk).update(claimed_at=now - datetime.timedelta(hours=3))
+        sent, calls = self._run(now)
+        self.assertEqual((sent['owners'], sent['customers']), (1, 0))
+        self.assertEqual(calls[0].args[0], OWNER)
+        self.assertIn(f'Oda #{order.code} inasubiri uthibitisho wako', calls[0].args[1])
+        self.assertIn('QWE12345RT', calls[0].args[1])
+        self.assertEqual(self._run(now)[0]['owners'], 0)
+        order.refresh_from_db()
+        self.assertEqual(order.status, 'payment_sent')                               # mmiliki ndiye anathibitisha
+
+    def test_sales_summary_and_csv(self):
+        import datetime
+        from django.utils import timezone
+        from apps.chatbot import shop
+        from apps.chatbot.models import Order
+        now = timezone.now()
+        mk = lambda code, total, status, paid: Order.objects.create(
+            bot=self.bot, code=code, total=total, status=status, paid_at=paid,
+            items=[{'name': 'Shati', 'qty': 1, 'price': total}], customer_name='Asha')
+        mk('A1', 15000, 'paid', now)
+        mk('A2', 25000, 'delivered', now - datetime.timedelta(days=3))
+        mk('A3', 40000, 'paid', now - datetime.timedelta(days=40))
+        mk('A4', 9000, 'new', None)
+        mk('A5', 7000, 'payment_sent', None)
+        mk('A6', 5000, 'cancelled', None)
+        s = shop.sales_summary(self.bot)
+        self.assertEqual(s['today'], {'n': 1, 'total': 15000})
+        self.assertEqual(s['week'], {'n': 2, 'total': 40000})
+        self.assertEqual((s['waiting']['total'], s['to_check']['total']), (9000, 7000))
+        self.client.force_login(self.user)
+        page = self.client.get('/chatbot/orders/').content.decode()
+        self.assertIn('15,000', page)
+        self.assertIn('to check (TZS 7,000)', page)
+        r = self.client.get('/chatbot/orders/export/')
+        self.assertEqual(r['Content-Type'], 'text/csv; charset=utf-8')
+        body = r.content.decode('utf-8-sig')
+        self.assertTrue(body.startswith('Order,Date,Customer'))
+        self.assertIn('A2,', body)
+        self.assertIn('1 x Shati', body)
+
+    def test_completed_order_counts_as_sale(self):
+        from apps.chatbot import shop
+        order = self._order()
+        with mock.patch('apps.chatbot.bridge.BaileysHandler'):
+            shop.mark(order, 'delivered')
+        order.refresh_from_db()
+        self.assertIsNotNone(order.paid_at)
+        self.assertEqual(shop.sales_summary(self.bot)['today']['n'], 1)

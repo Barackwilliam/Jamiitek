@@ -175,7 +175,11 @@ class BotConfig(models.Model):
         default=False, help_text="Customers can browse products and order in the chat")
     payment_instructions = models.TextField(
         blank=True,
-        help_text="How to pay, shown after an order. E.g. Lipa Namba (M-Pesa) and business name")
+        help_text="Extra payment note, shown after the payment methods")
+    # [{'kind': 'lipa'|'mobile'|'bank', 'provider': 'mpesa'…/jina la benki, 'number': …, 'name': …}]
+    # Zinaonyeshwa kwa mteja baada ya oda (shop.payment_text). Mmiliki ndiye anathibitisha malipo.
+    payment_methods    = models.JSONField(default=list, blank=True,
+                                          help_text="Lipa Namba, mobile money numbers and bank accounts")
 
     # ── Meta (zimebaki kwa bot za zamani; hazitumiki tena) ────
     whatsapp_phone_id  = models.CharField(max_length=50, blank=True, help_text="Meta Phone Number ID (legacy)")
@@ -984,6 +988,9 @@ class Order(models.Model):
     updated_at     = models.DateTimeField(auto_now=True)
     paid_at        = models.DateTimeField(null=True, blank=True)
     lang           = models.CharField(max_length=2, blank=True, help_text="Customer's language: sw / en")
+    claimed_at     = models.DateTimeField(null=True, blank=True, help_text="When the customer said they paid")
+    # Kumbusho zilizokwisha tumwa (shop.send_reminders): 'pay1', 'pay24', 'owner'
+    reminders      = models.JSONField(default=list, blank=True)
 
     class Meta:
         ordering = ['-created_at']

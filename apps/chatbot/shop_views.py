@@ -41,6 +41,10 @@ def chatbot_shop(request):
         'active_count': products.filter(is_active=True).count(),
         'edit': edit,
         'categories': sorted({p.category for p in products if p.category}),
+        'methods': [dict(m, i=i, label=shop.method_label(m)) for i, m in enumerate(bot.payment_methods or [])],
+        'networks': shop.NETWORKS.items(),
+        'max_methods': shop.MAX_METHODS,
+        'preview': shop.payment_text(bot, 'en', 'K7Q2', 45000),
     })
 
 
@@ -58,6 +62,43 @@ def chatbot_shop_settings(request):
     else:
         messages.success(request, "Shop settings saved.")
     return redirect('chatbot_shop')
+
+
+@login_required(login_url=LOGIN)
+@require_POST
+def chatbot_payment_method(request):
+    """Ongeza au futa njia ya malipo (Lipa Namba / namba ya simu / benki)."""
+    bot, go = _bot_or_wizard(request)
+    if go:
+        return go
+    methods = list(bot.payment_methods or [])
+    back = reverse('chatbot_shop') + '#pay'
+    if request.POST.get('action') == 'delete':
+        try:
+            removed = methods.pop(int(request.POST.get('index', '')))
+        except (ValueError, IndexError):
+            return redirect(back)
+        bot.payment_methods = methods
+        bot.save(update_fields=['payment_methods'])
+        messages.success(request, f"{shop.method_label(removed)} removed.")
+        return redirect(back)
+    if len(methods) >= shop.MAX_METHODS:
+        messages.error(request, f"You can add up to {shop.MAX_METHODS} payment methods.")
+        return redirect(back)
+    kind = request.POST.get('kind')
+    provider = request.POST.get('bank' if kind == 'bank' else 'network')
+    method, error = shop.clean_method(kind, provider, request.POST.get('number'), request.POST.get('name'))
+    if error:
+        messages.error(request, error)
+        return redirect(back)
+    if any(m['kind'] == method['kind'] and m['number'] == method['number'] for m in methods):
+        messages.info(request, "That payment method is already on the list.")
+        return redirect(back)
+    methods.append(method)
+    bot.payment_methods = methods
+    bot.save(update_fields=['payment_methods'])
+    messages.success(request, f"{shop.method_label(method)} added.")
+    return redirect(back)
 
 
 @login_required(login_url=LOGIN)
@@ -126,7 +167,32 @@ def chatbot_orders(request):
         'tab': tab if tab in groups else 'open',
         'orders': groups.get(tab, groups['open'])[:200],
         'counts': {k: v.count() for k, v in groups.items()},
+        'sales': shop.sales_summary(bot),
     })
+
+
+@login_required(login_url=LOGIN)
+def chatbot_orders_export(request):
+    """Oda zote kama CSV (Excel) — kwa hesabu za mmiliki."""
+    import csv
+    from django.http import HttpResponse
+    from django.utils import timezone
+    bot, go = _bot_or_wizard(request)
+    if go:
+        return go
+    resp = HttpResponse(content_type='text/csv; charset=utf-8')
+    resp['Content-Disposition'] = f'attachment; filename="orders-{timezone.localdate():%Y-%m-%d}.csv"'
+    resp.write('\ufeff')                      # BOM: Excel inasoma herufi kama "—" sawasawa
+    w = csv.writer(resp)
+    w.writerow(['Order', 'Date', 'Customer', 'Phone', 'Items', 'Total (TZS)', 'Status',
+                'Transaction', 'Paid at', 'Delivery'])
+    local = timezone.localtime
+    for o in bot.orders.all():
+        w.writerow([o.code, f"{local(o.created_at):%Y-%m-%d %H:%M}", o.customer_name, o.phone_display,
+                    '; '.join(f"{i.get('qty')} x {i.get('name')}" for i in o.items), o.total,
+                    o.get_status_display(), o.payment_ref,
+                    f"{local(o.paid_at):%Y-%m-%d %H:%M}" if o.paid_at else '', o.delivery])
+    return resp
 
 
 @login_required(login_url=LOGIN)

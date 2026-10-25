@@ -15,6 +15,7 @@ RATIBA (kila kazi ina alama yake ya cache, hazitegemeani):
   | check_alerts               | dakika 30   |
   | check_bot_sessions         | dakika 10   |
   | check_handoffs             | dakika 10   |
+  | shop_reminders             | dakika 15   |
   | wafanyakazi (timu ya AI)   | dakika 30   |
   | auto_suspend               | siku        |
   | send_expiry_emails         | siku        |
@@ -67,6 +68,7 @@ SCHEDULE = {
     'check_alerts':              ('jamiitek:task:check_alerts',        30 * MINUTE),
     'check_bot_sessions':        ('jamiitek:task:bot_sessions',        10 * MINUTE),
     'check_handoffs':            ('jamiitek:task:handoffs',            10 * MINUTE),
+    'shop_reminders':            ('jamiitek:task:shop_reminders',      15 * MINUTE),
     'check_custom_domains':      ('jamiitek:task:custom_domains',      15 * MINUTE),
     'wafanyakazi':               ('jamiitek:task:wafanyakazi',         30 * MINUTE),
     'send_digest':               ('jamiitek:task:send_digest',         24 * 60 * MINUTE),
@@ -81,7 +83,8 @@ SCHEDULE = {
 }
 
 PERIODIC = ('sync_integrations', 'process_scheduled_actions', 'check_alerts',
-            'check_bot_sessions', 'check_handoffs', 'check_custom_domains', 'wafanyakazi')
+            'check_bot_sessions', 'check_handoffs', 'shop_reminders', 'check_custom_domains',
+            'wafanyakazi')
 
 _thread_lock = threading.Lock()
 _running = False           # kazi za kila siku
@@ -163,6 +166,9 @@ def _run_periodic_in_background():
         # mteja anapoandika tena — lakini ameambiwa "subiri", kwa hiyo
         # anasubiri kimya. Hii inakimbia kwa saa, si kwa ujumbe.
         _run_command('check_handoffs', quiet=True)
+
+        # Duka la JamiiBot: oda zisizolipwa (mteja) na malipo yasiyothibitishwa (mmiliki)
+        _run_command('shop_reminders', quiet=True)
 
         # Domain za wateja zinazosubiri DNS/SSL. Mteja anapoweka DNS
         # usiku, website inakuwa Live bila mtu kubonyeza "Kagua".

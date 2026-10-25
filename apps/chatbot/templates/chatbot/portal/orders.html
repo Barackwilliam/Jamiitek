@@ -29,11 +29,34 @@
 .acts form{margin:0}
 .lnk,.empty a,.kv a{color:var(--gold)}
 .lnk{font-size:12px;margin-left:8px}
+.sales{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.sale{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 16px;min-width:0}
+.sale-l{font-family:var(--mono);font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:.7px}
+.sale-v{font-family:var(--head);font-size:19px;font-weight:800;color:var(--text);margin-top:6px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sale-v small{font-size:11px;color:var(--text-3);font-weight:600}
+.sale-n{font-size:11.5px;color:var(--text-3);margin-top:3px}
+.pending{display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--text-2);margin-bottom:18px}
+.pending b{color:var(--text)}
+.pending .to-check b{color:#60a5fa}
+.pending a.csv{margin-left:auto;color:var(--gold);text-decoration:none}
+@media (max-width:560px){.sales{grid-template-columns:1fr}.sale{display:flex;align-items:baseline;gap:10px}
+  .sale-v{margin:0 0 0 auto;font-size:17px}.sale-n{margin:0}}
 .empty{text-align:center;padding:52px 20px;color:var(--text-3);font-size:13.5px;line-height:1.7}
 </style>
 {% endblock %}
 
 {% block content %}
+<div class="sales">
+  <div class="sale"><div class="sale-l">Today</div><div class="sale-v"><small>TZS</small> {{ sales.today.total|floatformat:"0g" }}</div><div class="sale-n">{{ sales.today.n }} paid order{{ sales.today.n|pluralize }}</div></div>
+  <div class="sale"><div class="sale-l">Last 7 days</div><div class="sale-v"><small>TZS</small> {{ sales.week.total|floatformat:"0g" }}</div><div class="sale-n">{{ sales.week.n }} paid order{{ sales.week.n|pluralize }}</div></div>
+  <div class="sale"><div class="sale-l">{{ sales.month_name }}</div><div class="sale-v"><small>TZS</small> {{ sales.month.total|floatformat:"0g" }}</div><div class="sale-n">{{ sales.month.n }} paid order{{ sales.month.n|pluralize }}</div></div>
+</div>
+<div class="pending">
+  <span class="to-check"><b>{{ sales.to_check.n }}</b> to check (TZS {{ sales.to_check.total|floatformat:"0g" }})</span>
+  <span><b>{{ sales.waiting.n }}</b> waiting for payment (TZS {{ sales.waiting.total|floatformat:"0g" }})</span>
+  <a class="csv" href="{% url 'chatbot_orders_export' %}"><i class="fas fa-file-arrow-down"></i> Download CSV</a>
+</div>
 <div class="tabs">
   <a class="tab {% if tab == 'open' %}on{% endif %}" href="?tab=open">Open<b>{{ counts.open }}</b></a>
   <a class="tab {% if tab == 'done' %}on{% endif %}" href="?tab=done">Completed<b>{{ counts.done }}</b></a>

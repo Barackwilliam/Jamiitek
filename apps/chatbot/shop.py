@@ -32,9 +32,10 @@ kawaida. Akiandika "bidhaa" tena, anaendelea pale alipoachia.
 
 MALIPO
 
-JamiiTek haishiki pesa. Mteja anaonyeshwa maelekezo ya malipo ya mmiliki
-(BotConfig.payment_instructions — Lipa Namba / M-Pesa yake), anatuma
-namba ya muamala, na mmiliki anathibitisha kwenye dashboard → Orders.
+JamiiTek haishiki pesa. Mteja anaonyeshwa njia za malipo za mmiliki
+(BotConfig.payment_methods — Lipa Namba, namba za simu, akaunti za benki —
+na payment_instructions kama maelezo ya ziada), anatuma namba ya muamala,
+na mmiliki MWENYEWE anathibitisha kwenye dashboard → Orders ("Mark paid").
 """
 import logging
 import re
@@ -109,7 +110,6 @@ TEXT = {
                       'en': "Sorry, the order could not be saved. Please try again."},
     'received':      {'sw': "✅ *Oda #{code} imepokelewa!*\nJumla: *{total}*",
                       'en': "✅ *Order #{code} received!*\nTotal: *{total}*"},
-    'how_to_pay':    {'sw': "*Jinsi ya kulipa:*", 'en': "*How to pay:*"},
     'send_ref':      {'sw': "Ukishalipa, tuma hapa *namba ya muamala* (au picha ya ujumbe wa malipo).",
                       'en': "After paying, send the *transaction number* here "
                             "(or a screenshot of the payment message)."},
@@ -140,10 +140,100 @@ TEXT = {
                             "Check your phone, then press *Mark paid* on the dashboard → Orders."},
     'owner_cancelled': {'sw': "❌ *Oda #{code} imeghairiwa* na {who}.",
                         'en': "❌ *Order #{code} was cancelled* by {who}."},
+    # Kumbusho (send_reminders)
+    'remind_pay':    {'sw': "⏰ Kumbusho: oda *#{code}* bado inasubiri malipo.\n\n{pay}\n\n"
+                            "Ukishalipa, tuma hapa *namba ya muamala*. Kama hutaki tena, andika *ghairi*.",
+                      'en': "⏰ Reminder: order *#{code}* is still waiting for payment.\n\n{pay}\n\n"
+                            "After paying, send the *transaction number* here. If you no longer want it, "
+                            "type *cancel*."},
+    'owner_check':   {'sw': "⏳ *Oda #{code} inasubiri uthibitisho wako*\n\n{who} alisema amelipa {total} "
+                            "saa {hours} zilizopita.\nMuamala: {ref}\n\n"
+                            "Hakiki kwenye simu au benki yako, kisha bonyeza *Mark paid* kwenye dashboard → Orders.",
+                      'en': "⏳ *Order #{code} is waiting for your check*\n\n{who} said they paid {total} "
+                            "{hours} hours ago.\nTransaction: {ref}\n\n"
+                            "Check your phone or bank, then press *Mark paid* on the dashboard → Orders."},
     'customer':      {'sw': "Mteja", 'en': "Customer"},
     'open_chat':     {'sw': "fungua chat kwenye WhatsApp ya biashara", 'en': "open the chat on the business WhatsApp"},
     'screenshot':    {'sw': "[picha ya malipo — iangalie WhatsApp]", 'en': "[payment screenshot — check WhatsApp]"},
 }
+
+
+# ── Njia za malipo za mmiliki ─────────────────────────────────
+
+NETWORKS = {
+    'mpesa':    'M-Pesa',
+    'mixx':     'Mixx by Yas',
+    'airtel':   'Airtel Money',
+    'halopesa': 'Halopesa',
+}
+KINDS = ('lipa', 'mobile', 'bank')
+MAX_METHODS = 6
+
+PAY_TEXT = {
+    'title':  {'sw': "💳 *Jinsi ya kulipa — {total}*", 'en': "💳 *How to pay — {total}*"},
+    'lipa':   {'sw': "Lipa Namba ({net})", 'en': "Lipa Namba ({net})"},
+    'mobile': {'sw': "{net} — namba ya simu", 'en': "{net} — phone number"},
+    'bank':   {'sw': "Benki — {bank}", 'en': "Bank — {bank}"},
+    'name':   {'sw': "Jina: {name}", 'en': "Name: {name}"},
+    'ref':    {'sw': "Kwenye maelezo ya malipo andika *{code}* ukiweza.",
+               'en': "Use *{code}* as the payment reference if you can."},
+}
+_KEYCAPS = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣']
+
+
+def clean_method(kind, provider, number, name):
+    """(method, None) au (None, kosa) — kutoka fomu ya dashboard."""
+    kind = (kind or '').strip()
+    provider = (provider or '').strip()[:60]
+    name = re.sub(r'\s+', ' ', (name or '')).strip()[:80]
+    raw = (number or '').strip()
+    if kind not in KINDS:
+        return None, "Choose a payment type."
+    if kind in ('lipa', 'mobile') and provider not in NETWORKS:
+        return None, "Choose the mobile network."
+    if kind == 'bank' and not provider:
+        return None, "Enter the bank name."
+    if not name:
+        return None, "Enter the name the customer will see when paying."
+    if kind == 'mobile':
+        digits = re.sub(r'\D', '', raw)
+        if digits.startswith('255') and len(digits) == 12:
+            digits = '0' + digits[3:]
+        if not re.fullmatch(r'0[67]\d{8}', digits):
+            return None, "Enter a valid phone number, e.g. 0754 123 456."
+        number = f"{digits[:4]} {digits[4:7]} {digits[7:]}"
+    elif kind == 'lipa':
+        number = re.sub(r'\s', '', raw)
+        if not re.fullmatch(r'\d{5,10}', number):
+            return None, "Enter the Lipa Namba (numbers only, e.g. 555777)."
+    else:
+        number = re.sub(r'\s+', ' ', raw)
+        if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9 -]{4,29}', number):
+            return None, "Enter a valid account number."
+    return {'kind': kind, 'provider': provider, 'number': number, 'name': name}, None
+
+
+def method_label(m, lang='en'):
+    net = NETWORKS.get(m.get('provider'), m.get('provider', ''))
+    return PAY_TEXT[m['kind']][lang].format(net=net, bank=m.get('provider', ''))
+
+
+def payment_text(bot, lang, code, total):
+    """Maelekezo ya malipo kwa mteja, au '' kama mmiliki hajaweka njia yoyote."""
+    methods = [m for m in (bot.payment_methods or []) if m.get('kind') in KINDS][:MAX_METHODS]
+    note = (bot.payment_instructions or '').strip()
+    if not methods and not note:
+        return ''
+    out = [PAY_TEXT['title'][lang].format(total=tzs(total))]
+    for i, m in enumerate(methods):
+        mark = _KEYCAPS[i] if len(methods) > 1 else '▪️'
+        out += ["", f"{mark} *{method_label(m, lang)}*", f"*{m['number']}*",
+                PAY_TEXT['name'][lang].format(name=m['name'])]
+    if note:
+        out += ["", note]
+    if methods:
+        out += ["", PAY_TEXT['ref'][lang].format(code=code)]
+    return "\n".join(out)
 
 
 # ── Msaada ────────────────────────────────────────────────────
@@ -384,9 +474,9 @@ def _place_order(bot, wa, conv, phone, jid):
         contact=_contact(bot, conv), rows=rows, total=tzs(total), place=order.delivery))
 
     msg = [_t(bot, conv, 'received', code=order.code, total=tzs(total))]
-    if (bot.payment_instructions or '').strip():
-        msg += ["", _t(bot, conv, 'how_to_pay'), bot.payment_instructions.strip(), "",
-                _t(bot, conv, 'send_ref')]
+    pay = payment_text(bot, lang, order.code, total)
+    if pay:
+        msg += ["", pay, "", _t(bot, conv, 'send_ref')]
         next_state = 'shop_payref'
     else:
         msg += ["", _t(bot, conv, 'will_contact')]
@@ -416,7 +506,8 @@ def _payment_ref(bot, wa, conv, phone, jid, text, msg_type):
         ref = m.group(0)
     order.payment_ref = ref[:60]
     order.status = 'payment_sent'
-    order.save(update_fields=['payment_ref', 'status', 'updated_at'])
+    order.claimed_at = timezone.now()
+    order.save(update_fields=['payment_ref', 'status', 'claimed_at', 'updated_at'])
     _notify_owner(bot, wa, conv, _owner(
         bot, 'owner_paid', code=order.code, who=order.customer_name or _owner(bot, 'customer'),
         total=tzs(order.total), ref=order.payment_ref))
@@ -547,7 +638,7 @@ def mark(order, status):
         return
     order.status = status
     fields = ['status', 'updated_at']
-    if status == 'paid' and not order.paid_at:
+    if status in ('paid', 'delivered') and not order.paid_at:   # oda iliyokamilika ni mauzo
         order.paid_at = timezone.now()
         fields.append('paid_at')
     order.save(update_fields=fields)
@@ -566,3 +657,116 @@ def mark(order, status):
     except Exception:
         logger.exception('[%s] duka: taarifa ya oda #%s kwa mteja imeshindwa',
                          order.bot.session_name, order.code)
+
+
+# ── Kumbusho (kazi ya ratiba: manage.py shop_reminders) ───────
+
+# (alama, saa tangu oda) — mteja ambaye hajalipa wala kutuma muamala
+PAY_REMINDERS = (('pay1', 1), ('pay24', 24))
+OWNER_AFTER_HOURS = 2      # mteja alisema amelipa, mmiliki bado hajathibitisha
+REMIND_WINDOW_DAYS = 3     # oda za zamani zaidi hazikumbushwi (k.m. siku ya deploy)
+QUIET = (21, 8)            # saa za usiku (Dar): hakuna kumbusho kati ya 21:00 na 08:00
+
+
+def _quiet(now):
+    hour = timezone.localtime(now).hour
+    return hour >= QUIET[0] or hour < QUIET[1]
+
+
+def _remind_customer(order, key, now):
+    conv = order.conversation
+    jid = (conv.metadata or {}).get('jid') if conv else None
+    if not jid:
+        return False                 # chat ya tovuti: hakuna njia ya kumfikia baadaye
+    bot = order.bot
+    lang = lang_for(bot, order.lang)
+    pay = payment_text(bot, lang, order.code, order.total)
+    if not pay:
+        return False                 # mmiliki hajaweka njia za malipo — atawasiliana mwenyewe
+    from .bridge import BaileysHandler
+    text = TEXT['remind_pay'][lang].format(code=order.code, pay=pay)
+    res = BaileysHandler(bot).send_text(conv.customer_phone, text, jid=jid)
+    if not res.get('success'):
+        logger.warning('[%s] kumbusho la oda #%s halikufika: %s', bot.session_name, order.code, res.get('error'))
+        return False
+    Message.objects.create(conversation=conv, role='assistant', content=text)
+    # Akijibu kwa namba ya muamala, inanaswa — ila tu kama hayuko katikati ya duka
+    if conv.metadata.get('state', 'chat') == 'chat':
+        conv.metadata['shop'] = {'order': order.id, 'lang': order.lang}
+        conv.metadata['state'] = 'shop_payref'
+        conv.save(update_fields=['metadata'])
+    return True
+
+
+def _remind_owner(order, now):
+    bot = order.bot
+    if not bot.owner_digits:
+        return False
+    from .bridge import BaileysHandler
+    hours = max(1, int((now - order.claimed_at).total_seconds() // 3600))
+    text = _owner(bot, 'owner_check', code=order.code, who=order.customer_name or _owner(bot, 'customer'),
+                  total=tzs(order.total), hours=hours, ref=order.payment_ref or '-')
+    res = BaileysHandler(bot).send_text(bot.owner_whatsapp, text)
+    if not res.get('success'):
+        logger.warning('[%s] kumbusho la mmiliki (oda #%s) halikufika: %s',
+                       bot.session_name, order.code, res.get('error'))
+    return bool(res.get('success'))
+
+
+def send_reminders(now=None):
+    """Kumbusha wateja wasiolipa na wamiliki wasiothibitisha. {'customers': n, 'owners': n}"""
+    from datetime import timedelta
+    now = now or timezone.now()
+    sent = {'customers': 0, 'owners': 0}
+    if _quiet(now):
+        return sent
+    since = now - timedelta(days=REMIND_WINDOW_DAYS)
+    live = dict(bot__is_active=True, bot__status='active')
+
+    for order in (Order.objects.filter(status='new', created_at__gte=since, **live)
+                  .select_related('bot', 'conversation')):
+        age = now - order.created_at
+        due = [k for k, h in PAY_REMINDERS if age >= timedelta(hours=h) and k not in order.reminders]
+        if not due:
+            continue
+        if _remind_customer(order, due[-1], now):
+            sent['customers'] += 1
+        # Alama zote zilizofika zinawekwa: mteja hapati kumbusho mbili mfululizo
+        order.reminders = list(order.reminders) + due
+        order.save(update_fields=['reminders'])
+
+    for order in (Order.objects.filter(status='payment_sent', claimed_at__gte=since,
+                                       claimed_at__lte=now - timedelta(hours=OWNER_AFTER_HOURS), **live)
+                  .select_related('bot')):
+        if 'owner' in order.reminders:
+            continue
+        if _remind_owner(order, now):
+            sent['owners'] += 1
+        order.reminders = list(order.reminders) + ['owner']
+        order.save(update_fields=['reminders'])
+    return sent
+
+
+# ── Ripoti ya mauzo (dashboard → Orders) ──────────────────────
+
+def sales_summary(bot, now=None):
+    """Mauzo (oda zilizolipwa/kukamilika) ya leo, siku 7 na mwezi huu, na zinazosubiri."""
+    from datetime import timedelta
+    from django.db.models import Count, Q, Sum
+    now = timezone.localtime(now or timezone.now())
+    today = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    month = today.replace(day=1)
+    sold = bot.orders.filter(status__in=('paid', 'delivered'), paid_at__isnull=False)
+
+    def agg(qs):
+        r = qs.aggregate(n=Count('id'), total=Sum('total'))
+        return {'n': r['n'] or 0, 'total': r['total'] or 0}
+
+    return {
+        'today': agg(sold.filter(paid_at__gte=today)),
+        'week': agg(sold.filter(paid_at__gte=today - timedelta(days=6))),
+        'month': agg(sold.filter(paid_at__gte=month)),
+        'waiting': agg(bot.orders.filter(status='new')),
+        'to_check': agg(bot.orders.filter(status='payment_sent')),
+        'month_name': now.strftime('%B'),
+    }
