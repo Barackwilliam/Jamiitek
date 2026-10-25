@@ -25,6 +25,12 @@
 .tag-out{color:var(--red);border-color:rgba(239,68,68,.3)}
 .acts{display:flex;gap:6px;margin-left:auto;flex-shrink:0}
 .acts form{margin:0}
+.pm{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--border)}
+.pm:first-of-type{border-top:none}
+.pm form{margin:0}
+.pm-ico{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+  background:var(--card-s);color:var(--gold);flex-shrink:0}
+.pm-add{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
 .empty{text-align:center;padding:34px 16px;color:var(--text-3);font-size:13.5px;line-height:1.7}
 @media(max-width:560px){.prod{flex-wrap:wrap}.acts{width:100%;justify-content:flex-end}}
 </style>
@@ -92,15 +98,69 @@
       </form>
     </div>
 
+    <!-- NJIA ZA MALIPO -->
+    <div class="shop-card" id="pay">
+      <h2 class="shop-h"><i class="fas fa-wallet" style="color:var(--gold)"></i> Payment methods</h2>
+      <p class="shop-p">Customers pay you directly. You check your phone or bank, then press <b>Mark paid</b> under <a href="{% url 'chatbot_orders' %}" style="color:var(--gold)">Orders</a>.</p>
+      {% for m in methods %}
+      <div class="pm">
+        <div class="pm-ico"><i class="fas {% if m.kind == 'bank' %}fa-building-columns{% else %}fa-mobile-screen{% endif %}"></i></div>
+        <div style="flex:1;min-width:0">
+          <div class="p-name">{{ m.label }}</div>
+          <div class="p-meta">{{ m.number }} · {{ m.name }}</div>
+        </div>
+        <form method="post" action="{% url 'chatbot_payment_method' %}">{% csrf_token %}
+          <input type="hidden" name="action" value="delete"><input type="hidden" name="index" value="{{ m.i }}">
+          <button class="jt-btn btn-ghost" aria-label="Remove {{ m.label }}" title="Remove"><i class="fas fa-trash"></i></button>
+        </form>
+      </div>
+      {% empty %}
+      <div class="hint" style="margin:0 0 6px">No payment methods yet. Add your Lipa Namba, phone number or bank account.</div>
+      {% endfor %}
+
+      {% if methods|length < max_methods %}
+      <form method="post" action="{% url 'chatbot_payment_method' %}" class="pm-add">
+        {% csrf_token %}
+        <label class="f-label">Type</label>
+        <select name="kind" class="f-input" id="pm-kind">
+          <option value="lipa">Lipa Namba</option>
+          <option value="mobile">Mobile money number</option>
+          <option value="bank">Bank account</option>
+        </select>
+        <div id="pm-net">
+          <label class="f-label" style="margin-top:10px">Network</label>
+          <select name="network" class="f-input">
+            {% for k, v in networks %}<option value="{{ k }}">{{ v }}</option>{% endfor %}
+          </select>
+        </div>
+        <div id="pm-bank" hidden>
+          <label class="f-label" style="margin-top:10px">Bank</label>
+          <input name="bank" class="f-input" list="banks" maxlength="60" placeholder="e.g. CRDB">
+          <datalist id="banks"><option value="NMB"><option value="CRDB"><option value="NBC"><option value="Equity"><option value="Stanbic"><option value="Exim"><option value="Azania"><option value="ABSA"><option value="DTB"><option value="KCB"></datalist>
+        </div>
+        <label class="f-label" style="margin-top:10px" id="pm-num-l">Lipa Namba</label>
+        <input name="number" class="f-input" required maxlength="30" inputmode="numeric" id="pm-num" placeholder="e.g. 555777">
+        <label class="f-label" style="margin-top:10px">Name shown when paying</label>
+        <input name="name" class="f-input" required maxlength="80" placeholder="e.g. {{ bot.business_name|default:'Duka la Mama' }}">
+        <button class="jt-btn btn-primary" style="width:100%;justify-content:center;margin-top:14px"><i class="fas fa-plus"></i> Add payment method</button>
+      </form>
+      {% endif %}
+
+      {% if preview %}
+      <label class="f-label" style="margin-top:18px">What the customer sees</label>
+      <div class="demo">{{ preview }}</div>
+      {% endif %}
+    </div>
+
     <!-- MIPANGILIO -->
     <div class="shop-card">
-      <h2 class="shop-h"><i class="fas fa-sliders" style="color:var(--gold)"></i> Shop &amp; payments</h2>
+      <h2 class="shop-h"><i class="fas fa-sliders" style="color:var(--gold)"></i> Shop settings</h2>
       <form method="post" action="{% url 'chatbot_shop_settings' %}">
         {% csrf_token %}
         <label class="switch"><input type="checkbox" name="shop_enabled" {% if bot.shop_enabled %}checked{% endif %}> Turn on the shop in chat</label>
-        <label class="f-label">How customers pay</label>
-        <textarea name="payment_instructions" class="f-input" style="min-height:92px" maxlength="1000" placeholder="e.g. Lipa Namba: (your number) — M-Pesa&#10;Name: (business name)">{{ bot.payment_instructions }}</textarea>
-        <div class="hint">Shown to the customer after they confirm an order. The money comes straight to you; the customer sends the transaction number and you confirm it under <a href="{% url 'chatbot_orders' %}">Orders</a>. If left empty, the customer is told you will contact them.</div>
+        <label class="f-label">Extra payment note (optional)</label>
+        <textarea name="payment_instructions" class="f-input" style="min-height:72px" maxlength="1000" placeholder="e.g. Delivery is paid on arrival.">{{ bot.payment_instructions }}</textarea>
+        <div class="hint">Shown under your payment methods. With no methods and no note, the customer is told you will contact them.</div>
         <button class="jt-btn btn-primary" style="width:100%;justify-content:center;margin-top:14px"><i class="fas fa-floppy-disk"></i> Save</button>
       </form>
     </div>
@@ -118,4 +178,23 @@ Bot: ✅ Order #K7Q2 received + how to pay</div>
     </div>
   </div>
 </div>
+<script>
+(function () {
+  const kind = document.getElementById('pm-kind');
+  if (!kind) return;
+  const net = document.getElementById('pm-net'), bank = document.getElementById('pm-bank');
+  const num = document.getElementById('pm-num'), lbl = document.getElementById('pm-num-l');
+  const copy = {lipa: ['Lipa Namba', 'e.g. 555777', 'numeric'],
+                mobile: ['Phone number', 'e.g. 0754 123 456', 'tel'],
+                bank: ['Account number', 'e.g. 0150 1234 5678', 'text']};
+  function sync() {
+    const k = kind.value;
+    net.hidden = k === 'bank';
+    bank.hidden = k !== 'bank';
+    bank.querySelector('input').required = k === 'bank';
+    lbl.textContent = copy[k][0]; num.placeholder = copy[k][1]; num.inputMode = copy[k][2];
+  }
+  kind.addEventListener('change', sync); sync();
+})();
+</script>
 {% endblock %}

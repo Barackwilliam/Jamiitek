@@ -24,6 +24,7 @@ urlpatterns = [
     # ── Duka: bidhaa, oda, malipo (shop.py + shop_views.py) ──
     path('shop/',                        shop_views.chatbot_shop,          name='chatbot_shop'),
     path('shop/settings/',               shop_views.chatbot_shop_settings, name='chatbot_shop_settings'),
+    path('shop/payment/',                shop_views.chatbot_payment_method, name='chatbot_payment_method'),
     path('shop/product/',                shop_views.chatbot_product_save,  name='chatbot_product_save'),
     path('orders/',                      shop_views.chatbot_orders,        name='chatbot_orders'),
     path('orders/<int:order_id>/',       shop_views.chatbot_order_status,  name='chatbot_order_status'),

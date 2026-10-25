@@ -252,3 +252,75 @@ class JamiiBotShopTest(TestCase):
         self.bot.save()
         wa = self.say('products')
         self.assertIn('Bidhaa za Duka la Mama', wa.to_customer()[-1])
+
+
+class JamiiBotPaymentMethodsTest(TestCase):
+    """Njia za malipo zilizopangwa: Lipa Namba, namba za simu, benki. Mmiliki anathibitisha mwenyewe."""
+    setUp = JamiiBotShopTest.setUp
+    say = JamiiBotShopTest.say
+
+    def test_clean_method_validates_each_kind(self):
+        from apps.chatbot.shop import clean_method
+        m, err = clean_method('mobile', 'airtel', '+255 688 123 456', ' Asha  Juma ')
+        self.assertIsNone(err)
+        self.assertEqual(m, {'kind': 'mobile', 'provider': 'airtel', 'number': '0688 123 456', 'name': 'Asha Juma'})
+        self.assertEqual(clean_method('lipa', 'mpesa', '555 777', 'Duka')[0]['number'], '555777')
+        self.assertEqual(clean_method('bank', 'CRDB', '0150 1234 5678', 'Duka Ltd')[0]['provider'], 'CRDB')
+        for bad in (('mobile', 'airtel', '12345', 'A'), ('lipa', 'mpesa', 'abc', 'A'),
+                    ('lipa', 'tpesa', '555777', 'A'), ('bank', '', '01501234', 'A'),
+                    ('mobile', 'mpesa', '0754123456', ''), ('card', 'mpesa', '1', 'A')):
+            self.assertIsNone(clean_method(*bad)[0], bad)
+
+    def test_customer_sees_every_method_and_owner_confirms(self):
+        from apps.chatbot.models import Order
+        self.bot.payment_instructions = ''
+        self.bot.payment_methods = [
+            {'kind': 'lipa', 'provider': 'mpesa', 'number': '555777', 'name': 'Duka la Mama'},
+            {'kind': 'mobile', 'provider': 'airtel', 'number': '0688 123 456', 'name': 'Asha Juma'},
+            {'kind': 'bank', 'provider': 'CRDB', 'number': '0150 1234 5678', 'name': 'Duka la Mama Ltd'},
+        ]
+        self.bot.save()
+        for t in ('bidhaa', '2', '1', '2', 'nitachukua'):
+            self.say(t)
+        wa = self.say('1')
+        order = Order.objects.get()
+        reply = wa.to_customer()[-1]
+        for text in ('Jinsi ya kulipa — TZS 15,000', '1️⃣ *Lipa Namba (M-Pesa)*', '*555777*',
+                     '2️⃣ *Airtel Money — namba ya simu*', '*0688 123 456*', 'Jina: Asha Juma',
+                     '3️⃣ *Benki — CRDB*', '*0150 1234 5678*', f'*{order.code}*', 'namba ya muamala'):
+            self.assertIn(text, reply)
+        self.say('Nimelipa QWE12345RT')
+        order.refresh_from_db()
+        self.assertEqual(order.status, 'payment_sent')        # mteja amesema — si "paid" mpaka mmiliki athibitishe
+
+    def test_note_only_still_works(self):
+        self.bot.payment_methods = []
+        self.bot.save()
+        for t in ('bidhaa', '2', '1', '2', 'nitachukua'):
+            self.say(t)
+        reply = self.say('1').to_customer()[-1]
+        self.assertIn('Lipa Namba: 555777 (M-Pesa)', reply)
+        self.assertNotIn('Kwenye maelezo ya malipo', reply)
+
+    def test_dashboard_adds_and_removes_methods(self):
+        self.client.force_login(self.user)
+        r = self.client.post('/chatbot/shop/payment/', {'kind': 'mobile', 'network': 'mpesa',
+                                                        'number': '0754 111 222', 'name': 'Mama Duka'})
+        self.assertRedirects(r, '/chatbot/shop/#pay', fetch_redirect_response=False)
+        self.client.post('/chatbot/shop/payment/', {'kind': 'bank', 'bank': 'NMB',
+                                                    'number': '2041 0000 111', 'name': 'Duka la Mama'})
+        r = self.client.post('/chatbot/shop/payment/', {'kind': 'mobile', 'network': 'mpesa',
+                                                        'number': '999', 'name': 'X'}, follow=True)
+        self.assertIn('valid phone number', ' '.join(str(m) for m in r.context['messages']))
+        self.bot.refresh_from_db()
+        self.assertEqual([m['provider'] for m in self.bot.payment_methods], ['mpesa', 'NMB'])
+        page = self.client.get('/chatbot/shop/').content.decode()
+        self.assertIn('M-Pesa — phone number', page)
+        self.assertIn('Bank — NMB', page)
+        self.assertIn('How to pay — TZS 45,000', page)          # muonekano kwa mteja
+        self.client.post('/chatbot/shop/payment/', {'action': 'delete', 'index': '0'})
+        self.bot.refresh_from_db()
+        self.assertEqual([m['provider'] for m in self.bot.payment_methods], ['NMB'])
+        self.client.post('/chatbot/shop/payment/', {'action': 'delete', 'index': '9'})   # haipo — hakuna kosa
+        self.bot.refresh_from_db()
+        self.assertEqual(len(self.bot.payment_methods), 1)

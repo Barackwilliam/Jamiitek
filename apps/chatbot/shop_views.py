@@ -41,6 +41,10 @@ def chatbot_shop(request):
         'active_count': products.filter(is_active=True).count(),
         'edit': edit,
         'categories': sorted({p.category for p in products if p.category}),
+        'methods': [dict(m, i=i, label=shop.method_label(m)) for i, m in enumerate(bot.payment_methods or [])],
+        'networks': shop.NETWORKS.items(),
+        'max_methods': shop.MAX_METHODS,
+        'preview': shop.payment_text(bot, 'en', 'K7Q2', 45000),
     })
 
 
@@ -58,6 +62,43 @@ def chatbot_shop_settings(request):
     else:
         messages.success(request, "Shop settings saved.")
     return redirect('chatbot_shop')
+
+
+@login_required(login_url=LOGIN)
+@require_POST
+def chatbot_payment_method(request):
+    """Ongeza au futa njia ya malipo (Lipa Namba / namba ya simu / benki)."""
+    bot, go = _bot_or_wizard(request)
+    if go:
+        return go
+    methods = list(bot.payment_methods or [])
+    back = reverse('chatbot_shop') + '#pay'
+    if request.POST.get('action') == 'delete':
+        try:
+            removed = methods.pop(int(request.POST.get('index', '')))
+        except (ValueError, IndexError):
+            return redirect(back)
+        bot.payment_methods = methods
+        bot.save(update_fields=['payment_methods'])
+        messages.success(request, f"{shop.method_label(removed)} removed.")
+        return redirect(back)
+    if len(methods) >= shop.MAX_METHODS:
+        messages.error(request, f"You can add up to {shop.MAX_METHODS} payment methods.")
+        return redirect(back)
+    kind = request.POST.get('kind')
+    provider = request.POST.get('bank' if kind == 'bank' else 'network')
+    method, error = shop.clean_method(kind, provider, request.POST.get('number'), request.POST.get('name'))
+    if error:
+        messages.error(request, error)
+        return redirect(back)
+    if any(m['kind'] == method['kind'] and m['number'] == method['number'] for m in methods):
+        messages.info(request, "That payment method is already on the list.")
+        return redirect(back)
+    methods.append(method)
+    bot.payment_methods = methods
+    bot.save(update_fields=['payment_methods'])
+    messages.success(request, f"{shop.method_label(method)} added.")
+    return redirect(back)
 
 
 @login_required(login_url=LOGIN)
