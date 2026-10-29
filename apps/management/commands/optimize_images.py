@@ -34,6 +34,43 @@ TARGETS = [
 
 MIN_SAVING = 0.15
 
+# Upande mrefu zaidi kwa sehemu zinazoonyeshwa ndogo (nyingine zote: storage.OPTIMIZE_MAX_SIDE).
+# Kadi ya portfolio ni ≤650px (1200 inatosha skrini za 2x); picha ya testimonial ni 46px.
+MAX_SIDE = {
+    'apps.PortfolioItem': 1200,
+    'apps.Testimonial': 320,
+}
+
+
+def shrink(url, label, max_side=None, apply=False):
+    """Pakua picha, ipunguze, na (apply=True) pakia toleo jipya.
+
+    Rudisha (status, ukubwa_wa_zamani, ukubwa_mpya, url_mpya au ujumbe wa kosa).
+    status: 'ok' | 'skip' | 'error'. URL ya zamani haiguswi.
+    """
+    import requests
+
+    try:
+        resp = requests.get(url, timeout=30)
+        resp.raise_for_status()
+        data = resp.content
+    except Exception as e:
+        return 'error', 0, 0, f'haikupakuliwa ({e})'
+
+    ext = url.rsplit('.', 1)[-1].lower().split('?')[0]
+    ext = 'jpg' if ext == 'jpeg' else ext
+    new, new_ext = storage.optimize_image(data, ext, max_side or MAX_SIDE.get(label, storage.OPTIMIZE_MAX_SIDE))
+    if len(new) > len(data) * (1 - MIN_SAVING):
+        return 'skip', len(data), len(data), ''
+    if not apply:
+        return 'ok', len(data), len(new), ''
+
+    res = storage.upload_bytes(new, f'optimized/{label.split(".")[-1].lower()}',
+                               new_ext, 'image/webp' if new_ext == 'webp' else resp.headers.get('Content-Type', ''))
+    if not res.get('success'):
+        return 'error', len(data), len(new), f'upload: {res.get("error")}'
+    return 'ok', len(data), len(new), res['url']
+
 
 class Command(BaseCommand):
     help = 'Punguza picha zilizopo Supabase (WebP, ≤2000px). Bila --apply inaonyesha tu.'
@@ -45,8 +82,6 @@ class Command(BaseCommand):
                             help='Shughulikia picha hizi tu (0 = zote).')
 
     def handle(self, *args, **opts):
-        import requests
-
         apply, limit = opts['apply'], opts['limit']
         if apply and not storage.is_configured():
             self.stderr.write('Supabase haijawekwa (SUPABASE_URL / funguo za S3).')
@@ -77,41 +112,24 @@ class Command(BaseCommand):
                         Model.objects.filter(pk=pk).update(**{field: seen[url]})
                     continue
 
-                try:
-                    resp = requests.get(url, timeout=30)
-                    resp.raise_for_status()
-                    data = resp.content
-                except Exception as e:
+                status, old_size, new_size, result = shrink(url, label, apply=apply)
+                if status == 'error':
                     failed += 1
-                    self.stdout.write(f'  ✗ {label}#{pk}: haikupakuliwa ({e})')
+                    self.stdout.write(f'  ✗ {label}#{pk}: {result}')
                     seen[url] = None
                     continue
-
-                ext = url.rsplit('.', 1)[-1].lower().split('?')[0]
-                ext = 'jpg' if ext == 'jpeg' else ext
-                new, new_ext = storage.optimize_image(data, ext)
-                if len(new) > len(data) * (1 - MIN_SAVING):
+                if status == 'skip':
                     skipped += 1
                     seen[url] = None
                     continue
 
-                before += len(data)
-                after += len(new)
+                before += old_size
+                after += new_size
                 done += 1
-                self.stdout.write(f'  {label}#{pk}: {len(data)//1024} KB → {len(new)//1024} KB')
-
+                self.stdout.write(f'  {label}#{pk}: {old_size//1024} KB → {new_size//1024} KB')
                 if apply:
-                    res = storage.upload_bytes(new, f'optimized/{label.split(".")[-1].lower()}',
-                                               new_ext, 'image/webp' if new_ext == 'webp' else resp.headers.get('Content-Type', ''))
-                    if not res.get('success'):
-                        failed += 1
-                        self.stdout.write(f'    ✗ upload: {res.get("error")}')
-                        seen[url] = None
-                        continue
-                    Model.objects.filter(pk=pk).update(**{field: res['url']})
-                    seen[url] = res['url']
-                else:
-                    seen[url] = None
+                    Model.objects.filter(pk=pk).update(**{field: result})
+                seen[url] = result or None
 
         mb = lambda n: f'{n / 1024 / 1024:.1f} MB'
         self.stdout.write('')

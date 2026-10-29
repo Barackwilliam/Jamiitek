@@ -15,7 +15,7 @@
 {% if nav_categories is not None and p|slice:':6' == '/blog/' %}{% firstof "1" as blog_side %}{% endif %}
 <aside class="side{% if blog_side %} side--blog{% endif %}" id="side" aria-label="Menu" aria-hidden="true">
   <div class="side__top">
-    <a class="brand" href="{% url 'home' %}"><img src="{% static 'images/logo.png' %}" alt="" width="40" height="35" loading="lazy"><span>Jamii<em>Tek</em></span></a>
+    <a class="brand" href="{% url 'home' %}"><img src="{% static 'images/logo-96.png' %}" alt="" width="40" height="35" loading="lazy"><span>Jamii<em>Tek</em></span></a>
     <button class="side__x" id="sideX" aria-label="Close menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </div>
   {% if blog_side %}

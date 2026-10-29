@@ -29,17 +29,59 @@ class PortfolioItemForm(forms.ModelForm):
     class Meta:
         model = PortfolioItem
         fields = '__all__'
-        widgets = {'image': SupabaseImageWidget(folder='portfolio')}
+        widgets = {'image': SupabaseImageWidget(folder='portfolio', max_px=1200)}
 
 
 class TestimonialForm(forms.ModelForm):
     class Meta:
         model = Testimonial
         fields = '__all__'
-        widgets = {'image': SupabaseImageWidget(folder='testimonials')}
+        widgets = {'image': SupabaseImageWidget(folder='testimonials', max_px=320)}
 
 
 # ──────────────────────────────────────────────────────────────
+class OptimizeImagesMixin:
+    """Kitendo cha Admin: picha kubwa za Supabase (PNG 300-600KB) → WebP ndogo.
+
+    Ni sawa na `manage.py optimize_images --apply`, lakini kwa safu zilizochaguliwa —
+    hakuna haja ya shell ya Render. `save()` (si `.update()`) ili signal ya
+    public_cache isafishe ukurasa wa mwanzo. Faili la zamani haliguswi.
+    """
+    actions = ['optimize_images']
+
+    @admin.action(description='⚡ Optimize images (faster loading)')
+    def optimize_images(self, request, queryset):
+        from django.contrib import messages
+        from . import storage
+        from .management.commands.optimize_images import shrink
+
+        if not storage.is_configured():
+            self.message_user(request, 'Supabase haijawekwa (SUPABASE_URL / funguo za S3).', level=messages.ERROR)
+            return
+        prefix = storage.public_url('x')[:-1]
+        label = f'{self.model._meta.app_label}.{self.model.__name__}'
+        done, skipped, errors = [], 0, []
+        for obj in queryset[:40]:
+            if not (obj.image or '').startswith(prefix):
+                skipped += 1
+                continue
+            status, old_size, new_size, result = shrink(obj.image, label, apply=True)
+            if status == 'ok':
+                obj.image = result
+                obj.save(update_fields=['image'])
+                done.append(f'{old_size // 1024}KB → {new_size // 1024}KB')
+            elif status == 'error':
+                errors.append(f'{obj}: {result}')
+            else:
+                skipped += 1
+        if done:
+            self.message_user(request, f'⚡ Picha {len(done)} zimepunguzwa: ' + ', '.join(done[:8]))
+        if skipped:
+            self.message_user(request, f'Picha {skipped} zimerukwa (tayari ndogo / si za Supabase / hakuna picha).')
+        for e in errors[:5]:
+            self.message_user(request, e, level=messages.ERROR)
+
+
 class PreviewMixin:
     @admin.display(description='Preview')
     def preview(self, obj):
@@ -82,7 +124,7 @@ class HeroSlideAdmin(PreviewMixin, admin.ModelAdmin):
 
 
 @admin.register(PortfolioItem)
-class PortfolioItemAdmin(PreviewMixin, admin.ModelAdmin):
+class PortfolioItemAdmin(OptimizeImagesMixin, PreviewMixin, admin.ModelAdmin):
     form = PortfolioItemForm
     list_display = ('preview', 'title', 'client', 'category', 'year', 'order', 'is_featured')
     list_editable = ('order', 'is_featured')
@@ -101,7 +143,7 @@ class PortfolioItemAdmin(PreviewMixin, admin.ModelAdmin):
 
 
 @admin.register(Testimonial)
-class TestimonialAdmin(PreviewMixin, admin.ModelAdmin):
+class TestimonialAdmin(OptimizeImagesMixin, PreviewMixin, admin.ModelAdmin):
     form = TestimonialForm
     list_display = ('preview', 'name', 'role', 'rating', 'order', 'is_active')
     list_editable = ('order', 'is_active')
