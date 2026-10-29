@@ -17,7 +17,7 @@
 @font-face{font-family:'Inter';font-weight:600;font-display:swap;src:url("../fonts/inter-600.woff2") format('woff2')}
 
 .hdr,.side,.scrim{
-  --ink:#0B1730; --ink-2:#34405A; --muted:#66728A; --line:#CCD8EB; --paper:#D9E5F6; --bg:#E6EFFB;
+  --ink:#0B1730; --ink-2:#34405A; --muted:#5A667E; --line:#CCD8EB; --paper:#D9E5F6; --bg:#E6EFFB;
   --navy:#0A2245; --navy-2:#123563; --navy-3:#1B4C8C; --navy-d:#0B1A36;
   --gold:#F5A623; --amber:#FFC456; --sun:#FF7A3D;
   --ease:cubic-bezier(.22,1,.36,1);

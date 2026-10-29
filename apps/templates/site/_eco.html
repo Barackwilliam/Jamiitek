@@ -70,8 +70,8 @@
 .eco__pane{display:none;padding:16px 4px 2px}
 .eco__pane.is-on{display:block;animation:ecoIn .5s var(--ease)}
 @keyframes ecoIn{from{opacity:0;transform:translateY(8px)}}
-.eco__pane h3{display:flex;align-items:center;gap:8px;color:#fff;font:800 20px/1.15 'Sora',sans-serif;letter-spacing:-.03em}
-.eco__pane h3 em{flex:none;white-space:nowrap;font-style:normal;padding:3px 7px;border-radius:6px;background:color-mix(in srgb,var(--c) 22%,transparent);color:var(--c);font:700 9.5px var(--mono);letter-spacing:.1em}
+.eco__pane h2{display:flex;align-items:center;gap:8px;color:#fff;font:800 20px/1.15 'Sora',sans-serif;letter-spacing:-.03em}
+.eco__pane h2 em{flex:none;white-space:nowrap;font-style:normal;padding:3px 7px;border-radius:6px;background:color-mix(in srgb,var(--c) 22%,transparent);color:var(--c);font:700 9.5px var(--mono);letter-spacing:.1em}
 .eco__pane>p{margin:8px 0 14px;color:#C9D4EA;font-size:14.5px;line-height:1.55}
 .eco__demo{min-height:118px;padding:12px;border-radius:14px;background:rgba(3,10,26,.55);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
 .eco__stats{display:flex;flex-wrap:wrap;gap:6px 14px;margin:12px 0 14px;font:500 11px var(--mono);color:#9FB2D6}
@@ -110,8 +110,8 @@
 .site.is-on .site__in{animation:tpvScroll 11s ease-in-out .6s infinite}
 /* Inashuka hadi mwisho wa tovuti (--sd inapimwa na JS) kisha inarudi juu */
 @keyframes tpvScroll{0%,16%{transform:none}48%,70%{transform:translateY(calc(var(--sd,0px) * -1))}100%{transform:none}}
-.d-hero h4,.sf-hero h4,.f-hero h4{color:#fff}
-.site h4,.site h5{margin:0;font-family:'Sora',sans-serif;letter-spacing:-.03em}
+.d-hero h3,.sf-hero h3,.f-hero h3{color:#fff}
+.site h3,.site h5{margin:0;font-family:'Sora',sans-serif;letter-spacing:-.03em}
 .site p{margin:0}
 .s-nav{display:flex;align-items:center;gap:1em;height:3.4em;padding:0 1.4em;border-bottom:1px solid rgba(0,0,0,.06)}
 .s-nav b{display:flex;align-items:center;gap:.45em;margin-right:auto;font:800 1.2em 'Sora',sans-serif;letter-spacing:-.03em}
@@ -125,7 +125,7 @@
 .site--duka{--sc:#1B4C8C}
 .d-hero{display:grid;grid-template-columns:1.2fr 1fr;align-items:center;margin:1.2em 1.4em 0;padding:1.6em;border-radius:1.2em;background:linear-gradient(135deg,#123563,#0A2245);color:#fff}
 .d-hero small{font:600 .7em var(--mono);letter-spacing:.12em;color:#FFC456}
-.d-hero h4{margin:.3em 0 .4em;font-size:1.9em;line-height:1.05}
+.d-hero h3{margin:.3em 0 .4em;font-size:1.9em;line-height:1.05}
 .d-hero p{font-size:.85em;color:#C7D3EA}
 .d-hero .s-btn{background:#F5A623;color:#2A1800}
 .d-hero svg{width:100%;height:auto}
@@ -144,7 +144,7 @@
 .sf-hero svg{position:absolute;inset:0;width:100%;height:100%}
 .sf-hero div{position:absolute;left:1.6em;top:2.4em;max-width:60%}
 .sf-hero small{font:600 .7em var(--mono);letter-spacing:.14em;color:#FFE1A8}
-.sf-hero h4{margin:.3em 0;font-size:2.1em;line-height:1.02;text-shadow:0 2px 10px rgba(0,0,0,.25)}
+.sf-hero h3{margin:.3em 0;font-size:2.1em;line-height:1.02;text-shadow:0 2px 10px rgba(0,0,0,.25)}
 .sf-hero .s-btn{background:#fff;color:#14532D}
 .sf-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.9em;margin:0 1.4em}
 .sf-card{border-radius:.9em;overflow:hidden;box-shadow:0 0 0 1px #E7E2D6}
@@ -158,7 +158,7 @@
 .site--food{--sc:#EA580C;background:#FFF8F0}
 .f-hero{display:grid;grid-template-columns:1.15fr 1fr;align-items:center;gap:.6em;padding:1.8em 1.4em;background:radial-gradient(circle at 80% 50%,#3B1E12,#1C0F0A 70%);color:#fff}
 .f-hero small{font:600 .7em var(--mono);letter-spacing:.12em;color:#FDBA74}
-.f-hero h4{margin:.3em 0 .4em;font-size:1.8em;line-height:1.05}
+.f-hero h3{margin:.3em 0 .4em;font-size:1.8em;line-height:1.05}
 .f-hero p{font-size:.85em;color:#E7D3C3}
 .f-hero .s-btn{background:#EA580C;color:#fff}
 .f-hero svg{width:100%;height:auto}
@@ -183,7 +183,7 @@
 @media (max-width:520px){
   .eco__card{padding:12px;border-radius:20px}
   .eco__tabs button{padding:9px 4px;font-size:11.5px;gap:5px}
-  .eco__pane h3{flex-wrap:wrap;font-size:18.5px}
+  .eco__pane h2{flex-wrap:wrap;font-size:18.5px}
 }
 @media (prefers-reduced-motion:reduce){.site__in,.eco__orb--3,.eco__core::before,.eco__core i,.eco__beams line{animation:none}}
 </style>
@@ -198,7 +198,7 @@
       <span style="--c:#F55036">Groq · Llama AI</span><span style="--c:#25D366">WhatsApp Cloud API</span><span style="--c:#7CC4FF">Swahili NLP</span>
       <span style="--c:#F38020">Cloudflare CDN</span><span style="--c:#3ECF8E">Supabase</span><span style="--c:#46E3B7">Render Cloud</span>
     </div>
-    <div class="eco__core"><i></i><i></i><img src="{% static 'images/logo.png' %}" alt="" width="40" height="35" loading="lazy" decoding="async"><b>AI CORE · ONLINE</b></div>
+    <div class="eco__core"><i></i><i></i><img src="{% static 'images/logo-96.png' %}" alt="" width="40" height="35" loading="lazy" decoding="async"><b>AI CORE · ONLINE</b></div>
     <div class="eco__node" data-k="0" style="--c:#25D366"><button type="button" tabindex="-1"><span><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2z"/></svg></span><em>AI Chatbot<small>JamiiBot</small></em></button></div>
     <div class="eco__node" data-k="1" style="--c:#3B82F6"><button type="button" tabindex="-1"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4zM4 9h16M9 9v10"/></svg></span><em>Web Builder<small>AI · 10 min</small></em></button></div>
     <div class="eco__node" data-k="2" style="--c:#F5A623"><button type="button" tabindex="-1"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v6H4zM4 14h7v6H4zM15 14h5v6h-5z"/></svg></span><em>Templates<small>Ready-made</small></em></button></div>
@@ -212,7 +212,7 @@
     </div>
 
     <div class="eco__pane is-on" role="tabpanel" style="--c:#25D366">
-      <h3>JamiiBot <em>AI · 24/7</em></h3>
+      <h2>JamiiBot <em>AI · 24/7</em></h2>
       <p>An AI assistant on your WhatsApp that answers customers in Swahili and English, quotes prices, takes orders and books appointments — day and night.</p>
       <div class="eco__demo eco-chat" data-demo="chat">
         <p class="u">Habari, keki ya 1kg ni bei gani?</p>
@@ -226,7 +226,7 @@
     </div>
 
     <div class="eco__pane" role="tabpanel" style="--c:#60A5FA">
-      <h3>AI Website Builder <em>NO CODE</em></h3>
+      <h2>AI Website Builder <em>NO CODE</em></h2>
       <p>Describe your business in one line. AI writes the text, picks the layout and images, and publishes your site to yourname.jamiitek.com in minutes.</p>
       <div class="eco__demo" data-demo="build">
         <div class="eco-bld__q"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg><span data-type="Duka la nguo, Kariakoo"></span></div>
@@ -238,7 +238,7 @@
     </div>
 
     <div class="eco__pane" role="tabpanel" style="--c:#F5A623">
-      <h3>Ready-made templates <em>FROM TSH 15K</em></h3>
+      <h2>Ready-made templates <em>FROM TSH 15K</em></h2>
       <p>Professionally designed sites for shops, safaris, restaurants, schools and more. Add your content and go live in hours — hosting included.</p>
       <div class="eco__demo tpv" data-demo="tpl">
         <div class="tpv__win">
@@ -248,7 +248,7 @@
             <div class="site site--duka is-on"><div class="site__in">
               <div class="s-nav"><b><i></i>Duka la Juma</b><span>Bidhaa</span><span>Oda</span><em>🛒 2</em></div>
               <div class="d-hero">
-                <div><small>MPYA · 2026</small><h4>Mitindo mipya ya msimu</h4><p>Nguo, viatu na mikoba — tunaleta hadi mlangoni Dar.</p><span class="s-btn">Nunua sasa →</span></div>
+                <div><small>MPYA · 2026</small><h3>Mitindo mipya ya msimu</h3><p>Nguo, viatu na mikoba — tunaleta hadi mlangoni Dar.</p><span class="s-btn">Nunua sasa →</span></div>
                 <svg viewBox="0 0 100 90"><circle cx="55" cy="45" r="38" fill="#1B4C8C"/><path d="M38 22l12-6h10l12 6 10 14-11 7-5-6v40H44V37l-5 6-11-7z" fill="#F5A623"/><path d="M50 16q5 8 10 0" fill="none" stroke="#0A2245" stroke-width="3"/><circle cx="55" cy="50" r="3" fill="#0A2245"/><circle cx="55" cy="60" r="3" fill="#0A2245"/></svg>
               </div>
               <div class="s-h2">Bidhaa maarufu <small>Ona zote →</small></div>
@@ -265,7 +265,7 @@
               <div class="s-nav"><b><i></i>Serengeti Trails</b><span>Tours</span><span>Zanzibar</span><em>Book</em></div>
               <div class="sf-hero">
                 <svg viewBox="0 0 400 170" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="sfSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F97316"/><stop offset=".55" stop-color="#FDBA74"/><stop offset="1" stop-color="#FDE68A"/></linearGradient></defs><rect width="400" height="170" fill="url(#sfSky)"/><circle cx="300" cy="105" r="34" fill="#FFF7D6"/><path d="M0 120q80-18 170-4t230-10v64H0z" fill="#B45309"/><path d="M0 138q100-14 220-2t180-6v40H0z" fill="#78350F"/><g fill="#1C1917"><path d="M250 128v-30M240 98q10-8 22 0" stroke="#1C1917" stroke-width="2.5" fill="none"/><path d="M222 100q28-10 56 0q-28 5-56 0z"/><path d="M110 140l2-22 4-2 1-20 4-2 2 4-3 2-1 18 10 1 2 21h-3l-2-14-8-1-3 15z"/><path d="M150 141l2-17 3-1 1-15 3-1 2 3-2 2-1 13 8 1 1 15h-2l-2-11-6-1-2 12z"/></g></svg>
-                <div><small>TANZANIA · 2026</small><h4>Discover the wild side</h4><span class="s-btn">Book a safari →</span></div>
+                <div><small>TANZANIA · 2026</small><h3>Discover the wild side</h3><span class="s-btn">Book a safari →</span></div>
               </div>
               <div class="s-h2">Popular tours <small>★ 4.9 on Google</small></div>
               <div class="sf-grid">
@@ -280,7 +280,7 @@
             <div class="site site--food"><div class="site__in">
               <div class="s-nav"><b><i></i>Mama Ntilie Kitchen</b><span>Menu</span><span>Delivery</span><em>Agiza</em></div>
               <div class="f-hero">
-                <div><small>WAZI LEO · 7:00–22:00</small><h4>Chakula kitamu cha nyumbani</h4><p>Pika leo, tunaleta moto moto ndani ya dakika 30.</p><span class="s-btn">Agiza sasa →</span></div>
+                <div><small>WAZI LEO · 7:00–22:00</small><h3>Chakula kitamu cha nyumbani</h3><p>Pika leo, tunaleta moto moto ndani ya dakika 30.</p><span class="s-btn">Agiza sasa →</span></div>
                 <svg viewBox="0 0 100 100"><circle cx="50" cy="52" r="40" fill="#FAFAF9"/><circle cx="50" cy="52" r="31" fill="#F5E6C8"/><g fill="#D97706"><circle cx="40" cy="45" r="3"/><circle cx="52" cy="40" r="2.5"/><circle cx="60" cy="50" r="3"/><circle cx="45" cy="58" r="2.6"/><circle cx="57" cy="62" r="2.4"/></g><g fill="#7C2D12"><rect x="36" y="50" width="7" height="5" rx="1.5"/><rect x="52" y="54" width="7" height="5" rx="1.5"/><rect x="47" y="45" width="6" height="5" rx="1.5"/></g><path d="M62 38l6-5M66 44l7-3" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round"/><path d="M30 6q4 6 0 12M42 4q4 6 0 12" stroke="#fff" stroke-opacity=".5" stroke-width="2" fill="none"/></svg>
               </div>
               <div class="s-h2">Menu ya leo <small>Bei kwa Tsh</small></div>

@@ -99,6 +99,50 @@ class OptimizeImagesCommandTest(TestCase):
         get.assert_not_called()
 
 
+@override_settings(SUPABASE_URL='https://proj.supabase.co', SUPABASE_BUCKET='media')
+class PortfolioImageShrinkTest(TestCase):
+    """Picha za portfolio (PNG 300-600KB) zinapunguzwa hadi ≤1200px — kadi ni ≤650px."""
+    URL = 'https://proj.supabase.co/storage/v1/object/public/media/portfolio/2026/01/a.png'
+    NEW = 'https://proj.supabase.co/storage/v1/object/public/media/optimized/portfolioitem/b.webp'
+
+    def _get(self, *a, **k):
+        return mock.Mock(content=_jpeg(), headers={'Content-Type': 'image/png'},
+                         raise_for_status=lambda: None)
+
+    def test_portfolio_images_are_capped_at_1200px(self):
+        from apps.management.commands.optimize_images import shrink
+        with mock.patch('requests.get', side_effect=self._get), \
+             mock.patch.object(storage, 'upload_bytes', return_value={'success': True, 'url': self.NEW}) as up:
+            status, old, new, url = shrink(self.URL.replace('.png', '.jpg'), 'apps.PortfolioItem', apply=True)
+        self.assertEqual((status, url), ('ok', self.NEW))
+        self.assertLess(new, old)
+        self.assertEqual(max(Image.open(BytesIO(up.call_args[0][0])).size), 1200)
+
+    def test_admin_action_replaces_url_and_clears_home_cache(self):
+        from django.contrib.admin.sites import site
+        from django.contrib.auth import get_user_model
+        from django.test import RequestFactory
+        from apps import public_cache
+        from apps.site_content import PortfolioItem
+
+        item = PortfolioItem.objects.create(title='Shop', image=self.URL.replace('.png', '.jpg'))
+        static = PortfolioItem.objects.get(live_url__icontains='wemasatanzania.org')   # picha ya /static/
+        request = RequestFactory().post('/')
+        request.user = get_user_model().objects.create_superuser('a', 'a@x.tz', 'p')
+        admin = site._registry[PortfolioItem]
+        with mock.patch('requests.get', side_effect=self._get), \
+             mock.patch.object(storage, 'is_configured', return_value=True), \
+             mock.patch.object(storage, 'upload_bytes', return_value={'success': True, 'url': self.NEW}), \
+             mock.patch.object(admin, 'message_user'):
+            before = public_cache._version()
+            admin.optimize_images(request, PortfolioItem.objects.filter(pk__in=[item.pk, static.pk]))
+        item.refresh_from_db()
+        static.refresh_from_db()
+        self.assertEqual(item.image, self.NEW)
+        self.assertIn('/static/', static.image)
+        self.assertNotEqual(public_cache._version(), before)        # ukurasa wa mwanzo utajengwa upya
+
+
 def BytesIO_text():
     from io import StringIO
     return StringIO()

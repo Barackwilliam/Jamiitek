@@ -15,7 +15,7 @@
 :root{
   /* Mwanga — nyeupe yenye bluu iliyofifia sana (inaendana na navy ya chapa) */
   --bg:#E6EFFB; --paper:#D9E5F6; --paper-2:#D1E0F5; --card:#FFFFFF;
-  --ink:#0B1730; --ink-2:#34405A; --muted:#66728A; --line:#CCD8EB; --line-2:#DAE4F2;
+  --ink:#0B1730; --ink-2:#34405A; --muted:#5A667E; --line:#CCD8EB; --line-2:#DAE4F2;
   /* Navy ya chapa — kwa sehemu chache za giza (domain, footer, Kilimanjaro) */
   --navy:#0A2245; --navy-2:#123563; --navy-3:#1B4C8C; --navy-d:#0B1A36;
   --gold:#F5A623; --amber:#FFC456; --sun:#FF7A3D; --cyan:#22B8E0; --wa:#25D366; --violet:#7C5CFF; --green:#16A34A;
@@ -280,3 +280,5 @@ button{cursor:pointer;border:0;background:none}
   .k-birds,.tz-pkt{display:none}
   html{scroll-behavior:auto}
 }
+/* Maandishi ya visoma-skrini pekee (mf. "Learn more about …") */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}

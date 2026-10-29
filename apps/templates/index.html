@@ -50,6 +50,7 @@
 .devs__shine{position:absolute;inset:0;pointer-events:none;mix-blend-mode:soft-light;
   background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.95) 48%,transparent 60%) no-repeat;background-size:250% 100%;background-position:150% 0;
   -webkit-mask:var(--m) center/100% 100% no-repeat;mask:var(--m) center/100% 100% no-repeat;animation:shine 6s ease-in-out 2.4s infinite}
+/* Mask ni umbo tu: 844w inatosha, na ndiyo <img> inayopakuliwa na simu nyingi — si 1266w ya ziada */
 @keyframes shine{0%{background-position:150% 0}35%,100%{background-position:-60% 0}}
 @media (prefers-reduced-motion:reduce){.devs__img,.devs__glow,.devs__floor{animation:none;opacity:1;transform:none}.devs__shine{display:none}}
 .devs .f-bot{left:-5%;top:-9%;width:min(240px,40%);padding:12px;animation-delay:2.9s,3.8s}
@@ -272,10 +273,10 @@
       <span class="devs__floor" aria-hidden="true"></span>
       <div class="devs__img">
         <img src="{% static 'images/hero-devices.webp' %}"
-             srcset="{% static 'images/hero-devices-800.webp' %} 844w, {% static 'images/hero-devices.webp' %} 1266w"
+             srcset="{% static 'images/hero-devices-640.webp' %} 640w, {% static 'images/hero-devices-800.webp' %} 844w, {% static 'images/hero-devices.webp' %} 1266w"
              sizes="(min-width:1060px) 760px, 94vw" width="1266" height="849" fetchpriority="high" decoding="async"
              alt="JamiiTek websites on a desktop, laptop, tablet and phone">
-        <span class="devs__shine" aria-hidden="true" style="--m:url('{% static 'images/hero-devices.webp' %}')"></span>
+        <span class="devs__shine" aria-hidden="true" style="--m:url('{% static 'images/hero-devices-800.webp' %}')"></span>
       </div>
       <div class="float f-bot" style="animation-delay:2.9s,3.8s">
         <div class="who"><i><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2z"/></svg></i><span>JamiiBot<small>● online · replies in 2s</small></span></div>
@@ -361,7 +362,7 @@
         {% if forloop.first %}{% if sv.art == 'code' %}{% include 'site/_web_build.html' %}{% else %}<div class="svc__art" aria-hidden="true">{% include 'site/_svc_art.html' with svc=sv %}</div>{% endif %}{% endif %}
         <h3>{{ sv.service_type }}</h3>
         <p>{% if sv.summary %}{{ sv.summary }}{% else %}{{ sv.description|striptags|truncatewords:28 }}{% endif %}</p>
-        <a class="svc__go" href="{{ sv.home_url }}"{% if sv.home_url|slice:":4" == "http" %} target="_blank" rel="noopener"{% endif %}>{{ sv.link_label|default:"Learn more" }}
+        <a class="svc__go" href="{{ sv.home_url }}"{% if sv.home_url|slice:":4" == "http" %} target="_blank" rel="noopener"{% endif %}>{{ sv.link_label|default:"Learn more" }}<span class="sr-only"> about {{ sv.service_type }}</span>
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 11h12.2l-4.6-4.6L13 5l7 7-7 7-1.4-1.4 4.6-4.6H4z"/></svg></a>
       </article>
       {% endfor %}

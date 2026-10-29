@@ -198,8 +198,11 @@ OPTIMIZE_QUALITY = 82
 _OPTIMIZABLE = {'jpg', 'png', 'webp'}
 
 
-def optimize_image(data, ext):
-    """Inarudisha (data, ext). Haitupi kosa — ikishindwa, inarudisha ya asili."""
+def optimize_image(data, ext, max_side=OPTIMIZE_MAX_SIDE):
+    """Inarudisha (data, ext). Haitupi kosa — ikishindwa, inarudisha ya asili.
+
+    max_side: upande mrefu zaidi (px). Kadi ndogo (portfolio, testimonials) zinahitaji chini ya 2000.
+    """
     if ext not in _OPTIMIZABLE or not data:
         return data, ext
     try:
@@ -212,8 +215,8 @@ def optimize_image(data, ext):
         img = ImageOps.exif_transpose(img)
         if img.mode not in ('RGB', 'RGBA'):
             img = img.convert('RGBA' if 'A' in img.getbands() or img.mode == 'P' else 'RGB')
-        if max(img.size) > OPTIMIZE_MAX_SIDE:
-            img.thumbnail((OPTIMIZE_MAX_SIDE, OPTIMIZE_MAX_SIDE), Image.LANCZOS)
+        if max(img.size) > max_side:
+            img.thumbnail((max_side, max_side), Image.LANCZOS)
 
         out = BytesIO()
         # Logo/picha zenye uwazi: ubora juu kidogo ili kingo zibaki safi
