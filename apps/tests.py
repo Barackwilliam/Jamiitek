@@ -591,6 +591,19 @@ class OneAccountTest(NoPingMixin, TestCase):
         self.assertEqual(c.email, 'neema@example.com')
         self.assertEqual(self.client.get('/portal/').status_code, 200)
 
+    def test_portal_bot_promo_shows_the_real_plan_prices(self):
+        # Bei za JamiiBot kwenye dashboard ya portal zinatoka database, si namba zilizoandikwa kwenye template
+        from apps.chatbot.models import SubscriptionPlan
+        SubscriptionPlan.objects.all().delete()
+        for i, (name, price) in enumerate((('Starter', 5000), ('Business', 10000), ('Enterprise', 15000))):
+            SubscriptionPlan.objects.create(name=name, slug=name.lower(), price_tzs=price, msg_limit=0, sort_order=i)
+        self.client.force_login(self.user)
+        html = self.client.get('/portal/').content.decode()
+        for price in ('5,000', '10,000', '15,000'):
+            self.assertIn(f'<div class="pplan-price">{price}</div>', html)
+        for old in ('15K', '30K', '60K'):
+            self.assertNotIn(f'>{old}<', html)
+
     def test_portal_login_accepts_email_and_blocks_external_next(self):
         r = self.client.post('/portal/login/', {'username': 'NEEMA@example.com', 'password': 'Kilimo2026!',
                                                 'next': '//evil.example/x'})

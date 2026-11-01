@@ -290,7 +290,18 @@ def portal_dashboard(request):
     except Exception:
         pass
 
+    # Bei za JamiiBot zinatoka database (Admin -> Subscription plans), kama kwenye /bot/ na Billing —
+    # kamwe zisiandikwe ndani ya template, zisije zikatofautiana na bei halisi.
+    bot_plans = []
+    if not bot_client:
+        try:
+            from apps.chatbot.models import SubscriptionPlan
+            bot_plans = list(SubscriptionPlan.objects.filter(is_active=True).order_by('sort_order', 'price_tzs'))
+        except Exception:
+            pass
+
     return render(request, 'portal/dashboard.html', {
+        'bot_plans':     bot_plans,
         'title':         'My Dashboard',
         'client':        client,
         'websites':      websites,
