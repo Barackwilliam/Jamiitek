@@ -1,4 +1,5 @@
 {% extends 'portal/base.html' %}
+{% load humanize %}
 {% block title %}Dashboard{% endblock %}
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -676,11 +677,14 @@ setTimeout(()=>{
       </div>
 
       <div style="margin-bottom:20px">
+        {# Bei kutoka database (SubscriptionPlan) — sawa na /bot/ na ukurasa wa Billing #}
+        {% if bot_plans %}
         <div class="promo-plans">
-          <div class="pplan"><div class="pplan-name">Starter</div><div class="pplan-price">15K</div><div class="pplan-unit">TZS/MONTH</div></div>
-          <div class="pplan popular"><div class="pplan-name">Business</div><div class="pplan-price">30K</div><div class="pplan-unit">TZS/MONTH</div></div>
-          <div class="pplan"><div class="pplan-name">Enterprise</div><div class="pplan-price">60K</div><div class="pplan-unit">TZS/MONTH</div></div>
+          {% for plan in bot_plans %}
+          <div class="pplan{% if forloop.counter == 2 %} popular{% endif %}"><div class="pplan-name">{{ plan.name }}</div><div class="pplan-price">{{ plan.price_tzs|intcomma }}</div><div class="pplan-unit">TZS/MONTH</div></div>
+          {% endfor %}
         </div>
+        {% endif %}
         <div style="font-size:12px;color:rgba(37,211,102,.6);display:flex;align-items:center;gap:6px;font-family:monospace">
           <span style="width:5px;height:5px;border-radius:50%;background:#25d366;animation:botPulse 2s infinite"></span>
           7-day free trial · No payment required to start
