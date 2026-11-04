@@ -145,14 +145,17 @@ class WebHandler:
         return {'success': ok, 'message_id': 'owner_notify'}
 
     def _email_owner(self, message):
+        # Taarifa hii ni ya mwenye bot (mteja wa JamiiTek). Awali, mteja asipokuwa na email, ilitumwa kwa
+        # EMAIL_HOST_USER — yaani JamiiTek ilipata taarifa za wateja wa biashara za watu wengine.
         to = ''
         try:
-            to = (self.bot.client.email or '').strip()
+            client = self.bot.client
+            to = (client.email or '').strip() or (getattr(client.user, 'email', '') or '').strip()
         except Exception:
             to = ''
         if not to:
-            to = (getattr(settings, 'EMAIL_HOST_USER', '') or '').strip()
-        if not to:
+            logger.warning('[%s] mwenye bot hana email — taarifa ya tovuti imetumwa WhatsApp tu',
+                           self.bot.session_name)
             return False
 
         from django.core.mail import send_mail

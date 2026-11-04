@@ -331,17 +331,32 @@ def newsletter_subscribe(request):
     except ValidationError:
         return reply('invalid', 'Please enter a valid email address.', 400)
 
+    # Aliyejiandikisha anahifadhiwa (Admin -> Newsletter subscribers) na anapata barua yeye mwenyewe.
+    # Awali barua pekee iliyotumwa ilikuwa "New newsletter subscriber" kwenda kwa mmiliki.
+    from .models import NewsletterSubscriber
     try:
-        send_mail(
-            subject='New newsletter subscriber',
-            message=f'{email} subscribed to the JamiiTek newsletter from {back}.',
-            from_email='info@jamiitek.com',
-            recipient_list=['info@jamiitek.com'],
-            fail_silently=False,
-        )
+        sub, created = NewsletterSubscriber.objects.get_or_create(
+            email=email.lower(), defaults={'source': back[:200]})
+        if not created and not sub.is_active:
+            sub.is_active, created = True, True
+            sub.save(update_fields=['is_active'])
     except Exception:
-        logger.exception('Newsletter: kutuma taarifa kumeshindwa')
+        logger.exception('Newsletter: kuhifadhi kumeshindwa')
         return reply('error', 'Something went wrong. Please try again or WhatsApp us.', 502)
+    if created:
+        try:
+            send_mail(
+                subject="You're subscribed to JamiiTek",
+                message=("Hi,\n\nThank you for subscribing to JamiiTek updates. "
+                         "You will receive our news and offers at this address.\n\n"
+                         "If you did not sign up, simply reply to this email and we will remove you.\n\n"
+                         "— JamiiTek Team\nhttps://www.jamiitek.com"),
+                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'JamiiTek <info@jamiitek.com>'),
+                recipient_list=[sub.email],
+                fail_silently=True,
+            )
+        except Exception:
+            logger.exception('Newsletter: barua ya kukaribisha haikutumwa')
     return reply('ok', "You're subscribed. Asante!")
 
 

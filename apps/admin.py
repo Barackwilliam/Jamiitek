@@ -1087,3 +1087,13 @@ class StaffTwoFactorAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+
+from .models import NewsletterSubscriber  # noqa: E402
+
+
+@admin.register(NewsletterSubscriber)
+class NewsletterSubscriberAdmin(admin.ModelAdmin):
+    list_display = ('email', 'source', 'is_active', 'created_at')
+    list_filter = ('is_active',)
+    search_fields = ('email',)
