@@ -147,14 +147,15 @@ def fulfill(tx):
             logger.exception('build_request: notify imeshindwa')
         if br.email:
             try:
-                from django.core.mail import send_mail
-                send_mail(
-                    'We received your payment — we are building your website',
-                    f'Hello {br.name},\n\nThank you! We received TSh {br.amount:,} for your website '
-                    f'({br.template_name}).\n\nOur team will call you on {br.phone} within one working day '
-                    f'to start. You can check your request here:\nhttps://www.jamiitek.com/build/{br.token}/\n\n'
-                    f'Thank you,\nJamiiTek',
-                    settings.DEFAULT_FROM_EMAIL, [br.email])
+                from apps.utils.customer_email import send_customer_email
+                send_customer_email(
+                    br.email, 'We received your payment — we are building your website',
+                    f'Hello {br.name},\n\nThank you! We received your payment for your website.\n\n'
+                    f'Our team will call you on {br.phone} within one working day to start.',
+                    rows=[('Amount', f'TSh {br.amount:,}'), ('Design', br.template_name)],
+                    alert={'kind': 'success', 'title': 'Payment received', 'text': 'Your website is now in our queue.'},
+                    button=('Check your request', f'https://www.jamiitek.com/build/{br.token}/'),
+                    category='payment', fail_silently=False)
             except Exception:
                 logger.exception('build_request: email imeshindwa')
     transaction.on_commit(_tell)

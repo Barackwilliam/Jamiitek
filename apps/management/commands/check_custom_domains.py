@@ -43,9 +43,25 @@ class Command(BaseCommand):
 
 
 def _notify_live(site):
-    """Mjulishe mmiliki domain yake imekuwa live — habari njema inastahili taarifa."""
+    """Mjulishe mteja (mwenye website) kwamba domain yake imekuwa live — habari njema inastahili taarifa.
+
+    Awali taarifa hii ilienda kwa JamiiTek peke yake (notify), na mteja hakujua. Sasa anapata email yeye
+    mwenyewe; JamiiTek inaendelea kupata taarifa fupi kama kumbukumbu.
+    """
+    owner = getattr(site, 'owner', None)
+    to = (getattr(owner, 'email', '') or '').strip()
+    if to:
+        from apps.utils.customer_email import send_customer_email
+        name = (getattr(owner, 'first_name', '') or getattr(owner, 'username', '') or '').strip()
+        send_customer_email(
+            to, f'🌐 {site.custom_domain} is now live',
+            (f'Hi {name},' if name else 'Hello,')
+            + f'\n\nGood news: your website {site.site_name} now opens at your own domain, {site.custom_domain}.',
+            button=('Open your website', f'https://{site.custom_domain}'), category='domain',
+        )
     try:
         from apps.notify import notify
-        notify(f'🌐 {site.custom_domain} sasa iko LIVE — website ya {site.site_name}.')
+        notify(f'🌐 {site.custom_domain} sasa iko LIVE — website ya {site.site_name}'
+               + (f' (mteja amejulishwa: {to}).' if to else ' (mteja hana email — mjulishe mwenyewe).'))
     except Exception:
         pass

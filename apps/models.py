@@ -2142,3 +2142,20 @@ class StaticSiteRepo(models.Model):
     @property
     def token(self):
         return (self.credentials or {}).get('token', '')
+
+
+class NewsletterSubscriber(models.Model):
+    """Aliyejiandikisha kwenye newsletter (fomu ya footer). Anapokea barua ya kukaribishwa yeye mwenyewe;
+    orodha inaonekana Admin -> Newsletter subscribers. Awali email zake hazikuhifadhiwa popote, na
+    barua pekee iliyotumwa ilienda kwa mmiliki."""
+    email = models.EmailField(unique=True)
+    source = models.CharField(max_length=200, blank=True, help_text="Ukurasa alioandikiana nao")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Newsletter subscriber'
+
+    def __str__(self):
+        return self.email

@@ -1,0 +1,11 @@
+{% extends 'emails/base_email.html' %}
+{% block content %}
+{% if greeting %}<div class="greeting">{{ greeting }}</div>{% endif %}
+{% if alert %}<div class="alert alert-{{ alert.kind|default:'info' }}">{% if alert.title %}<strong>{{ alert.title }}</strong>{% endif %}{{ alert.text }}</div>{% endif %}
+{% for p in paragraphs %}<p>{{ p|urlize|linebreaksbr }}</p>
+{% endfor %}
+{% if rows %}<div class="info-box">{% for label, value in rows %}
+  <div class="info-row"><span class="info-label">{{ label }}</span><span class="info-value">{{ value }}</span></div>{% endfor %}
+</div>{% endif %}
+{% if button %}<div class="btn-wrap"><a class="btn" href="{{ button.url }}">{{ button.label }}</a></div>{% endif %}
+{% endblock %}

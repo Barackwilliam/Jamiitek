@@ -427,20 +427,13 @@ def send_bulk_expiry_warnings():
             plan.save(update_fields=['status', 'suspension_message'])
             # Send suspension notification
             try:
-                from django.core.mail import send_mail
-                from django.conf import settings as djsettings
-                send_mail(
-                    subject=f'🔒 Email Hosting Suspended — {plan.email_domain}',
-                    message=(
-                        f'Dear {plan.client.name},\n\n'
-                        f'Your email hosting for {plan.email_domain} has been suspended '
-                        f'due to non-payment.\n\n'
-                        f'Please contact JamiiTek to restore your service.\n\n'
-                        f'— JamiiTek Team'
-                    ),
-                    from_email=getattr(djsettings, 'DEFAULT_FROM_EMAIL', 'noreply@jamiitek.co.tz'),
-                    recipient_list=[plan.client.email],
-                    fail_silently=True,
+                from apps.utils.customer_email import send_customer_email
+                send_customer_email(
+                    plan.client.email, f'🔒 Email Hosting Suspended — {plan.email_domain}',
+                    f'Dear {plan.client.name},\n\nYour email hosting for {plan.email_domain} has been '
+                    'suspended due to non-payment.\n\nPlease contact JamiiTek to restore your service.',
+                    alert={'kind': 'danger', 'title': 'Suspended', 'text': f'{plan.email_domain} email is paused.'},
+                    button=('Open your portal', PORTAL_URL), category='suspension',
                 )
             except Exception as e:
                 logger.error(f"[EmailSuspend] {plan.email_domain} — {e}")
@@ -453,20 +446,16 @@ def send_bulk_expiry_warnings():
             if raw_days in [plan.warning_days_before, 7, 3, 1]:
                 # Basic expiry warning email for email hosting
                 try:
-                    from django.core.mail import send_mail
-                    from django.conf import settings as djsettings
-                    send_mail(
-                        subject=f'⚠ Email Hosting Expiry — {plan.email_domain} expires in {raw_days} days',
-                        message=(
-                            f'Dear {plan.client.name},\n\n'
-                            f'Your email hosting for {plan.email_domain} expires in {raw_days} day(s) '
-                            f'on {plan.end_date.strftime("%d %B %Y")}.\n\n'
-                            f'Please make a payment to avoid service interruption.\n\n'
-                            f'— JamiiTek Team'
-                        ),
-                        from_email=getattr(djsettings, 'DEFAULT_FROM_EMAIL', 'noreply@jamiitek.co.tz'),
-                        recipient_list=[plan.client.email],
-                        fail_silently=True,
+                    from apps.utils.customer_email import send_customer_email
+                    send_customer_email(
+                        plan.client.email,
+                        f'⚠ Email Hosting Expiry — {plan.email_domain} expires in {raw_days} '
+                        f'day{"" if raw_days == 1 else "s"}',
+                        f'Dear {plan.client.name},\n\nYour email hosting for {plan.email_domain} expires soon. '
+                        'Please make a payment to avoid service interruption.',
+                        rows=[('Domain', plan.email_domain), ('Expires on', plan.end_date.strftime('%d %B %Y')),
+                              ('Days left', raw_days)],
+                        button=('Renew now', PORTAL_URL), category='expiry_warning',
                     )
                     sent += 1
                 except Exception as e:

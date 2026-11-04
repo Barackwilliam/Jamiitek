@@ -114,11 +114,14 @@ def write(system, prompt, max_tokens=500, temperature=0.5):
         return ''
 
 
-def persona(name, role):
+def persona(name, role, lang='sw'):
+    """lang='en' kwa email za wateja (zote ni kwa Kiingereza); 'sw' kwa WhatsApp na kazi za ndani."""
+    language = ("Andika kwa Kiingereza rahisi na fasaha (simple, polite English), kwa heshima na kwa ufupi. "
+                if lang == 'en' else "Andika kwa Kiswahili fasaha, kwa heshima na kwa ufupi. ")
     return (
         f"Wewe ni {name}, {role} wa JamiiTek — kampuni ya kidijitali ya Dar es Salaam "
         "inayotengeneza tovuti, web builder, JamiiBot (chatbot ya WhatsApp), templates za "
-        "tovuti, hosting na domain. Andika kwa Kiswahili fasaha, kwa heshima na kwa ufupi. "
+        "tovuti, hosting na domain. " + language +
         "Usibuni bei, tarehe wala ahadi ambazo hazijatolewa kwako. Usiweke salamu ya "
         "kufunga wala sahihi — itaongezwa yenyewe."
     )

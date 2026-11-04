@@ -109,6 +109,8 @@ class Command(BaseCommand):
 
         if down:
             notify.notify(self._down_message(down))
+            for bot, problem, mins in down:      # mwenye bot ajue pia — awali taarifa ilikuja JamiiTek peke yake
+                _email_client_down(bot)
         if recovered:
             notify.notify(self._recovered_message(recovered))
 
@@ -180,3 +182,27 @@ def _sessions_url():
     from django.conf import settings
     base = (getattr(settings, 'SITE_URL', '') or 'https://www.jamiitek.com').rstrip('/')
     return f"{base}/manage/chatbot/sessions/"
+
+
+def _email_client_down(bot):
+    """Email kwa mwenye bot (mteja) kwamba bot yake imekatika kutoka WhatsApp, na jinsi ya kuirudisha.
+    Mara moja kwa kila tukio (alerted_at). Hakuna email ya mteja -> hakuna kinachotumwa (si kwa JamiiTek)."""
+    client = getattr(bot, 'client', None)
+    to = (getattr(client, 'email', '') or '').strip()
+    if not to and getattr(client, 'user', None):
+        to = (client.user.email or '').strip()
+    if not to:
+        return False
+    from django.conf import settings
+    from apps.utils.customer_email import send_customer_email
+    base = (getattr(settings, 'SITE_URL', '') or 'https://www.jamiitek.com').rstrip('/')
+    name = (getattr(client, 'full_name', '') or '').split(' ')[0]
+    return send_customer_email(
+        to, f'⚠️ {bot.bot_name} is not connected to WhatsApp',
+        (f'Hi {name},' if name else 'Hello,')
+        + f'\n\nYour JamiiBot "{bot.bot_name}" has lost its connection to WhatsApp, so it is not replying to '
+        + 'your customers right now.\n\nTo reconnect, open the Connect page and scan the QR code with the '
+        + 'WhatsApp of your business.',
+        alert={'kind': 'warning', 'title': 'Action needed', 'text': 'Your customers are not getting replies.'},
+        button=('Reconnect WhatsApp', f'{base}/chatbot/connect/'), category='bot_down',
+    )

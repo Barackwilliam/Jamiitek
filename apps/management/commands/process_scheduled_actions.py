@@ -7,7 +7,6 @@ Au kwa dakika 5: */5 * * * * python manage.py process_scheduled_actions
 """
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from django.core.mail import send_mail
 from django.conf import settings
 from apps.models import ScheduledAction, ManagedWebsite, WebsiteFeature, ClientNotification
 import logging
@@ -83,15 +82,9 @@ class Command(BaseCommand):
                 self._send_email(
                     website,
                     'restored',
-                    f'Website Yako Imerudishwa - {website.name}',
-                    f"""Habari {website.client.name},
-
-Tunafurahi kukuarifu kwamba website yako ({website.name}) sasa inafanya kazi tena.
-
-URL: {website.url}
-
-Asante,
-JamiiTek Team"""
+                    f'Your website is back online — {website.name}',
+                    f"Hello {website.client.name},\n\nGood news: your website {website.name} is working again.",
+                    button=('Open your website', website.url) if website.url else None,
                 )
 
         elif action.action_type == 'maintenance':
@@ -105,7 +98,7 @@ JamiiTek Team"""
                 self._send_email(
                     website,
                     'custom',
-                    data.get('email_subject', 'Taarifa kutoka JamiiTek'),
+                    data.get('email_subject', 'A message from JamiiTek'),
                     data.get('email_body', '')
                 )
 
@@ -187,31 +180,21 @@ JamiiTek Team"""
                     self._send_email(
                         website,
                         'payment_reminder',
-                        f'Kumbusho: Hosting Inaisha Siku {days_left} - {website.name}',
-                        f"""Habari {website.client.name},
-
-Hosting ya website yako ({website.name}) itaisha tarehe {website.hosting_end_date.strftime('%d/%m/%Y')} ({days_left} siku zilizobaki).
-
-Tafadhali lipa ankara yako mapema ili kuepuka kusimamishwa kwa huduma.
-
-Wasiliana nasi:
-- Email: {getattr(settings, 'SUPPORT_EMAIL', 'info@jamiitek.com')}
-- Simu: {getattr(settings, 'SUPPORT_PHONE', '+255 000 000 000')}
-
-Asante,
-JamiiTek Team"""
+                        f'Reminder: hosting for {website.name} ends in {days_left} day{"" if days_left == 1 else "s"}',
+                        f"Hello {website.client.name},\n\nThe hosting for your website {website.name} ends soon. "
+                        "Please pay your invoice early to avoid the service being suspended.",
+                        rows=[('Website', website.name),
+                              ('Hosting ends', website.hosting_end_date.strftime('%d %B %Y')),
+                              ('Days left', days_left)],
+                        button=('Open your portal', getattr(settings, 'PORTAL_BASE_URL', 'https://jamiitek.com/portal/')),
                     )
                     self.stdout.write(f'  📧 Onyo limetumwa: {website.name} ({days_left} siku)')
 
-    def _send_email(self, website, notification_type, subject, message):
+    def _send_email(self, website, notification_type, subject, message, button=None, rows=None):
         try:
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@jamiitek.com'),
-                recipient_list=[website.client.email],
-                fail_silently=True,
-            )
+            from apps.utils.customer_email import send_customer_email
+            send_customer_email(website.client.email, subject, message, button=button, rows=rows,
+                                category=notification_type)
             ClientNotification.objects.create(
                 website=website,
                 client=website.client,

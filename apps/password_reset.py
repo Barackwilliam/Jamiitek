@@ -159,15 +159,16 @@ def _notify_changed(user, request):
     try:
         from django.utils import timezone
         when = timezone.localtime().strftime('%d %b %Y, %H:%M')
-        send_mail(
-            'Your JamiiTek password was changed',
-            (f'Hello {user.get_full_name() or user.get_username()},\n\n'
-             f'The password for your JamiiTek account ({user.get_username()}) was changed on {when} (EAT).\n\n'
-             'If this was you, no action is needed.\n'
-             'If it was NOT you, reset your password immediately at '
-             f'{getattr(settings, "SITE_BASE_URL", "https://www.jamiitek.com")}/account/password-reset/ '
-             'and contact us at info@jamiitek.com.\n\n— JamiiTek Security'),
-            None, [user.email], fail_silently=True,
+        from apps.utils.customer_email import send_customer_email
+        reset = f'{getattr(settings, "SITE_BASE_URL", "https://www.jamiitek.com")}/account/password-reset/'
+        send_customer_email(
+            user.email, 'Your JamiiTek password was changed',
+            f'Hello {user.get_full_name() or user.get_username()},\n\n'
+            f'The password for your JamiiTek account ({user.get_username()}) was changed on {when} (EAT).\n\n'
+            'If this was you, no action is needed. If it was NOT you, reset your password now and contact us at '
+            'info@jamiitek.com.',
+            alert={'kind': 'info', 'title': 'Security notice', 'text': 'Your password was just changed.'},
+            button=('Reset my password', reset), category='security',
         )
     except Exception:
         log.exception('Password changed notice haikutumwa')

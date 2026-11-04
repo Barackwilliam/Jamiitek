@@ -662,10 +662,9 @@ def _send_notification(website, notification_type, subject, message, sent_by=Non
 
     if website.client.email:
         try:
-            sent = send_mail(
-                subject=subject, message=message,
-                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@jamiitek.com'),
-                recipient_list=[website.client.email], fail_silently=True)
+            from apps.utils.customer_email import send_customer_email
+            sent = send_customer_email(website.client.email, subject, message,
+                                       category=notification_type or 'notice')
             if sent:
                 n.email_sent = True
                 n.save(update_fields=['email_sent'])
@@ -773,18 +772,14 @@ def _send_domain_notification(domain, renewed_until):
     if not client.email:
         return
     try:
-        send_mail(
-            subject=f'Domain Renewal Confirmed — {domain.domain_name}',
-            message=(
-                f'Dear {client.name},\n\n'
-                f'Your domain {domain.domain_name} has been renewed.\n\n'
-                f'Valid Until: {renewed_until}\n'
-                f'Registrar: {domain.get_registrar_display()}\n\n'
-                f'JamiiTek Team\ninfo@jamiitek.com'
-            ),
-            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@jamiitek.com'),
-            recipient_list=[client.email],
-            fail_silently=True,
+        from apps.utils.customer_email import send_customer_email
+        send_customer_email(
+            client.email, f'Domain Renewal Confirmed — {domain.domain_name}',
+            f'Dear {client.name},\n\nYour domain {domain.domain_name} has been renewed. Thank you!',
+            rows=[('Domain', domain.domain_name), ('Valid until', renewed_until),
+                  ('Registrar', domain.get_registrar_display())],
+            alert={'kind': 'success', 'title': 'Renewed', 'text': 'Your domain stays active.'},
+            category='renewal',
         )
     except Exception:
         pass
@@ -883,20 +878,13 @@ def email_hosting_payment(request, pk):
         plan.save()
     if request.POST.get('notify_client') and plan.client.email:
         try:
-            send_mail(
-                subject=f'Email Hosting Payment Received — {plan.email_domain}',
-                message=(
-                    f'Dear {plan.client.name},\n\n'
-                    f'We have received your email hosting payment.\n\n'
-                    f'Plan: {plan.plan_name}\n'
-                    f'Domain: {plan.email_domain}\n'
-                    f'Amount: TZS {amount}\n'
-                    f'Valid Until: {plan.end_date}\n\n'
-                    f'JamiiTek Team'
-                ),
-                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@jamiitek.com'),
-                recipient_list=[plan.client.email],
-                fail_silently=True,
+            from apps.utils.customer_email import send_customer_email
+            send_customer_email(
+                plan.client.email, f'Email Hosting Payment Received — {plan.email_domain}',
+                f'Dear {plan.client.name},\n\nWe have received your email hosting payment. Thank you!',
+                rows=[('Plan', plan.plan_name), ('Domain', plan.email_domain), ('Amount', f'TZS {amount}'),
+                      ('Valid until', plan.end_date)],
+                category='payment',
             )
         except Exception:
             pass
@@ -912,11 +900,15 @@ def email_hosting_suspend(request, pk):
     plan.suspension_message = request.POST.get('suspension_message', plan.suspension_message)
     plan.save()
     if request.POST.get('notify_client') and plan.client.email:
-        send_mail(
-            subject=f'Email Hosting Suspended — {plan.email_domain}',
-            message=f'Dear {plan.client.name},\n\nYour email hosting for {plan.email_domain} has been suspended.\n\n{plan.suspension_message}\n\nJamiiTek Team',
-            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@jamiitek.com'),
-            recipient_list=[plan.client.email], fail_silently=True)
+        from apps.utils.customer_email import send_customer_email
+        send_customer_email(
+            plan.client.email, f'Email Hosting Suspended — {plan.email_domain}',
+            f'Dear {plan.client.name},\n\nYour email hosting for {plan.email_domain} has been suspended.'
+            + (f'\n\n{plan.suspension_message}' if plan.suspension_message else '')
+            + '\n\nContact us to restore your service.',
+            alert={'kind': 'danger', 'title': 'Suspended', 'text': f'{plan.email_domain} email is paused.'},
+            category='suspension',
+        )
     messages.success(request, 'Email plan suspended.')
     return redirect('email_hosting_detail', pk=plan.pk)
 
@@ -928,11 +920,14 @@ def email_hosting_restore(request, pk):
     plan.status = 'active'
     plan.save()
     if request.POST.get('notify_client') and plan.client.email:
-        send_mail(
-            subject=f'Email Hosting Restored — {plan.email_domain}',
-            message=f'Dear {plan.client.name},\n\nYour email hosting for {plan.email_domain} has been restored.\n\nJamiiTek Team',
-            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@jamiitek.com'),
-            recipient_list=[plan.client.email], fail_silently=True)
+        from apps.utils.customer_email import send_customer_email
+        send_customer_email(
+            plan.client.email, f'Email Hosting Restored — {plan.email_domain}',
+            f'Dear {plan.client.name},\n\nYour email hosting for {plan.email_domain} has been restored and is '
+            'working again.',
+            alert={'kind': 'success', 'title': 'Restored', 'text': f'{plan.email_domain} email is active.'},
+            category='restored',
+        )
     messages.success(request, 'Email plan restored.')
     return redirect('email_hosting_detail', pk=plan.pk)
 

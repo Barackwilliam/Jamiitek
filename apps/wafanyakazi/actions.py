@@ -38,13 +38,10 @@ def wa_link(phone, text=''):
 
 
 def _email(kazi):
-    who = member(kazi.worker)
-    paragraphs = [p.strip() for p in kazi.draft.split('\n\n') if p.strip()]
-    html = render_to_string('emails/mfanyakazi.html', {
-        'subject': kazi.subject or kazi.title,
-        'paragraphs': paragraphs,
-        'worker': who,
-    })
+    # Template ileile ya email zote za wateja (salamu, link zinazobonyezeka, footer ya JamiiTek).
+    # Maandishi ni yale uliyoidhinisha, bila kubadilishwa.
+    from apps.utils.customer_email import render_customer_email
+    _, html = render_customer_email(kazi.subject or kazi.title, kazi.draft)
     msg = EmailMultiAlternatives(
         subject=kazi.subject or kazi.title,
         body=kazi.draft,

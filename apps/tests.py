@@ -364,12 +364,18 @@ class NewsletterTest(TestCase):
     "Please fill in all fields". Sasa ina njia yake."""
     url = '/newsletter/subscribe/'
 
-    def test_ajax_subscribe_sends_notice(self):
-        r = self.client.post(self.url, {'email': 'neema@biashara.co.tz'}, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+    def test_subscriber_is_saved_and_gets_the_welcome_email_not_the_owner(self):
+        from .models import NewsletterSubscriber
+        r = self.client.post(self.url, {'email': 'Neema@Biashara.co.tz'}, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
         self.assertEqual(r.status_code, 200)
         self.assertTrue(r.json()['ok'])
+        self.assertTrue(NewsletterSubscriber.objects.filter(email='neema@biashara.co.tz').exists())
         self.assertEqual(len(mail.outbox), 1)
-        self.assertIn('neema@biashara.co.tz', mail.outbox[0].body)
+        self.assertEqual(mail.outbox[0].to, ['neema@biashara.co.tz'])         # kwa aliyejiandikisha, si info@
+        self.assertIn('subscribed', mail.outbox[0].subject)
+        self.client.post(self.url, {'email': 'neema@biashara.co.tz'}, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertEqual(len(mail.outbox), 1)                                  # mara ya pili: hakuna barua nyingine
+        self.assertEqual(NewsletterSubscriber.objects.count(), 1)
 
     def test_invalid_email_rejected(self):
         r = self.client.post(self.url, {'email': 'si-email'}, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
@@ -1253,3 +1259,49 @@ class StaticSiteGuardTest(TestCase):
         self.assertIn('SERVER GUARD', page)
         self.assertIn('dukalajuma.co.tz/*', page)
         self.assertIn('RewriteRule ^ jamiitek-guard.php [L,QSA]', page)
+
+
+@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend', EMAIL_HOST_USER='info@jamiitek.com')
+class CustomerNotificationsGoToCustomersTest(TestCase):
+    """Taarifa za mteja zimfikie mteja — si JamiiTek (info@jamiitek.com)."""
+
+    def setUp(self):
+        from django.contrib.auth.models import User
+        from apps.chatbot.models import BotConfig, ChatbotClient
+        self.user = User.objects.create_user('mwenyebot', 'mwenye@biashara.co.tz')
+        self.cl = ChatbotClient.objects.create(user=self.user, full_name='Asha Mussa',
+                                               business_name='Asha Fashion', email='asha@biashara.co.tz')
+        self.bot = BotConfig.objects.create(client=self.cl, bot_name='AshaBot', business_name='Asha Fashion',
+                                            description='Nguo', status='active', is_active=True)
+
+    def test_web_chat_handoff_email_goes_to_the_bot_owner_never_to_jamiitek(self):
+        from apps.chatbot.webchat import WebHandler
+        self.assertTrue(WebHandler(self.bot, 'web_1')._email_owner('Mteja anahitaji binadamu'))
+        self.assertEqual(mail.outbox[-1].to, ['asha@biashara.co.tz'])
+        type(self.cl).objects.filter(pk=self.cl.pk).update(email='')
+        self.bot.refresh_from_db()
+        WebHandler(self.bot, 'web_2')._email_owner('Mteja anahitaji binadamu')
+        self.assertEqual(mail.outbox[-1].to, ['mwenye@biashara.co.tz'])        # email ya akaunti yake
+        type(self.user).objects.filter(pk=self.user.pk).update(email='')
+        self.bot.refresh_from_db()
+        n = len(mail.outbox)
+        self.assertFalse(WebHandler(self.bot, 'web_3')._email_owner('Mteja anahitaji binadamu'))
+        self.assertEqual(len(mail.outbox), n)                                   # hakuna email kwa info@
+
+    def test_bot_owner_is_told_when_the_bot_disconnects(self):
+        from apps.management.commands.check_bot_sessions import _email_client_down
+        self.assertTrue(_email_client_down(self.bot))
+        self.assertEqual(mail.outbox[-1].to, ['asha@biashara.co.tz'])
+        self.assertIn('/chatbot/connect/', mail.outbox[-1].body)
+
+    def test_website_owner_is_told_when_the_domain_goes_live(self):
+        from builder.models import ClientWebsite
+        from apps.management.commands.check_custom_domains import _notify_live
+        site = ClientWebsite.objects.create(owner=self.user, subdomain='ashafashion', site_name='Asha Fashion',
+                                            custom_domain='ashafashion.co.tz')
+        with mock.patch('apps.notify.notify') as owner_note:
+            _notify_live(site)
+        customer = [m for m in mail.outbox if m.to == ['mwenye@biashara.co.tz']]
+        self.assertEqual(len(customer), 1)
+        self.assertIn('https://ashafashion.co.tz', customer[0].body)
+        self.assertIn('mteja amejulishwa', owner_note.call_args.args[0])
