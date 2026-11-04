@@ -158,20 +158,50 @@ class WebHandler:
                            self.bot.session_name)
             return False
 
-        from django.core.mail import send_mail
-        body = _strip_md(message)
-        # Njia hii inatumiwa na taarifa mbili tofauti: mteja anahitaji
-        # binadamu, na bot imeacha kujibu. Kichwa kilikuwa cha kwanza tu.
+        from apps.utils.customer_email import send_customer_email
+        base = (getattr(settings, 'SITE_URL', '') or 'https://www.jamiitek.com').rstrip('/')
+        body = _english(_strip_md(message))
+        # Njia hii inatumiwa na taarifa mbili tofauti: mteja anahitaji binadamu, na bot imeacha kujibu.
         if 'imeacha kujibu' in (message or ''):
-            subject = f"[JamiiTek] {self.bot.bot_name} imeacha kujibu wateja — {self.bot.business_name}"
+            reason = next((en for sw, en in _PAUSE_EN if sw in (message or '')), 'its service has stopped')
+            subject = f"{self.bot.bot_name} has stopped replying to customers — {self.bot.business_name}"
+            text = (f"Hello,\n\nYour JamiiBot {self.bot.bot_name} has stopped replying to customers because "
+                    f"{reason}.\n\nCustomers are still writing to you. Reply to them yourself, or turn the bot "
+                    f"back on from your billing page.")
+            button = ('Turn the bot back on', f'{base}/chatbot/billing/')
         else:
-            subject = f"[JamiiTek] Mteja wa tovuti anahitaji binadamu — {self.bot.business_name}"
-        send_mail(
-            subject, body,
-            getattr(settings, 'DEFAULT_FROM_EMAIL', to), [to],
-            fail_silently=True,
-        )
+            subject = f"A website visitor wants to talk to you — {self.bot.business_name}"
+            text = (f"Hello,\n\nA visitor on your website chat asked to talk to a person, so "
+                    f"{self.bot.bot_name} has paused for them.\n\n{body}")
+            button = ('Open your conversations', f'{base}/chatbot/conversations/')
+        send_customer_email(to, subject, text, button=button, category='handoff')
         return True
+
+
+# Taarifa za mmiliki zimeandikwa kwa Kiswahili kwa ajili ya WhatsApp; email za wateja ni kwa Kiingereza.
+_PAUSE_EN = (
+    ('siku 7 za majaribio zimeisha', 'the 7-day free trial has ended'),
+    ('kifurushi chako kimeisha muda wake', 'your plan has ended'),
+    ('huduma imesimamishwa', 'the service has been suspended'),
+    ('jumbe za kifurushi chako za mwezi huu zimekwisha', "you have used all of this month's messages"),
+)
+_LINES_EN = (
+    ('🙋 Mteja anahitaji binadamu', '🙋 A customer wants to talk to a person'),
+    ('Mteja anahitaji binadamu', 'A customer wants to talk to a person'),
+    ('fungua chat kwenye WhatsApp ya biashara', 'open the chat in your business WhatsApp'),
+    ('Sababu: Ameomba', 'Reason: they asked'),
+    ('Sababu:', 'Reason:'),
+    ('Mazungumzo ya mwisho:', 'Latest messages:'),
+    ('Mteja:', 'Customer:'),
+    ('Bot imesimama kwa mteja huyu na haitajibu tena.', 'The bot has stopped replying to this customer.'),
+    ('Ukimaliza, andika:', 'When you are done, send:'),
+)
+
+
+def _english(text):
+    for sw, en in _LINES_EN:
+        text = text.replace(sw, en)
+    return text
 
 
 def _strip_md(text):

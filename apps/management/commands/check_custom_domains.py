@@ -51,20 +51,14 @@ def _notify_live(site):
     owner = getattr(site, 'owner', None)
     to = (getattr(owner, 'email', '') or '').strip()
     if to:
-        try:
-            from django.conf import settings
-            from django.core.mail import send_mail
-            name = (getattr(owner, 'first_name', '') or getattr(owner, 'username', '') or '').strip()
-            send_mail(
-                f'🌐 {site.custom_domain} is now live',
-                (f'Hi {name},\n\n' if name else 'Hi,\n\n')
-                + f'Good news: your website {site.site_name} now opens at https://{site.custom_domain}\n\n'
-                + '— JamiiTek Team',
-                getattr(settings, 'DEFAULT_FROM_EMAIL', 'JamiiTek <info@jamiitek.com>'), [to],
-                fail_silently=True,
-            )
-        except Exception:
-            pass
+        from apps.utils.customer_email import send_customer_email
+        name = (getattr(owner, 'first_name', '') or getattr(owner, 'username', '') or '').strip()
+        send_customer_email(
+            to, f'🌐 {site.custom_domain} is now live',
+            (f'Hi {name},' if name else 'Hello,')
+            + f'\n\nGood news: your website {site.site_name} now opens at your own domain, {site.custom_domain}.',
+            button=('Open your website', f'https://{site.custom_domain}'), category='domain',
+        )
     try:
         from apps.notify import notify
         notify(f'🌐 {site.custom_domain} sasa iko LIVE — website ya {site.site_name}'

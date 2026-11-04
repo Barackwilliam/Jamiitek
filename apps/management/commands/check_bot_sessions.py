@@ -193,21 +193,16 @@ def _email_client_down(bot):
         to = (client.user.email or '').strip()
     if not to:
         return False
-    try:
-        from django.conf import settings
-        from django.core.mail import send_mail
-        base = (getattr(settings, 'SITE_URL', '') or 'https://www.jamiitek.com').rstrip('/')
-        name = (getattr(client, 'full_name', '') or '').split(' ')[0]
-        send_mail(
-            f'⚠️ {bot.bot_name} is not connected to WhatsApp',
-            (f'Hi {name},\n\n' if name else 'Hi,\n\n')
-            + f'Your JamiiBot "{bot.bot_name}" has lost its connection to WhatsApp, so it is not replying '
-            + 'to your customers right now.\n\n'
-            + f'To reconnect, open {base}/chatbot/connect/ and scan the QR code with the WhatsApp of your business.\n\n'
-            + '— JamiiTek Team',
-            getattr(settings, 'DEFAULT_FROM_EMAIL', 'JamiiTek <info@jamiitek.com>'), [to],
-            fail_silently=True,
-        )
-        return True
-    except Exception:
-        return False
+    from django.conf import settings
+    from apps.utils.customer_email import send_customer_email
+    base = (getattr(settings, 'SITE_URL', '') or 'https://www.jamiitek.com').rstrip('/')
+    name = (getattr(client, 'full_name', '') or '').split(' ')[0]
+    return send_customer_email(
+        to, f'⚠️ {bot.bot_name} is not connected to WhatsApp',
+        (f'Hi {name},' if name else 'Hello,')
+        + f'\n\nYour JamiiBot "{bot.bot_name}" has lost its connection to WhatsApp, so it is not replying to '
+        + 'your customers right now.\n\nTo reconnect, open the Connect page and scan the QR code with the '
+        + 'WhatsApp of your business.',
+        alert={'kind': 'warning', 'title': 'Action needed', 'text': 'Your customers are not getting replies.'},
+        button=('Reconnect WhatsApp', f'{base}/chatbot/connect/'), category='bot_down',
+    )

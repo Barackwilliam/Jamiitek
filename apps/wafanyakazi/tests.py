@@ -93,7 +93,10 @@ class DianaTests(Base):
         for inv in (a, b, c):
             self.assertIn(f'/invoice/{inv.token}/', kazi.draft)
             self.assertIn(inv.invoice_number, kazi.detail)
-        self.assertEqual(kazi.draft.count('Habari Asha Shop'), 1)
+        self.assertEqual(kazi.draft.count('Hello Asha Shop'), 1)            # email kwa mteja: Kiingereza
+        self.assertIn('Thank you,', kazi.draft)
+        self.assertNotIn('Habari', kazi.draft)
+        self.assertIn('Finance and office — JamiiTek', kazi.draft)
 
         # Moja ikilipwa: ukumbusho mpya wenye invoice 2, wa zamani unafungwa
         c.status = 'paid'

@@ -20,15 +20,17 @@ LEAD_DAYS = 21
 PER_RUN = 15
 
 
-def _write(facts, ask, fallback, max_tokens=320):
+def _write(facts, ask, fallback, max_tokens=320, lang='sw'):
     who = member(SLUG)
-    return ai.write(ai.persona(who['name'], who['role']), f'{facts}\n{ask}',
+    return ai.write(ai.persona(who['name'], who['role'], lang=lang), f'{facts}\n{ask}',
                     max_tokens=max_tokens) or fallback
 
 
-def _sign(body, link=''):
+def _sign(body, link='', lang='sw'):
+    """Email za wateja (lang='en') zinaishia kwa Kiingereza; WhatsApp inabaki Kiswahili."""
     tail = f'\n\n{link}' if link else ''
-    return f'{body}{tail}\n\nAsante,\n{signature(SLUG)}'
+    thanks = 'Thank you,' if lang == 'en' else 'Asante,'
+    return f'{body}{tail}\n\n{thanks}\n{signature(SLUG, lang)}'
 
 
 # ── Leads za /proposals/ ─────────────────────────────────────────
@@ -64,7 +66,16 @@ def _leads(now):
                            if k not in ('client_email', 'client_phone', 'client_name')
                            and isinstance(v, (str, int)) and str(v).strip())[:600]
 
-        def draft(name=name, kind=kind, wishes=wishes):
+        def draft(name=name, kind=kind, wishes=wishes, lang='en' if email else 'sw'):
+            if lang == 'en':                  # email kwa mteja: Kiingereza
+                body = _write(
+                    f"{name} alijaza fomu ya JamiiTek akiomba {kind}. Maelezo: {wishes or 'hakuna'}.",
+                    f"Andika ujumbe wa kumfuatilia (aya 2): mshukuru, onyesha umeelewa anachotaka, "
+                    f"na umwombe muda mfupi wa simu au mkutano ili kumpa proposal. Anza na 'Hello {name},'.",
+                    f"Hello {name},\n\nThank you for contacting JamiiTek about {kind}. We have read your "
+                    "details and would like to prepare a full proposal for you. Do you have time for a short "
+                    "call this week so we understand exactly what you need?", lang=lang)
+                return f'{kind} for {name} — JamiiTek', _sign(body, lang=lang)
             body = _write(
                 f"{name} alijaza fomu ya JamiiTek akiomba {kind}. Maelezo: {wishes or 'hakuna'}.",
                 f"Andika ujumbe wa kumfuatilia (aya 2): mshukuru, onyesha umeelewa anachotaka, "
@@ -111,11 +122,11 @@ def _contacts():
                 f"{c.full_name} ameandika kupitia fomu ya mawasiliano. Mada: {c.subject}. "
                 f"Ujumbe: {c.message[:800]}",
                 f"Andika jibu fupi la kwanza (aya 1-2): mshukuru, jibu kwa ufupi kama unaweza "
-                f"bila kubuni, na umwombe maelezo/muda wa kuzungumza. Anza na 'Habari {c.full_name},'.",
-                f"Habari {c.full_name},\n\nAsante kwa kuwasiliana na JamiiTek kuhusu \"{c.subject}\". "
-                "Tumepokea ujumbe wako na tutakusaidia. Je, unaweza kutupa namba ya simu au muda "
-                "mzuri wa kuzungumza?")
-            return f'Re: {c.subject}'[:200], _sign(body)
+                f"bila kubuni, na umwombe maelezo/muda wa kuzungumza. Anza na 'Hello {c.full_name},'.",
+                f"Hello {c.full_name},\n\nThank you for contacting JamiiTek about \"{c.subject}\". "
+                "We have received your message and we will help you. Could you share a phone number or a "
+                "good time to talk?", lang='en')
+            return f'Re: {c.subject}'[:200], _sign(body, lang='en')
 
         found(SLUG, f'selv:contact:{c.pk}', f'Ujumbe mpya: {c.full_name} — {c.subject}'[:200],
               draft=draft, ref=f'contact:{c.pk}', priority=1, detail=c.message[:1500],
@@ -151,7 +162,17 @@ def _abandoned(now):
         what = tx.description or tx.get_purpose_display()
         amount = f'{tx.currency} {float(tx.amount):,.0f}'
 
-        def draft(name=name, what=what, amount=amount):
+        def draft(name=name, what=what, amount=amount, lang='en' if tx.email else 'sw'):
+            if lang == 'en':
+                body = _write(
+                    f"{name} alianza kulipa {amount} kwa ajili ya '{what}' kupitia Pesapal lakini "
+                    "malipo hayakukamilika.",
+                    f"Andika ujumbe mfupi wa kirafiki (aya 1-2) wa kuuliza kama alipata changamoto "
+                    f"na kumpa msaada wa kukamilisha. Anza na 'Hello {name},'.",
+                    f"Hello {name},\n\nWe noticed you started paying for {what} ({amount}) but the payment "
+                    "did not finish. If something went wrong, let us know and we will help — we can also give "
+                    "you another way to pay.", lang=lang)
+                return f'Your payment for {what} — can we help?'[:200], _sign(body, lang=lang)
             body = _write(
                 f"{name} alianza kulipa {amount} kwa ajili ya '{what}' kupitia Pesapal lakini "
                 "malipo hayakukamilika.",
@@ -196,12 +217,12 @@ def _drafts(now):
                 f"{name} alianza kutengeneza tovuti '{w.site_name}' kwenye JamiiTek web builder "
                 "siku kadhaa zilizopita lakini bado hajaichapisha.",
                 f"Andika ujumbe mfupi (aya 1-2) wa kumtia moyo na kumpa msaada wa kuimaliza "
-                f"na kuichapisha. Anza na 'Habari {name},'.",
-                f"Habari {name},\n\nTumeona umeanza kutengeneza tovuti \"{w.site_name}\" — hongera! "
-                "Bado haijachapishwa. Kama kuna sehemu inayokukwamisha, tujibu ujumbe huu "
-                "tutakusaidia kuimaliza leo.")
-            return f'Tovuti yako "{w.site_name}" — tukusaidie kuimaliza?'[:200], _sign(
-                body, site('/builder/login/'))
+                f"na kuichapisha. Anza na 'Hello {name},'.",
+                f"Hello {name},\n\nWe saw that you started building your website \"{w.site_name}\" — well "
+                "done! It is not published yet. If anything is holding you back, reply to this email and we "
+                "will help you finish it today.", lang='en')
+            return f'Your website "{w.site_name}" — can we help you finish it?'[:200], _sign(
+                body, site('/builder/login/'), lang='en')
 
         found(SLUG, key, f'Tovuti haijachapishwa: {w.site_name} ({name})'[:200],
               draft=draft, ref=f'site:{w.pk}', priority=3,

@@ -9,7 +9,7 @@ Hosting ya mwaka ya website za Builder zilizolipiwa (builder/billing.py):
     inaacha kufanya kazi. Template iliyonunuliwa inasimama yenyewe (billing.is_paused).
 """
 from django.conf import settings
-from django.core.mail import send_mail
+from apps.utils.customer_email import send_customer_email
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
@@ -64,13 +64,14 @@ class Command(BaseCommand):
                              f'and your own name stops working.')
                     self.stdout.write(f'{"(dry-run) " if dry_run else ""}→ {site.owner.email}: {site.subdomain} ({when})')
                     if not dry_run:
-                        send_mail(SUBJECT.format(site=f'{site.subdomain}.jamiitek.com', when=when),
-                                  BODY.format(name=site.owner.first_name or site.owner.username,
-                                              site=f'{site.subdomain}.jamiitek.com',
-                                              date=site.hosting_until.strftime('%-d %B %Y'), price=f'{price:,}',
-                                              link=f'https://www.jamiitek.com/builder/site/{site.id}/pay/renew/',
-                                              after=after),
-                                  settings.DEFAULT_FROM_EMAIL, [site.owner.email])
+                        renew = f'https://www.jamiitek.com/builder/site/{site.id}/pay/renew/'
+                        send_customer_email(
+                            site.owner.email, SUBJECT.format(site=f'{site.subdomain}.jamiitek.com', when=when),
+                            BODY.format(name=site.owner.first_name or site.owner.username,
+                                        site=f'{site.subdomain}.jamiitek.com',
+                                        date=site.hosting_until.strftime('%-d %B %Y'), price=f'{price:,}',
+                                        link=renew, after=after),
+                            button=(f'Pay TSh {price:,} and renew', renew), category='renewal', fail_silently=False)
                         done[key] = sorted(set(done.get(key, [])) | {left})
                         ts['renew_sent'] = done
                         ClientWebsite.objects.filter(pk=site.pk).update(theme_settings=ts)

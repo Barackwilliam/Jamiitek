@@ -15,7 +15,7 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.core import signing
-from django.core.mail import send_mail
+from apps.utils.customer_email import send_customer_email
 from django.core.management.base import BaseCommand
 from django.urls import reverse
 from django.utils import timezone
@@ -96,13 +96,13 @@ class Command(BaseCommand):
                 hosting = (f', with the first year of hosting included. From year 2 hosting is '
                            f'TSh {pricing.yearly_hosting_price:,} per year' if pricing.yearly_hosting_price
                            else ', hosting included')
+                pay_url = BASE + reverse('builder:checkout', args=[site.id, 'template'])
                 paras = [
                     f'Hello {owner.first_name or owner.username},',
                     (f'Your website {name} with the {tpl.name} design is saved and ready.' if step == 1 else
                      f'Your website {name} with the {tpl.name} design is still saved, but it is not online yet.'),
                     f'Put it online for TSh {tpl.price:,} (one time){hosting}. '
-                    f'You can pay with M-Pesa, Tigo Pesa, Airtel Money or card:\n'
-                    + BASE + reverse('builder:checkout', args=[site.id, 'template']),
+                    f'You can pay with M-Pesa, Tigo Pesa, Airtel Money or card:\n' + pay_url,
                     'Or keep editing first — everything you did is saved:\n'
                     + BASE + reverse('builder:site_dashboard', args=[site.id]),
                     f'No time to finish it? Our team can build it for you:\n{BASE}{build_url}',
@@ -110,10 +110,9 @@ class Command(BaseCommand):
                 if step == 2:
                     paras.append('This is the last reminder we send about this website.')
                 paras.append(FOOTER.format(stop_link=BASE + reverse('builder:unpaid_stop', args=[stop_token(site)])))
-                send_mail(
-                    SUBJECTS[step].format(site=name),
-                    '\n\n'.join(paras),
-                    settings.DEFAULT_FROM_EMAIL, [owner.email])
+                send_customer_email(owner.email, SUBJECTS[step].format(site=name), paras,
+                                    button=('Put my website online', pay_url), category='builder_unpaid',
+                                    fail_silently=False)
                 ts['pay_reminders'] = sorted({s for s, _ in STEPS if s <= step} | set(ts.get('pay_reminders') or []))
                 ClientWebsite.objects.filter(pk=site.pk).update(theme_settings=ts)
             sent += 1

@@ -29,17 +29,24 @@ def _client(inv):
     return who, name, email, phone
 
 
-def _line(inv, today):
+def _line(inv, today, lang='sw'):
     number = inv.invoice_number or f'#{inv.pk}'
     late = (today - inv.due_date).days
-    when = (f'ilitakiwa {inv.due_date:%d/%m/%Y} (siku {late} zimepita)' if late > 0
-            else f'inatakiwa {inv.due_date:%d/%m/%Y}')
+    if lang == 'en':
+        when = (f'was due {inv.due_date:%d/%m/%Y} ({late} day{"" if late == 1 else "s"} late)' if late > 0
+                else f'due {inv.due_date:%d/%m/%Y}')
+    else:
+        when = (f'ilitakiwa {inv.due_date:%d/%m/%Y} (siku {late} zimepita)' if late > 0
+                else f'inatakiwa {inv.due_date:%d/%m/%Y}')
     return (f"• {number} — {inv.title}: {money(inv.balance_due, inv.currency)}, {when}\n"
             f"  {site(inv.public_url)}")
 
 
 def _reminder(group, today, late):
-    """Rasimu MOJA kwa mteja mmoja, ikiorodhesha invoice zake zote za hatua hii."""
+    """Rasimu MOJA kwa mteja mmoja, ikiorodhesha invoice zake zote za hatua hii.
+    Ikitumwa kwa email (mteja ana email) ni kwa Kiingereza; kwa WhatsApp inabaki Kiswahili."""
+    if group.get('email'):
+        return _reminder_en(group, today, late)
     who = member(SLUG)
     invs, name = group['invoices'], group['name']
     total = money(sum(i.balance_due for i in invs), invs[0].currency)
@@ -72,6 +79,39 @@ def _reminder(group, today, late):
     lines = '\n'.join(_line(i, today) for i in invs)
     return subject[:200], (f"{body}\n\n{'Invoice' if not many else 'Invoice zako'} na njia za kulipa:\n"
                            f"{lines}\n\nAsante,\n{signature(SLUG)}")
+
+
+def _reminder_en(group, today, late):
+    who = member(SLUG)
+    invs, name = group['invoices'], group['name']
+    total = money(sum(i.balance_due for i in invs), invs[0].currency)
+    many = len(invs) > 1
+    numbers = ', '.join(i.invoice_number or f'#{i.pk}' for i in invs)
+    if late:
+        subject = (f'Reminder: {len(invs)} unpaid invoices ({total})' if many
+                   else f'Reminder: invoice {numbers} ({total})')
+        facts = (f"{name} ana invoice {len(invs)} ({numbers}) zilizopita tarehe ya kulipwa, "
+                 f"jumla ya salio {total}." if many else
+                 f"Invoice {numbers} ({invs[0].title}) ya {name} ina salio la {total} na "
+                 f"imechelewa siku {(today - invs[0].due_date).days}.")
+        fallback = (f"Hello {name},\n\nThis is a polite reminder about "
+                    + (f"{len(invs)} invoices that are still unpaid, {total} in total."
+                       if many else f"invoice {numbers}, with {total} still due, which is past its due date.")
+                    + " If you have already paid, please send us the confirmation so we can update our records.")
+    else:
+        subject = f'Invoice {numbers} is due soon'
+        facts = f"{name} ana invoice {numbers} yenye salio la {total} inayokaribia tarehe ya kulipwa."
+        fallback = (f"Hello {name},\n\nThis is a friendly reminder about "
+                    + (f"{len(invs)} invoices that are due soon, {total} in total."
+                       if many else f"invoice {numbers}, with {total} due soon."))
+    body = ai.write(
+        ai.persona(who['name'], who['role'], lang='en'),
+        f"{facts}\nAndika aya 1-2 tu za utangulizi za kumkumbusha mteja kulipa, kwa adabu, ukianza "
+        f"na 'Hello {name},'. Usiorodheshe invoice wala kuweka link — orodha itaongezwa chini.",
+        max_tokens=260) or fallback
+    lines = '\n'.join(_line(i, today, 'en') for i in invs)
+    return subject[:200], (f"{body}\n\n{'Your invoice' if not many else 'Your invoices'} and how to pay:\n"
+                           f"{lines}\n\nThank you,\n{signature(SLUG, 'en')}")
 
 
 def _invoices(today):

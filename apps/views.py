@@ -254,24 +254,15 @@ Contact form message from JamiiTek website
                 fail_silently=False,
             )
             
-            # Optional: Send confirmation email to customer
-            send_mail(
-                subject="We received your message — JamiiTek",
-                message=f"""
-Hi {full_name},
- 
-Thank you for reaching out. We've received your message and will respond within 24 hours.
- 
-Subject: {subject}
- 
-Best regards,
-JamiiTek Team
-                """,
-                from_email='info@jamiitek.com',
-                recipient_list=[email],
-                fail_silently=True,
+            # Uthibitisho kwa mteja — Kiingereza, template ya JamiiTek
+            from apps.utils.customer_email import send_customer_email
+            send_customer_email(
+                email, "We received your message — JamiiTek",
+                f"Hi {full_name},\n\nThank you for reaching out. We have received your message and will "
+                f"reply within 24 hours.",
+                rows=[('Subject', subject)], category='contact',
             )
-            
+
             ujumbe = "✓ Your message has been sent successfully! We'll respond within 24 hours."
             messages.success(request, ujumbe)
             
@@ -344,19 +335,13 @@ def newsletter_subscribe(request):
         logger.exception('Newsletter: kuhifadhi kumeshindwa')
         return reply('error', 'Something went wrong. Please try again or WhatsApp us.', 502)
     if created:
-        try:
-            send_mail(
-                subject="You're subscribed to JamiiTek",
-                message=("Hi,\n\nThank you for subscribing to JamiiTek updates. "
-                         "You will receive our news and offers at this address.\n\n"
-                         "If you did not sign up, simply reply to this email and we will remove you.\n\n"
-                         "— JamiiTek Team\nhttps://www.jamiitek.com"),
-                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'JamiiTek <info@jamiitek.com>'),
-                recipient_list=[sub.email],
-                fail_silently=True,
-            )
-        except Exception:
-            logger.exception('Newsletter: barua ya kukaribisha haikutumwa')
+        from apps.utils.customer_email import send_customer_email
+        send_customer_email(
+            sub.email, "You're subscribed to JamiiTek",
+            "Hello,\n\nThank you for subscribing to JamiiTek updates. You will receive our news and offers at "
+            "this address.\n\nIf you did not sign up, simply reply to this email and we will remove you.",
+            button=('Visit jamiitek.com', 'https://www.jamiitek.com'), category='newsletter',
+        )
     return reply('ok', "You're subscribed. Asante!")
 
 

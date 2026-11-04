@@ -601,7 +601,7 @@ def invoice_send(request, pk):
     inv.sent_at = inv.sent_at or timezone.now()
     inv.save(update_fields=['status', 'sent_at'])
 
-    lang = request.POST.get('lang') if request.POST.get('lang') in ('en', 'sw') else 'sw'
+    lang = 'en'           # email zote za wateja ni kwa Kiingereza (ukurasa wa ankara bado una Kiswahili ukitaka)
     ctx = {'invoice': inv, 'items': inv.items, 'lang': lang,
            'link': _site_url(inv.public_url) + f'?lang={lang}',
            'pdf': _site_url(f'{inv.public_url}pdf/') + f'?lang={lang}'}
