@@ -1,4 +1,5 @@
 {% extends 'emails/base_email.html' %}
+{% block head %}<table class="head" role="presentation"><tr><td class="label">Website restored</td><td align="right"><span class="chip chip-success">✓ Back online</span></td></tr></table><div class="rule"></div>{% endblock %}
 {% block content %}
 <p class="greeting">Hello, {{ client_name }} 🎉</p>
 
@@ -7,6 +8,7 @@
   Great news! Your website <strong>{{ website_name }}</strong> is back online and fully operational.
 </div>
 
+{% include 'emails/_timeline.html' with tl_site=website_name tl_state='renewed' tl_pct=4 tl_note="Online again" tl_left=restored_date tl_lp="Restored " tl_right="Thank you!" %}
 <div class="info-box">
   <div class="info-row">
     <span class="info-label">Website</span>

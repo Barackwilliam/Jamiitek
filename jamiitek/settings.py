@@ -312,6 +312,13 @@ else:
     EMAIL_HOST_USER = 'info@jamiitek.com'
     DEFAULT_FROM_EMAIL = 'JamiiTek <info@jamiitek.com>'
  
+# Kila email ya mteja inafuatwa na taarifa fupi kwa mmiliki (apps/email_backend.OwnerNoticeBackend):
+# "Asha ametumiwa: ...". Backend halisi (Brevo / SMTP / console) inatumika ndani yake.
+# OWNER_NOTICE_EMAIL tupu = taarifa zimezimwa.
+EMAIL_REAL_BACKEND = EMAIL_BACKEND
+EMAIL_BACKEND = 'apps.email_backend.OwnerNoticeBackend'
+OWNER_NOTICE_EMAIL = os.getenv('OWNER_NOTICE_EMAIL', 'info@jamiitek.com').strip()
+
 PORTAL_BASE_URL = os.getenv('PORTAL_BASE_URL', 'https://jamiitek.com/portal/')
  
 # ── Cloudinary ─────────────────────────────────────────

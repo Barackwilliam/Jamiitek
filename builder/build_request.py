@@ -155,7 +155,7 @@ def fulfill(tx):
                     rows=[('Amount', f'TSh {br.amount:,}'), ('Design', br.template_name)],
                     alert={'kind': 'success', 'title': 'Payment received', 'text': 'Your website is now in our queue.'},
                     button=('Check your request', f'https://www.jamiitek.com/build/{br.token}/'),
-                    category='payment', fail_silently=False)
+                    category='payment', chip=('✓ Paid', 'success'), fail_silently=False)
             except Exception:
                 logger.exception('build_request: email imeshindwa')
     transaction.on_commit(_tell)

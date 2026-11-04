@@ -1305,3 +1305,35 @@ class CustomerNotificationsGoToCustomersTest(TestCase):
         self.assertEqual(len(customer), 1)
         self.assertIn('https://ashafashion.co.tz', customer[0].body)
         self.assertIn('mteja amejulishwa', owner_note.call_args.args[0])
+
+
+@override_settings(EMAIL_BACKEND='apps.email_backend.OwnerNoticeBackend',
+                   EMAIL_REAL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+                   OWNER_NOTICE_EMAIL='info@jamiitek.com', EMAIL_HOST_USER='info@jamiitek.com')
+class OwnerNoticeTest(TestCase):
+    """Kila email ya mteja: mmiliki anapata taarifa fupi 'X ametumiwa: ...' — bila maudhui ya barua."""
+
+    def test_customer_email_is_followed_by_a_short_notice_to_the_owner(self):
+        from .models import Client
+        from apps.utils.customer_email import send_customer_email
+        Client.objects.create(name='Asha Mussa', email='asha@biashara.co.tz')
+        send_customer_email('asha@biashara.co.tz', 'Reset your password',
+                            'Hello,\n\nUse this link: https://www.jamiitek.com/reset/SECRET-TOKEN/', category='security')
+        self.assertEqual([m.to for m in mail.outbox], [['asha@biashara.co.tz'], ['info@jamiitek.com']])
+        notice = mail.outbox[1]
+        self.assertIn('Asha Mussa was sent: Reset your password', notice.subject)
+        self.assertIn('Account security', notice.body)
+        self.assertIn('asha@biashara.co.tz', notice.body)
+        self.assertNotIn('SECRET-TOKEN', notice.body + notice.alternatives[0][0])   # maudhui hayaonyeshwi
+
+    def test_no_notice_for_internal_mail_or_when_the_owner_already_has_a_copy(self):
+        from django.core.mail import EmailMessage, send_mail
+        send_mail('[JamiiTek] Bot down', 'x', None, ['info@jamiitek.com'])
+        EmailMessage('Receipt', 'x', None, ['juma@example.com'], bcc=['info@jamiitek.com']).send()
+        self.assertEqual(len(mail.outbox), 2)                 # hakuna taarifa za ziada
+
+    @override_settings(OWNER_NOTICE_EMAIL='')
+    def test_notices_can_be_turned_off(self):
+        from django.core.mail import send_mail
+        send_mail('Hello', 'x', None, ['juma@example.com'])
+        self.assertEqual(len(mail.outbox), 1)

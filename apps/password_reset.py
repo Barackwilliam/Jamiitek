@@ -168,7 +168,7 @@ def _notify_changed(user, request):
             'If this was you, no action is needed. If it was NOT you, reset your password now and contact us at '
             'info@jamiitek.com.',
             alert={'kind': 'info', 'title': 'Security notice', 'text': 'Your password was just changed.'},
-            button=('Reset my password', reset), category='security',
+            button=('Reset my password', reset), category='security', chip=('🔐 Password changed', 'info'),
         )
     except Exception:
         log.exception('Password changed notice haikutumwa')

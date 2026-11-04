@@ -234,3 +234,126 @@ class BrevoEmailBackend(BaseEmailBackend):
                 )
         except Exception:
             logger.exception('EmailLog haikuhifadhiwa (barua yenyewe haijaathirika)')
+
+
+# ── Taarifa kwa mmiliki kwa kila email ya mteja ─────────────────────
+#
+# Mmiliki anataka kujua kila email inayomfikia mteja: "Asha (asha@x) ametumiwa: Hosting reminder ...".
+# Backend hii inazunguka backend halisi (EMAIL_REAL_BACKEND: Brevo / SMTP / console). Kila barua
+# iliyotumwa kwa mteja inafuatwa na taarifa fupi kwenda OWNER_NOTICE_EMAIL. Taarifa haina maudhui ya
+# barua (kwa mfano kiungo cha kubadilisha password) — ni nani, kichwa, aina na muda tu.
+#
+# Haitumi taarifa kwa: barua za ndani (wapokeaji wote ni anwani za JamiiTek), barua ambazo mmiliki
+# tayari ana nakala (cc/bcc), na taarifa zenyewe (X-JT-Owner-Notice). OWNER_NOTICE_EMAIL tupu = imezimwa.
+
+from email.utils import parseaddr
+
+
+def _owner_addresses():
+    keys = ('OWNER_NOTICE_EMAIL', 'EMAIL_HOST_USER', 'ALERT_EMAIL', 'PAYMENTS_OWNER_EMAIL',
+            'BLOG_REVIEW_EMAIL', 'ADMIN_EMAIL', 'SUPPORT_EMAIL')
+    out = {'info@jamiitek.com'}
+    for k in keys:
+        v = getattr(settings, k, '') or ''
+        if v:
+            out.add(parseaddr(str(v))[1].lower())
+    import os
+    alert = os.getenv('ALERT_EMAIL', '').strip()
+    if alert:
+        out.add(alert.lower())
+    return out
+
+
+_KIND_NAMES = {
+    'expiry_warning': 'Hosting / service expiry reminder', 'payment_reminder': 'Hosting reminder',
+    'suspension': 'Service suspended', 'restored': 'Service restored', 'renewal': 'Renewal',
+    'receipt': 'Payment receipt', 'payment': 'Payment', 'welcome': 'Welcome', 'contact': 'Contact form reply',
+    'newsletter': 'Newsletter welcome', 'domain': 'Domain', 'bot_down': 'JamiiBot disconnected',
+    'bot_paused': 'JamiiBot stopped replying', 'handoff': 'JamiiBot: visitor wants a person',
+    'security': 'Account security', 'builder_unpaid': 'Web Builder payment reminder', 'support': 'Support',
+    'registration': 'Registration', 'notice': 'Notice',
+}
+
+
+def _who(addr):
+    """Jina la mteja kutoka kwenye kumbukumbu, kama lipo."""
+    try:
+        from apps.models import Client
+        c = Client.objects.filter(email__iexact=addr).only('name').first()
+        if c and c.name:
+            return c.name
+        from apps.chatbot.models import ChatbotClient
+        b = ChatbotClient.objects.filter(email__iexact=addr).only('full_name').first()
+        if b and b.full_name:
+            return b.full_name
+        from django.contrib.auth.models import User
+        u = User.objects.filter(email__iexact=addr).first()
+        if u and (u.get_full_name() or '').strip():
+            return u.get_full_name()
+    except Exception:
+        pass
+    return ''
+
+
+class OwnerNoticeBackend(BaseEmailBackend):
+    """Inatuma kupitia EMAIL_REAL_BACKEND, kisha inamjulisha mmiliki kila barua iliyomfikia mteja."""
+
+    def __init__(self, fail_silently=False, **kwargs):
+        super().__init__(fail_silently=fail_silently, **kwargs)
+        from django.core.mail import get_connection
+        real = getattr(settings, 'EMAIL_REAL_BACKEND', '') or 'django.core.mail.backends.console.EmailBackend'
+        self.inner = get_connection(real, fail_silently=fail_silently, **kwargs)
+
+    def open(self):
+        return self.inner.open()
+
+    def close(self):
+        return self.inner.close()
+
+    def send_messages(self, email_messages):
+        sent = 0
+        for message in email_messages or []:
+            n = self.inner.send_messages([message]) or 0
+            sent += n
+            if n:
+                try:
+                    self._notice(message)
+                except Exception:
+                    logger.exception('Taarifa ya mmiliki haikutumwa (barua ya mteja imeshatoka)')
+        return sent
+
+    def _notice(self, message):
+        owner = (getattr(settings, 'OWNER_NOTICE_EMAIL', '') or '').strip()
+        headers = getattr(message, 'extra_headers', {}) or {}
+        if not owner or headers.get('X-JT-Owner-Notice'):
+            return
+        mine = _owner_addresses()
+        copied = {parseaddr(a)[1].lower() for a in list(message.cc or []) + list(message.bcc or [])}
+        if copied & mine:
+            return                                    # mmiliki tayari ana nakala kamili
+        customers = [parseaddr(a)[1] for a in list(message.to or [])]
+        customers = [a for a in customers if a and a.lower() not in mine]
+        if not customers:
+            return                                    # barua ya ndani (kwa JamiiTek yenyewe)
+
+        from django.utils import timezone
+        from apps.utils.customer_email import render_customer_email
+        kind = headers.get('X-JT-Category', '') or _guess_category(message.subject)
+        kind_name = _KIND_NAMES.get(kind, kind.replace('_', ' ').capitalize() if kind and kind != 'other' else 'Email')
+        people = [f'{_who(a)} <{a}>' if _who(a) else a for a in customers]
+        first = _who(customers[0]) or customers[0]
+        subject = f'📤 {first} was sent: {(message.subject or "")[:90]}'
+        when = timezone.localtime().strftime('%d %b %Y, %H:%M')
+        text, html = render_customer_email(
+            subject,
+            f'Hello,\n\nA customer email has just been sent from the system.',
+            rows=[('To', ', '.join(people)), ('About', kind_name), ('Subject', message.subject or '—'),
+                  ('Sent', f'{when} (EAT)')],
+            label='Sent to a customer', chip=('📤 Sent', 'info'),
+        )
+        from django.core.mail import EmailMultiAlternatives
+        note = EmailMultiAlternatives(subject=subject[:200], body=text, to=[owner],
+                                      from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
+                                      headers={'X-JT-Owner-Notice': '1', 'X-JT-Category': 'owner_notice'})
+        note.attach_alternative(html, 'text/html')
+        self.inner.send_messages([note])

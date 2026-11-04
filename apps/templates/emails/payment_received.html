@@ -1,4 +1,5 @@
 {% extends 'emails/base_email.html' %}
+{% block head %}<table class="head" role="presentation"><tr><td class="label">Payment received</td><td align="right"><span class="chip chip-success">✓ Paid</span></td></tr></table><div class="rule"></div>{% endblock %}
 {% block content %}
 <p class="greeting">Hello, {{ client_name }} ✅</p>
 
@@ -9,6 +10,7 @@
 
 <p>Here is your payment receipt:</p>
 
+{% include 'emails/_timeline.html' with tl_site=website_name tl_state='renewed' tl_pct=4 tl_note="Paid" tl_left=payment_date tl_lp="Paid " tl_right="Thank you!" %}
 <div class="info-box">
   <div class="info-row">
     <span class="info-label">Website</span>

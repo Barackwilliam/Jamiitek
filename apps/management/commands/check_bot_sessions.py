@@ -204,5 +204,5 @@ def _email_client_down(bot):
         + 'your customers right now.\n\nTo reconnect, open the Connect page and scan the QR code with the '
         + 'WhatsApp of your business.',
         alert={'kind': 'warning', 'title': 'Action needed', 'text': 'Your customers are not getting replies.'},
-        button=('Reconnect WhatsApp', f'{base}/chatbot/connect/'), category='bot_down',
+        button=('Reconnect WhatsApp', f'{base}/chatbot/connect/'), category='bot_down', chip=('⚠ Not connected', 'warning'),
     )

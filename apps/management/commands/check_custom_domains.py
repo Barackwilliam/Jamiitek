@@ -57,7 +57,7 @@ def _notify_live(site):
             to, f'🌐 {site.custom_domain} is now live',
             (f'Hi {name},' if name else 'Hello,')
             + f'\n\nGood news: your website {site.site_name} now opens at your own domain, {site.custom_domain}.',
-            button=('Open your website', f'https://{site.custom_domain}'), category='domain',
+            button=('Open your website', f'https://{site.custom_domain}'), category='domain', chip=('✓ Live', 'success'),
         )
     try:
         from apps.notify import notify

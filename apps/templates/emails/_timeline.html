@@ -1,0 +1,21 @@
+{# Mstari wa muda wa hosting (mtindo wa 4). Vigezo: tl_site, tl_note, tl_state = warning|urgent|suspended|renewed, #}
+{# tl_pct (0-100), tl_left, tl_right. Rangi na hatua zinatokana na tl_state. #}
+<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:16px;padding:18px;margin:4px 0 20px">
+  <table role="presentation" width="100%" style="font-size:13px;font-weight:700;color:#0f172a;border-collapse:collapse"><tr>
+    <td>🌐 {{ tl_site }}</td>
+    <td align="right" style="color:{% if tl_state == 'renewed' %}#16a34a{% elif tl_state == 'suspended' %}#dc2626{% else %}#ea580c{% endif %}">{{ tl_note }}</td>
+  </tr></table>
+  <div style="height:10px;background:#e2e8f0;border-radius:99px;margin:10px 0 8px;overflow:hidden">
+    <div style="width:{{ tl_pct }}%;height:10px;border-radius:99px;background-color:{% if tl_state == 'renewed' %}#22c55e{% elif tl_state == 'suspended' %}#ef4444{% else %}#f97316{% endif %};{% if tl_state == 'warning' or tl_state == 'urgent' %}background-image:linear-gradient(90deg,#22c55e,#eab308 70%,#f97316);{% endif %}"></div>
+  </div>
+  <table role="presentation" width="100%" style="font-size:12px;color:#64748b;border-collapse:collapse"><tr><td>{{ tl_lp }}{{ tl_left }}</td><td align="right">{{ tl_rp }}{{ tl_right }}</td></tr></table>
+  <table role="presentation" width="100%" style="margin-top:16px;border-collapse:collapse"><tr>
+    {% if tl_state == 'renewed' %}
+      {% include 'emails/_tl_step.html' with s='done' n='✓' t='Paid' %}{% include 'emails/_tl_step.html' with s='done' n='✓' t='Renewed' %}{% include 'emails/_tl_step.html' with s='done' n='✓' t='Online' %}
+    {% elif tl_state == 'suspended' %}
+      {% include 'emails/_tl_step.html' with s='done' n='✓' t='Reminders sent' %}{% include 'emails/_tl_step.html' with s='bad' n='!' t='Not paid' %}{% include 'emails/_tl_step.html' with s='todo' n='3' t='Back online' %}
+    {% else %}
+      {% include 'emails/_tl_step.html' with s='done' n='✓' t='Reminder sent' %}{% include 'emails/_tl_step.html' with s='now' n='2' t='Pay invoice' %}{% include 'emails/_tl_step.html' with s='todo' n='3' t='Stays online' %}
+    {% endif %}
+  </tr></table>
+</div>

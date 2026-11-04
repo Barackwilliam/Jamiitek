@@ -186,15 +186,21 @@ class Command(BaseCommand):
                         rows=[('Website', website.name),
                               ('Hosting ends', website.hosting_end_date.strftime('%d %B %Y')),
                               ('Days left', days_left)],
-                        button=('Open your portal', getattr(settings, 'PORTAL_BASE_URL', 'https://jamiitek.com/portal/')),
+                        button=('Open your portal', getattr(settings, 'PORTAL_BASE_URL', 'https://jamiitek.com/portal/'), 'orange'),
+                        chip=(f'⏳ {days_left} day{"" if days_left == 1 else "s"} left', 'warning'),
+                        timeline={'site': website.name, 'state': 'warning' if days_left > 3 else 'urgent',
+                                  'pct': 98 if days_left <= 1 else (92 if days_left <= 3 else 80),
+                                  'note': f'{days_left} day{"" if days_left == 1 else "s"} left', 'left': 'Today',
+                                  'right': 'Ends ' + website.hosting_end_date.strftime('%d %b %Y')},
                     )
                     self.stdout.write(f'  📧 Onyo limetumwa: {website.name} ({days_left} siku)')
 
-    def _send_email(self, website, notification_type, subject, message, button=None, rows=None):
+    def _send_email(self, website, notification_type, subject, message, button=None, rows=None, chip=None,
+                    timeline=None):
         try:
             from apps.utils.customer_email import send_customer_email
             send_customer_email(website.client.email, subject, message, button=button, rows=rows,
-                                category=notification_type)
+                                category=notification_type, chip=chip, timeline=timeline)
             ClientNotification.objects.create(
                 website=website,
                 client=website.client,

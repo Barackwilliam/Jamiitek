@@ -260,7 +260,7 @@ Contact form message from JamiiTek website
                 email, "We received your message — JamiiTek",
                 f"Hi {full_name},\n\nThank you for reaching out. We have received your message and will "
                 f"reply within 24 hours.",
-                rows=[('Subject', subject)], category='contact',
+                rows=[('Subject', subject)], category='contact', chip=('✓ Received', 'success'),
             )
 
             ujumbe = "✓ Your message has been sent successfully! We'll respond within 24 hours."
@@ -340,7 +340,7 @@ def newsletter_subscribe(request):
             sub.email, "You're subscribed to JamiiTek",
             "Hello,\n\nThank you for subscribing to JamiiTek updates. You will receive our news and offers at "
             "this address.\n\nIf you did not sign up, simply reply to this email and we will remove you.",
-            button=('Visit jamiitek.com', 'https://www.jamiitek.com'), category='newsletter',
+            button=('Visit jamiitek.com', 'https://www.jamiitek.com'), category='newsletter', chip=('✓ Subscribed', 'success'),
         )
     return reply('ok', "You're subscribed. Asante!")
 

@@ -1,13 +1,7 @@
 {% extends 'emails/base_email.html' %}
 {% load jt_contact %}
+{% block head %}<table class="head" role="presentation"><tr><td class="label">Website suspended</td><td align="right"><span class="chip chip-danger">⛔ Offline</span></td></tr></table><div class="rule"></div>{% endblock %}
 {% block content %}
-
-<!-- SUSPENDED HEADER -->
-<div style="background:linear-gradient(135deg,#1a1a2e,#2d0a0a);border-radius:12px;padding:24px 20px;text-align:center;margin-bottom:24px;border:1px solid rgba(239,68,68,0.3)">
-  <div style="font-size:40px;margin-bottom:8px">🔒</div>
-  <div style="font-size:18px;font-weight:800;color:#ef4444;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Your Website Has Been Suspended</div>
-  <div style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.6">Suspended on {{ suspended_date }} — Visitors are currently unable to access your website</div>
-</div>
 
 <p class="greeting">Hello, {{ client_name }}</p>
 
@@ -16,6 +10,7 @@
 <p><strong>Do not worry — your website data is completely safe.</strong> As soon as we receive and confirm your payment, we will restore your website immediately, usually within a few hours.</p>
 
 <!-- STATUS BREAKDOWN -->
+{% include 'emails/_timeline.html' with tl_site=website_name tl_state='suspended' tl_pct=100 tl_note="Suspended" tl_left=suspended_date tl_lp="Suspended " tl_right="Pay to restore" %}
 <div class="info-box">
   <div class="info-row">
     <span class="info-label">Website Name</span>

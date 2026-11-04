@@ -1,4 +1,5 @@
 {% extends 'emails/base_email.html' %}
+{% block head %}<table class="head" role="presentation"><tr><td class="label">Domain reminder</td><td align="right"><span class="chip chip-warning">⏳ {{ days_left }} day{{ days_left|pluralize }} left</span></td></tr></table><div class="rule"></div>{% endblock %}
 {% block content %}
 <p class="greeting">Hello, {{ client_name }} 👋</p>
 
