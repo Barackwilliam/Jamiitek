@@ -639,6 +639,10 @@ def portal_support(request):
                 )
             except Exception:
                 pass
+            from apps.activity import record
+            record('support_request', f'Support request from {client.name}: {subject}'[:255],
+                   rows=[('Priority', priority), ('Website', website.name if website else '—'),
+                         ('Email', client.email)], level='warning' if priority in ('high', 'urgent') else 'info')
             messages.success(request, 'Support request submitted! We will respond within 24 hours.')
             return redirect('portal_support')
 

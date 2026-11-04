@@ -140,6 +140,14 @@ def fulfill(tx):
 
     def _tell():
         try:
+            from apps.activity import record
+            record('build_request_paid', f'🛠 "Build it for me" paid: {br.business_name} — TSh {br.amount:,}',
+                   actor=('customer', br.name, br.email or br.phone), level='success', amount=br.amount,
+                   rows=[('Customer', f'{br.name} · {br.phone}'), ('Design', br.template_name or '—')],
+                   link='/admin/builder/buildrequest/')
+        except Exception:
+            logger.exception('build_request: activity')
+        try:
             from apps.notify import notify
             notify(f'🛠️ TUKUTENGENEZEE — AMELIPA TZS {br.amount:,}: {br.business_name} ({br.name}, {br.phone}). '
                    f'Template: {br.template_name}. Anza kazi: Admin → Build requests.')

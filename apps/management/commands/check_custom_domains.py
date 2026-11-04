@@ -60,6 +60,12 @@ def _notify_live(site):
             button=('Open your website', f'https://{site.custom_domain}'), category='domain', chip=('✓ Live', 'success'),
         )
     try:
+        from apps.activity import record
+        record('domain_live', f'🌐 {site.custom_domain} is live — {site.site_name}', actor='system', level='success',
+               rows=[('Website', site.site_name), ('Customer told', to or 'no email on record')])
+    except Exception:
+        pass
+    try:
         from apps.notify import notify
         notify(f'🌐 {site.custom_domain} sasa iko LIVE — website ya {site.site_name}'
                + (f' (mteja amejulishwa: {to}).' if to else ' (mteja hana email — mjulishe mwenyewe).'))

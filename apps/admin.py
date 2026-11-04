@@ -1110,3 +1110,32 @@ class OwnerNoticeDayAdmin(admin.ModelAdmin):
     @admin.display(description='In summary')
     def held_count(self, obj):
         return len(obj.held or [])
+
+
+from .models import ActivityEvent, ActivityRule  # noqa: E402
+
+
+@admin.register(ActivityEvent)
+class ActivityEventAdmin(admin.ModelAdmin):
+    """Kila tukio la msingi la mfumo: nani (mteja / staff / mfumo), nini, lini (apps/activity.py)."""
+    list_display = ('created_at', 'actor_kind', 'actor_name', 'title', 'level', 'mode', 'emailed_at')
+    list_filter = ('actor_kind', 'level', 'action', 'mode', 'created_at')
+    search_fields = ('title', 'actor_name', 'actor_email', 'action')
+    date_hierarchy = 'created_at'
+    readonly_fields = [f.name for f in ActivityEvent._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(ActivityRule)
+class ActivityRuleAdmin(admin.ModelAdmin):
+    """Chagua kwa kila aina ya tukio: email ya papo hapo, muhtasari wa siku, au kimya."""
+    list_display = ('label', 'action', 'mode')
+    list_editable = ('mode',)
+    list_filter = ('mode',)
+
+    def changelist_view(self, request, extra_context=None):
+        from .activity import ensure_rules
+        ensure_rules()
+        return super().changelist_view(request, extra_context)

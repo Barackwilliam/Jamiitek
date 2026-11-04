@@ -12,6 +12,7 @@ from .crypto import EncryptedJSONField
 import secrets
 from .site_content import HeroSlide, PortfolioItem, Testimonial  # noqa: F401
 from .pesapal_models import PesapalTransaction  # noqa: F401
+from .activity_models import ActivityDigest, ActivityEvent, ActivityRule  # noqa: F401
 from .security_models import StaffTwoFactor  # noqa: F401
 
 

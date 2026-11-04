@@ -1,0 +1,20 @@
+{% extends 'emails/base_email.html' %}
+{% block head %}<table class="head" role="presentation"><tr><td class="label">Daily summary</td><td align="right"><span class="chip chip-info">📅 {{ day|date:"D d M" }}</span></td></tr></table><div class="rule"></div>{% endblock %}
+{% block content %}
+<div class="greeting">Today on JamiiTek</div>
+<p>{{ total }} thing{{ total|pluralize }} happened. Here is what matters, grouped by who did it.</p>
+<table role="presentation" width="100%" style="border-collapse:separate;border-spacing:6px 0;margin:6px 0 4px"><tr>
+{% for s in stats %}<td width="25%" align="center" style="padding:12px 4px;background:#f8fafc;border-radius:14px"><div style="font-size:21px;font-weight:800;color:{{ s.color }}">{{ s.value }}</div><div style="font-size:11px;color:#64748b;margin-top:2px">{{ s.label }}</div></td>{% endfor %}
+</tr></table>
+{% for g in groups %}
+<div style="margin-top:22px">
+  <table role="presentation" width="100%"><tr><td style="font-size:15px;font-weight:800;color:#0f172a">{{ g.label }}</td><td align="right" style="font-size:12px;font-weight:700;color:{{ g.color }}">{{ g.count }} action{{ g.count|pluralize }}</td></tr></table>
+  <table role="presentation" width="100%" style="margin-top:6px;border-collapse:collapse">
+  {% for e in g.items %}<tr><td style="padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:14px;color:#334155">{{ e.title }}</td><td align="right" style="padding:8px 0 8px 8px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#94a3b8;white-space:nowrap">{{ e.time }}</td></tr>
+  {% empty %}<tr><td style="padding:8px 0;font-size:14px;color:#94a3b8">Nothing today.</td></tr>{% endfor %}
+  {% if g.more %}<tr><td colspan="2" style="padding:8px 0;font-size:12px;color:#64748b">+ {{ g.more }} more in Admin → Activity</td></tr>{% endif %}
+  </table>
+</div>
+{% endfor %}
+<div class="btn-wrap"><a class="btn" href="{{ activity_url }}">See all activity</a></div>
+{% endblock %}

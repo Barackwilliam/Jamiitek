@@ -1371,3 +1371,65 @@ class OwnerNoticeDailyLimitTest(TestCase):
         self.assertEqual(summaries[0].to, ['info@jamiitek.com'])
         self.assertIn('mteja3@example.com', summaries[0].body)
         self.assertIn('Reminder 3', summaries[0].body)
+
+
+@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend', ACTIVITY_EMAIL_SYNC=True,
+                   OWNER_NOTICE_EMAIL='info@jamiitek.com', ACTIVITY_DIGEST_HOUR=20)
+class ActivityLogTest(TestCase):
+    """Kila tukio la msingi linarekodiwa (nani: mteja / staff / mfumo); muhimu yanatumwa papo hapo."""
+
+    def test_new_account_is_logged_as_a_customer_and_emailed_right_away(self):
+        from django.contrib.auth.models import User
+        from .models import ActivityEvent
+        with self.captureOnCommitCallbacks(execute=True):
+            User.objects.create_user('neema', 'neema@biashara.co.tz')
+        e = ActivityEvent.objects.get(action='account_created')
+        self.assertEqual((e.actor_kind, e.mode), ('customer', 'instant'))
+        self.assertIsNotNone(e.emailed_at)
+        self.assertEqual(mail.outbox[-1].to, ['info@jamiitek.com'])
+        self.assertIn('New account: neema', mail.outbox[-1].subject)
+        self.assertIn('Customer', mail.outbox[-1].alternatives[0][0])
+
+    def test_payment_states_and_staff_actions(self):
+        from decimal import Decimal
+        from django.contrib.admin.models import DELETION, LogEntry
+        from django.contrib.auth.models import User
+        from django.contrib.contenttypes.models import ContentType
+        from .models import ActivityEvent, PesapalTransaction
+        tx = PesapalTransaction.objects.create(purpose='invoice', target_id='T1', amount=Decimal('150000'),
+                                               first_name='Asha', last_name='Mussa', email='asha@x.co.tz')
+        with self.captureOnCommitCallbacks(execute=True):
+            tx.status = 'completed'
+            tx.save()
+        paid = ActivityEvent.objects.get(action='payment_completed')
+        self.assertEqual((paid.actor_kind, paid.amount), ('system', Decimal('150000')))
+        self.assertIn('Asha Mussa paid TZS 150,000', mail.outbox[-1].subject)
+
+        boss = User.objects.create_user('william', 'w@jamiitek.com', is_staff=True)
+        with self.captureOnCommitCallbacks(execute=True):
+            LogEntry.objects.create(user=boss, content_type=ContentType.objects.get_for_model(User),
+                                    object_id='9', object_repr='old-user', action_flag=DELETION)
+        e = ActivityEvent.objects.get(action='admin_delete')
+        self.assertEqual((e.actor_kind, e.actor_name), ('staff', 'william'))
+        self.assertIn('Deleted in Admin', mail.outbox[-1].subject)
+
+    def test_rules_choose_instant_digest_or_off_and_the_digest_groups_by_actor(self):
+        from django.core.management import call_command
+        from django.contrib.auth.models import User
+        from .activity import record
+        from .models import ActivityRule
+        ActivityRule.objects.create(action='account_created', mode='off')
+        with self.captureOnCommitCallbacks(execute=True):
+            User.objects.create_user('juma', 'juma@example.com')                 # off: hakuna email
+            record('customer_login', 'Asha signed in', actor=('customer', 'Asha', 'a@x.co.tz'))   # digest
+            record('bot_disconnected', 'AshaBot disconnected', actor='system', level='danger')    # instant
+        self.assertEqual([m.subject for m in mail.outbox], ['AshaBot disconnected'])
+        call_command('activity_digest', force=True, quiet=True)
+        digest = mail.outbox[-1]
+        self.assertIn('Today on JamiiTek — 2 actions', digest.subject)        # 'off' haimo
+        html = digest.alternatives[0][0]
+        for text in ('👤 Customers', 'Asha signed in', '🤖 System', 'AshaBot disconnected', 'Problems'):
+            self.assertIn(text, html)
+        self.assertNotIn('juma', html)
+        call_command('activity_digest', quiet=True)                           # haurudiwi leo
+        self.assertEqual(sum('Today on JamiiTek' in m.subject for m in mail.outbox), 1)
