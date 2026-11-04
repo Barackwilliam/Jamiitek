@@ -111,6 +111,10 @@ class Command(BaseCommand):
             notify.notify(self._down_message(down))
             for bot, problem, mins in down:      # mwenye bot ajue pia — awali taarifa ilikuja JamiiTek peke yake
                 _email_client_down(bot)
+                from apps.activity import record
+                record('bot_disconnected', f'JamiiBot disconnected: {bot.bot_name} ({bot.client.business_name})',
+                       rows=[('Problem', problem), ('For', f'{mins} min')], actor='system', level='danger',
+                       link=f'/manage/chatbot/bots/{bot.pk}/')
         if recovered:
             notify.notify(self._recovered_message(recovered))
 
@@ -204,5 +208,5 @@ def _email_client_down(bot):
         + 'your customers right now.\n\nTo reconnect, open the Connect page and scan the QR code with the '
         + 'WhatsApp of your business.',
         alert={'kind': 'warning', 'title': 'Action needed', 'text': 'Your customers are not getting replies.'},
-        button=('Reconnect WhatsApp', f'{base}/chatbot/connect/'), category='bot_down',
+        button=('Reconnect WhatsApp', f'{base}/chatbot/connect/'), category='bot_down', chip=('⚠ Not connected', 'warning'),
     )

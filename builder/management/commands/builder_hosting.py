@@ -71,7 +71,12 @@ class Command(BaseCommand):
                                         site=f'{site.subdomain}.jamiitek.com',
                                         date=site.hosting_until.strftime('%-d %B %Y'), price=f'{price:,}',
                                         link=renew, after=after),
-                            button=(f'Pay TSh {price:,} and renew', renew), category='renewal', fail_silently=False)
+                            button=(f'Pay TSh {price:,} and renew', renew, 'orange'), category='renewal',
+                            label='Hosting reminder', chip=(f'⏳ Ends {when}', 'warning' if left > 1 else 'danger'),
+                            timeline={'site': f'{site.subdomain}.jamiitek.com', 'state': 'warning' if left > 1 else 'urgent',
+                                      'pct': 98 if left <= 1 else (92 if left <= 3 else 80), 'note': f'Ends {when}',
+                                      'left': 'Today', 'right': 'Ends ' + site.hosting_until.strftime('%-d %b %Y')},
+                            fail_silently=False)
                         done[key] = sorted(set(done.get(key, [])) | {left})
                         ts['renew_sent'] = done
                         ClientWebsite.objects.filter(pk=site.pk).update(theme_settings=ts)

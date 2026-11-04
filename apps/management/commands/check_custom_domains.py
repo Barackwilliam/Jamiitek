@@ -57,8 +57,14 @@ def _notify_live(site):
             to, f'🌐 {site.custom_domain} is now live',
             (f'Hi {name},' if name else 'Hello,')
             + f'\n\nGood news: your website {site.site_name} now opens at your own domain, {site.custom_domain}.',
-            button=('Open your website', f'https://{site.custom_domain}'), category='domain',
+            button=('Open your website', f'https://{site.custom_domain}'), category='domain', chip=('✓ Live', 'success'),
         )
+    try:
+        from apps.activity import record
+        record('domain_live', f'🌐 {site.custom_domain} is live — {site.site_name}', actor='system', level='success',
+               rows=[('Website', site.site_name), ('Customer told', to or 'no email on record')])
+    except Exception:
+        pass
     try:
         from apps.notify import notify
         notify(f'🌐 {site.custom_domain} sasa iko LIVE — website ya {site.site_name}'

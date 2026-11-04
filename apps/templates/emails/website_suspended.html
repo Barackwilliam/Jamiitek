@@ -1,13 +1,7 @@
 {% extends 'emails/base_email.html' %}
 {% load jt_contact %}
+{% block head %}<table class="head" role="presentation"><tr><td class="label">Website suspended</td><td align="right"><span class="chip chip-danger">⛔ Offline</span></td></tr></table><div class="rule"></div>{% endblock %}
 {% block content %}
-
-<!-- SUSPENDED HEADER -->
-<div style="background:linear-gradient(135deg,#1a1a2e,#2d0a0a);border-radius:12px;padding:24px 20px;text-align:center;margin-bottom:24px;border:1px solid rgba(239,68,68,0.3)">
-  <div style="font-size:40px;margin-bottom:8px">🔒</div>
-  <div style="font-size:18px;font-weight:800;color:#ef4444;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">Your Website Has Been Suspended</div>
-  <div style="font-size:13px;color:rgba(255,255,255,0.55);line-height:1.6">Suspended on {{ suspended_date }} — Visitors are currently unable to access your website</div>
-</div>
 
 <p class="greeting">Hello, {{ client_name }}</p>
 
@@ -16,6 +10,7 @@
 <p><strong>Do not worry — your website data is completely safe.</strong> As soon as we receive and confirm your payment, we will restore your website immediately, usually within a few hours.</p>
 
 <!-- STATUS BREAKDOWN -->
+{% include 'emails/_timeline.html' with tl_site=website_name tl_state='suspended' tl_pct=100 tl_note="Suspended" tl_left=suspended_date tl_lp="Suspended " tl_right="Pay to restore" %}
 <div class="info-box">
   <div class="info-row">
     <span class="info-label">Website Name</span>
@@ -76,7 +71,7 @@
     <div style="background:#3b82f6;color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0">2</div>
     <div>
       <div style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:2px">Send Payment Proof</div>
-      <div style="font-size:13px;color:#1d4ed8">Forward your receipt or bank confirmation via WhatsApp to <strong>{% contact "phone_display" %}</strong> or email <strong>info@jamiitek.co.tz</strong>.</div>
+      <div style="font-size:13px;color:#1d4ed8">Forward your receipt or bank confirmation via WhatsApp to <strong>{% contact "phone_display" %}</strong> or email <strong>info@jamiitek.com</strong>.</div>
     </div>
   </div>
   <div style="background:#faf5ff;border:1px solid #e9d5ff;border-radius:10px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start">

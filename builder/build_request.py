@@ -140,6 +140,14 @@ def fulfill(tx):
 
     def _tell():
         try:
+            from apps.activity import record
+            record('build_request_paid', f'🛠 "Build it for me" paid: {br.business_name} — TSh {br.amount:,}',
+                   actor=('customer', br.name, br.email or br.phone), level='success', amount=br.amount,
+                   rows=[('Customer', f'{br.name} · {br.phone}'), ('Design', br.template_name or '—')],
+                   link='/admin/builder/buildrequest/')
+        except Exception:
+            logger.exception('build_request: activity')
+        try:
             from apps.notify import notify
             notify(f'🛠️ TUKUTENGENEZEE — AMELIPA TZS {br.amount:,}: {br.business_name} ({br.name}, {br.phone}). '
                    f'Template: {br.template_name}. Anza kazi: Admin → Build requests.')
@@ -155,7 +163,7 @@ def fulfill(tx):
                     rows=[('Amount', f'TSh {br.amount:,}'), ('Design', br.template_name)],
                     alert={'kind': 'success', 'title': 'Payment received', 'text': 'Your website is now in our queue.'},
                     button=('Check your request', f'https://www.jamiitek.com/build/{br.token}/'),
-                    category='payment', fail_silently=False)
+                    category='payment', chip=('✓ Paid', 'success'), fail_silently=False)
             except Exception:
                 logger.exception('build_request: email imeshindwa')
     transaction.on_commit(_tell)

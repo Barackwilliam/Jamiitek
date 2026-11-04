@@ -433,7 +433,8 @@ def send_bulk_expiry_warnings():
                     f'Dear {plan.client.name},\n\nYour email hosting for {plan.email_domain} has been '
                     'suspended due to non-payment.\n\nPlease contact JamiiTek to restore your service.',
                     alert={'kind': 'danger', 'title': 'Suspended', 'text': f'{plan.email_domain} email is paused.'},
-                    button=('Open your portal', PORTAL_URL), category='suspension',
+                    button=('Open your portal', PORTAL_URL, 'red'), category='suspension',
+                    chip=('⛔ Suspended', 'danger'),
                 )
             except Exception as e:
                 logger.error(f"[EmailSuspend] {plan.email_domain} — {e}")
@@ -455,7 +456,8 @@ def send_bulk_expiry_warnings():
                         'Please make a payment to avoid service interruption.',
                         rows=[('Domain', plan.email_domain), ('Expires on', plan.end_date.strftime('%d %B %Y')),
                               ('Days left', raw_days)],
-                        button=('Renew now', PORTAL_URL), category='expiry_warning',
+                        button=('Renew now', PORTAL_URL, 'orange'), category='expiry_warning',
+                        chip=(f'⏳ {raw_days} day{"" if raw_days == 1 else "s"} left', 'warning'),
                     )
                     sent += 1
                 except Exception as e:

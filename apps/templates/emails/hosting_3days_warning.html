@@ -1,29 +1,15 @@
 {% extends 'emails/base_email.html' %}
 {% load jt_contact %}
+{% block head %}<table class="head" role="presentation"><tr><td class="label">Urgent: hosting</td><td align="right"><span class="chip chip-danger">🚨 {{ days_left }} day{{ days_left|pluralize }} left</span></td></tr></table><div class="rule"></div>{% endblock %}
 {% block content %}
-
-<!-- HEADER ACCENT: Red/Orange — urgent -->
-<div style="background:linear-gradient(135deg,#fef2f2,#fff1f2);border:2px solid #fca5a5;border-radius:12px;padding:18px 20px;margin-bottom:24px;display:flex;align-items:flex-start;gap:14px">
-  <div style="font-size:28px;line-height:1;flex-shrink:0">🚨</div>
-  <div>
-    <div style="font-size:13px;font-weight:800;color:#991b1b;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">URGENT — {{ days_left }} {% if days_left == 1 %}Day{% else %}Days{% endif %} Until Suspension</div>
-    <div style="font-size:14px;color:#7f1d1d;line-height:1.6">Your hosting for <strong>{{ website_name }}</strong> expires in <strong>{{ days_left }} {% if days_left == 1 %}day{% else %}days{% endif %}</strong>. Your website will be suspended on <strong>{{ expiry_date }}</strong> if payment is not received.</div>
-  </div>
-</div>
 
 <p class="greeting">Hello, {{ client_name }}</p>
 
 <p>This is an <strong>urgent notice</strong> — your website hosting is expiring in just <strong>{{ days_left }} {% if days_left == 1 %}day{% else %}days{% endif %}</strong>. We have not yet received a payment for your hosting renewal.</p>
 <p>If we do not receive payment by <strong>{{ expiry_date }}</strong>, your website will be <strong>automatically suspended</strong> and all visitors will be redirected to a suspension notice page. Your website will remain offline until payment is confirmed.</p>
 
-<!-- COUNTDOWN STYLE BLOCK -->
-<div style="background:#1a1a2e;border-radius:12px;padding:20px;text-align:center;margin:20px 0">
-  <div style="font-size:48px;font-weight:900;color:#ef4444;line-height:1;letter-spacing:-2px">{{ days_left }}</div>
-  <div style="font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:3px;text-transform:uppercase;margin-top:4px">{% if days_left == 1 %}Day Remaining{% else %}Days Remaining{% endif %}</div>
-  <div style="font-size:13px;color:rgba(255,255,255,0.7);margin-top:10px">Website suspends on <strong style="color:#ef4444">{{ expiry_date }}</strong></div>
-</div>
-
 <!-- HOSTING DETAILS -->
+{% include 'emails/_timeline.html' with tl_site=website_name tl_state='urgent' tl_pct=92 tl_note="Ends soon" tl_left="Today" tl_right=expiry_date tl_rp="Ends " %}
 <div class="info-box">
   <div class="info-row">
     <span class="info-label">Website Name</span>
@@ -84,7 +70,7 @@
   <strong>⚡ After Payment — What to Do</strong>
   After making the payment, <strong>do not wait</strong> — immediately contact us with your payment proof so we can process your renewal right away and avoid suspension:<br><br>
   📱 <strong>WhatsApp:</strong> {% contact "phone_display" %}<br>
-  ✉ <strong>Email:</strong> info@jamiitek.co.tz<br><br>
+  ✉ <strong>Email:</strong> info@jamiitek.com<br><br>
   We process renewals within a few hours of receiving payment confirmation.
 </div>
 

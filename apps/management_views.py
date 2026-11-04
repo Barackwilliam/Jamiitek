@@ -779,7 +779,7 @@ def _send_domain_notification(domain, renewed_until):
             rows=[('Domain', domain.domain_name), ('Valid until', renewed_until),
                   ('Registrar', domain.get_registrar_display())],
             alert={'kind': 'success', 'title': 'Renewed', 'text': 'Your domain stays active.'},
-            category='renewal',
+            category='renewal', chip=('✓ Renewed', 'success'),
         )
     except Exception:
         pass
@@ -884,7 +884,7 @@ def email_hosting_payment(request, pk):
                 f'Dear {plan.client.name},\n\nWe have received your email hosting payment. Thank you!',
                 rows=[('Plan', plan.plan_name), ('Domain', plan.email_domain), ('Amount', f'TZS {amount}'),
                       ('Valid until', plan.end_date)],
-                category='payment',
+                category='payment', chip=('✓ Paid', 'success'),
             )
         except Exception:
             pass
@@ -907,7 +907,7 @@ def email_hosting_suspend(request, pk):
             + (f'\n\n{plan.suspension_message}' if plan.suspension_message else '')
             + '\n\nContact us to restore your service.',
             alert={'kind': 'danger', 'title': 'Suspended', 'text': f'{plan.email_domain} email is paused.'},
-            category='suspension',
+            category='suspension', chip=('⛔ Suspended', 'danger'),
         )
     messages.success(request, 'Email plan suspended.')
     return redirect('email_hosting_detail', pk=plan.pk)
@@ -926,7 +926,7 @@ def email_hosting_restore(request, pk):
             f'Dear {plan.client.name},\n\nYour email hosting for {plan.email_domain} has been restored and is '
             'working again.',
             alert={'kind': 'success', 'title': 'Restored', 'text': f'{plan.email_domain} email is active.'},
-            category='restored',
+            category='restored', chip=('✓ Active', 'success'),
         )
     messages.success(request, 'Email plan restored.')
     return redirect('email_hosting_detail', pk=plan.pk)

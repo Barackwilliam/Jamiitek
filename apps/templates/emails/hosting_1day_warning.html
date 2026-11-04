@@ -1,5 +1,6 @@
 {% extends 'emails/base_email.html' %}
 {% load jt_contact %}
+{% block head %}<table class="head" role="presentation"><tr><td class="label">Final notice</td><td align="right"><span class="chip chip-danger">🔴 Final notice</span></td></tr></table><div class="rule"></div>{% endblock %}
 {% block content %}
 
 {% comment %}
@@ -11,18 +12,6 @@ alipokea barua ya siku 3, yenye kichwa kinachosema "expires in 3 days".
 Hapa hakuna namba iliyoandikwa kwa mkono — kila kitu kinatoka
 `days_left`, kwa hiyo ujumbe ni wa kweli daima.
 {% endcomment %}
-
-<!-- ONYO LA MWISHO -->
-<div style="background:linear-gradient(135deg,#450a0a,#7f1d1d);border-radius:12px;padding:20px;margin-bottom:24px;text-align:center">
-  <div style="font-size:11px;font-weight:800;color:#fca5a5;text-transform:uppercase;letter-spacing:2px">Final Notice</div>
-  <div style="font-size:19px;font-weight:800;color:#ffffff;margin-top:8px;line-height:1.4">
-    {% if days_left <= 0 %}
-      {{ website_name }} will be suspended today
-    {% else %}
-      {{ website_name }} will be suspended {% if days_left == 1 %}tomorrow{% else %}in {{ days_left }} days{% endif %}
-    {% endif %}
-  </div>
-</div>
 
 <p class="greeting">Hello, {{ client_name }}</p>
 
@@ -42,6 +31,7 @@ Hapa hakuna namba iliyoandikwa kwa mkono — kila kitu kinatoka
 </div>
 
 <!-- MAELEZO -->
+{% include 'emails/_timeline.html' with tl_site=website_name tl_state='urgent' tl_pct=98 tl_note="Last day" tl_left="Today" tl_right=expiry_date tl_rp="Ends " %}
 <div class="info-box">
   <div class="info-row">
     <span class="info-label">Website Name</span>

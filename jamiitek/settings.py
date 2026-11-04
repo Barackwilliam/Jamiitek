@@ -125,6 +125,8 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # Nani alifanya kitendo — kwa kumbukumbu ya matukio (apps/activity.py)
+    'apps.activity.CurrentUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     # Staff lazima wapite 2FA kabla ya ukurasa wowote (apps/two_factor.py)
     'apps.two_factor.StaffTwoFactorMiddleware',
@@ -312,6 +314,18 @@ else:
     EMAIL_HOST_USER = 'info@jamiitek.com'
     DEFAULT_FROM_EMAIL = 'JamiiTek <info@jamiitek.com>'
  
+# Kila email ya mteja inafuatwa na taarifa fupi kwa mmiliki (apps/email_backend.OwnerNoticeBackend):
+# "Asha ametumiwa: ...". Backend halisi (Brevo / SMTP / console) inatumika ndani yake.
+# OWNER_NOTICE_EMAIL tupu = taarifa zimezimwa.
+EMAIL_REAL_BACKEND = EMAIL_BACKEND
+EMAIL_BACKEND = 'apps.email_backend.OwnerNoticeBackend'
+OWNER_NOTICE_EMAIL = os.getenv('OWNER_NOTICE_EMAIL', 'info@jamiitek.com').strip()
+# Email za siku zikifika hapa, taarifa za moja moja zinasimama; mmiliki anapata muhtasari mmoja baada ya
+# siku (apps/management/commands/owner_notice_summary.py). 0 = hakuna kikomo.
+OWNER_NOTICE_DAILY_LIMIT = int(os.getenv('OWNER_NOTICE_DAILY_LIMIT', '150') or 0)
+# Muhtasari wa matukio ya siku (apps/activity.py, amri activity_digest): saa ya kutuma (saa za Tanzania).
+ACTIVITY_DIGEST_HOUR = int(os.getenv('ACTIVITY_DIGEST_HOUR', '20') or 20)
+
 PORTAL_BASE_URL = os.getenv('PORTAL_BASE_URL', 'https://jamiitek.com/portal/')
  
 # ── Cloudinary ─────────────────────────────────────────

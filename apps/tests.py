@@ -1305,3 +1305,131 @@ class CustomerNotificationsGoToCustomersTest(TestCase):
         self.assertEqual(len(customer), 1)
         self.assertIn('https://ashafashion.co.tz', customer[0].body)
         self.assertIn('mteja amejulishwa', owner_note.call_args.args[0])
+
+
+@override_settings(EMAIL_BACKEND='apps.email_backend.OwnerNoticeBackend',
+                   EMAIL_REAL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+                   OWNER_NOTICE_EMAIL='info@jamiitek.com', EMAIL_HOST_USER='info@jamiitek.com')
+class OwnerNoticeTest(TestCase):
+    """Kila email ya mteja: mmiliki anapata taarifa fupi 'X ametumiwa: ...' — bila maudhui ya barua."""
+
+    def test_customer_email_is_followed_by_a_short_notice_to_the_owner(self):
+        from .models import Client
+        from apps.utils.customer_email import send_customer_email
+        Client.objects.create(name='Asha Mussa', email='asha@biashara.co.tz')
+        send_customer_email('asha@biashara.co.tz', 'Reset your password',
+                            'Hello,\n\nUse this link: https://www.jamiitek.com/reset/SECRET-TOKEN/', category='security')
+        self.assertEqual([m.to for m in mail.outbox], [['asha@biashara.co.tz'], ['info@jamiitek.com']])
+        notice = mail.outbox[1]
+        self.assertIn('Asha Mussa was sent: Reset your password', notice.subject)
+        self.assertIn('Account security', notice.body)
+        self.assertIn('asha@biashara.co.tz', notice.body)
+        self.assertNotIn('SECRET-TOKEN', notice.body + notice.alternatives[0][0])   # maudhui hayaonyeshwi
+
+    def test_no_notice_for_internal_mail_or_when_the_owner_already_has_a_copy(self):
+        from django.core.mail import EmailMessage, send_mail
+        send_mail('[JamiiTek] Bot down', 'x', None, ['info@jamiitek.com'])
+        EmailMessage('Receipt', 'x', None, ['juma@example.com'], bcc=['info@jamiitek.com']).send()
+        self.assertEqual(len(mail.outbox), 2)                 # hakuna taarifa za ziada
+
+    @override_settings(OWNER_NOTICE_EMAIL='')
+    def test_notices_can_be_turned_off(self):
+        from django.core.mail import send_mail
+        send_mail('Hello', 'x', None, ['juma@example.com'])
+        self.assertEqual(len(mail.outbox), 1)
+
+
+@override_settings(EMAIL_BACKEND='apps.email_backend.OwnerNoticeBackend',
+                   EMAIL_REAL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+                   OWNER_NOTICE_EMAIL='info@jamiitek.com', EMAIL_HOST_USER='info@jamiitek.com',
+                   OWNER_NOTICE_DAILY_LIMIT=4)
+class OwnerNoticeDailyLimitTest(TestCase):
+    """Email za siku zikifika kikomo: taarifa za moja moja zinasimama, mmiliki anapata muhtasari mmoja."""
+
+    def test_notices_pause_at_the_limit_and_a_summary_follows(self):
+        from datetime import timedelta
+        from django.core.management import call_command
+        from django.utils import timezone
+        from .models import OwnerNoticeDay
+        from apps.utils.customer_email import send_customer_email
+        for i in range(4):
+            send_customer_email(f'mteja{i}@example.com', f'Reminder {i}', 'Hello,\n\nHi.', category='renewal')
+        to_owner = [m for m in mail.outbox if m.to == ['info@jamiitek.com']]
+        self.assertEqual(len([m for m in mail.outbox if m.to != ['info@jamiitek.com']]), 4)   # wateja wote
+        self.assertEqual(sum('was sent' in m.subject for m in to_owner), 2)        # kabla ya kikomo
+        self.assertEqual(sum('paused for today' in m.subject for m in to_owner), 1)  # mara moja tu
+        day = OwnerNoticeDay.objects.get()
+        self.assertEqual([h['subject'] for h in day.held], ['Reminder 2', 'Reminder 3'])
+
+        call_command('owner_notice_summary', quiet=True)                            # leo bado haijaisha
+        self.assertFalse(any('Summary' in m.subject for m in mail.outbox))
+        OwnerNoticeDay.objects.filter(pk=day.pk).update(date=timezone.localdate() - timedelta(days=1))
+        call_command('owner_notice_summary', quiet=True)
+        call_command('owner_notice_summary', quiet=True)                            # haurudiwi
+        summaries = [m for m in mail.outbox if 'Summary: 2 customer emails' in m.subject]
+        self.assertEqual(len(summaries), 1)
+        self.assertEqual(summaries[0].to, ['info@jamiitek.com'])
+        self.assertIn('mteja3@example.com', summaries[0].body)
+        self.assertIn('Reminder 3', summaries[0].body)
+
+
+@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend', ACTIVITY_EMAIL_SYNC=True,
+                   OWNER_NOTICE_EMAIL='info@jamiitek.com', ACTIVITY_DIGEST_HOUR=20)
+class ActivityLogTest(TestCase):
+    """Kila tukio la msingi linarekodiwa (nani: mteja / staff / mfumo); muhimu yanatumwa papo hapo."""
+
+    def test_new_account_is_logged_as_a_customer_and_emailed_right_away(self):
+        from django.contrib.auth.models import User
+        from .models import ActivityEvent
+        with self.captureOnCommitCallbacks(execute=True):
+            User.objects.create_user('neema', 'neema@biashara.co.tz')
+        e = ActivityEvent.objects.get(action='account_created')
+        self.assertEqual((e.actor_kind, e.mode), ('customer', 'instant'))
+        self.assertIsNotNone(e.emailed_at)
+        self.assertEqual(mail.outbox[-1].to, ['info@jamiitek.com'])
+        self.assertIn('New account: neema', mail.outbox[-1].subject)
+        self.assertIn('Customer', mail.outbox[-1].alternatives[0][0])
+
+    def test_payment_states_and_staff_actions(self):
+        from decimal import Decimal
+        from django.contrib.admin.models import DELETION, LogEntry
+        from django.contrib.auth.models import User
+        from django.contrib.contenttypes.models import ContentType
+        from .models import ActivityEvent, PesapalTransaction
+        tx = PesapalTransaction.objects.create(purpose='invoice', target_id='T1', amount=Decimal('150000'),
+                                               first_name='Asha', last_name='Mussa', email='asha@x.co.tz')
+        with self.captureOnCommitCallbacks(execute=True):
+            tx.status = 'completed'
+            tx.save()
+        paid = ActivityEvent.objects.get(action='payment_completed')
+        self.assertEqual((paid.actor_kind, paid.amount), ('system', Decimal('150000')))
+        self.assertIn('Asha Mussa paid TZS 150,000', mail.outbox[-1].subject)
+
+        boss = User.objects.create_user('william', 'w@jamiitek.com', is_staff=True)
+        with self.captureOnCommitCallbacks(execute=True):
+            LogEntry.objects.create(user=boss, content_type=ContentType.objects.get_for_model(User),
+                                    object_id='9', object_repr='old-user', action_flag=DELETION)
+        e = ActivityEvent.objects.get(action='admin_delete')
+        self.assertEqual((e.actor_kind, e.actor_name), ('staff', 'william'))
+        self.assertIn('Deleted in Admin', mail.outbox[-1].subject)
+
+    def test_rules_choose_instant_digest_or_off_and_the_digest_groups_by_actor(self):
+        from django.core.management import call_command
+        from django.contrib.auth.models import User
+        from .activity import record
+        from .models import ActivityRule
+        ActivityRule.objects.create(action='account_created', mode='off')
+        with self.captureOnCommitCallbacks(execute=True):
+            User.objects.create_user('juma', 'juma@example.com')                 # off: hakuna email
+            record('customer_login', 'Asha signed in', actor=('customer', 'Asha', 'a@x.co.tz'))   # digest
+            record('bot_disconnected', 'AshaBot disconnected', actor='system', level='danger')    # instant
+        self.assertEqual([m.subject for m in mail.outbox], ['AshaBot disconnected'])
+        call_command('activity_digest', force=True, quiet=True)
+        digest = mail.outbox[-1]
+        self.assertIn('Today on JamiiTek — 2 actions', digest.subject)        # 'off' haimo
+        html = digest.alternatives[0][0]
+        for text in ('👤 Customers', 'Asha signed in', '🤖 System', 'AshaBot disconnected', 'Problems'):
+            self.assertIn(text, html)
+        self.assertNotIn('juma', html)
+        call_command('activity_digest', quiet=True)                           # haurudiwi leo
+        self.assertEqual(sum('Today on JamiiTek' in m.subject for m in mail.outbox), 1)

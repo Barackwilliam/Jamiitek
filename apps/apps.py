@@ -20,3 +20,6 @@ class AppsConfig(AppConfig):
         # Kurasa za umma: cache ya RAM inafutika maudhui yakibadilishwa
         from .public_cache import connect_signals
         connect_signals()
+        # Kumbukumbu ya matukio (Admin -> Activity) na email kwa mmiliki
+        from .activity import connect as connect_activity
+        connect_activity()

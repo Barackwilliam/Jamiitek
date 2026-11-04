@@ -1,4 +1,5 @@
 {% extends 'emails/base_email.html' %}
+{% block head %}<table class="head" role="presentation"><tr><td class="label">Welcome</td><td align="right"><span class="chip chip-info">🚀 Account ready</span></td></tr></table><div class="rule"></div>{% endblock %}
 {% block content %}
 <p class="greeting">Welcome to JamiiTek, {{ client_name }}! 🚀</p>
 

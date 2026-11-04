@@ -71,6 +71,8 @@ SCHEDULE = {
     'shop_reminders':            ('jamiitek:task:shop_reminders',      15 * MINUTE),
     'check_custom_domains':      ('jamiitek:task:custom_domains',      15 * MINUTE),
     'wafanyakazi':               ('jamiitek:task:wafanyakazi',         30 * MINUTE),
+    'owner_notice_summary':      ('jamiitek:task:owner_notice_summary', 30 * MINUTE),
+    'activity_digest':           ('jamiitek:task:activity_digest',     30 * MINUTE),
     'send_digest':               ('jamiitek:task:send_digest',         24 * 60 * MINUTE),
     'prune_site_imports':        ('jamiitek:task:prune_site_imports',  24 * 60 * MINUTE),
     'builder_hosting':           ('jamiitek:task:builder_hosting',     24 * 60 * MINUTE),
@@ -84,7 +86,7 @@ SCHEDULE = {
 
 PERIODIC = ('sync_integrations', 'process_scheduled_actions', 'check_alerts',
             'check_bot_sessions', 'check_handoffs', 'shop_reminders', 'check_custom_domains',
-            'wafanyakazi')
+            'wafanyakazi', 'owner_notice_summary', 'activity_digest')
 
 _thread_lock = threading.Lock()
 _running = False           # kazi za kila siku
@@ -177,6 +179,11 @@ def _run_periodic_in_background():
         # Timu ya wafanyakazi wa AI (apps/wafanyakazi). Wa mwisho kwa
         # sababu inaweza kuita AI — kazi za afya zisisubiri.
         _run_command('wafanyakazi')
+
+        # Muhtasari wa email za wateja zilizozidi kikomo cha taarifa za siku (apps/email_backend.py)
+        _run_command('owner_notice_summary', quiet=True)
+        # Muhtasari wa matukio ya siku (saa ACTIVITY_DIGEST_HOUR) — apps/activity.py
+        _run_command('activity_digest', quiet=True)
     finally:
         _close_connection()
         with _thread_lock:
