@@ -1097,3 +1097,16 @@ class NewsletterSubscriberAdmin(admin.ModelAdmin):
     list_display = ('email', 'source', 'is_active', 'created_at')
     list_filter = ('is_active',)
     search_fields = ('email',)
+
+
+from .models import OwnerNoticeDay  # noqa: E402
+
+
+@admin.register(OwnerNoticeDay)
+class OwnerNoticeDayAdmin(admin.ModelAdmin):
+    list_display = ('date', 'sent_total', 'notices', 'held_count', 'summary_sent_at')
+    readonly_fields = ('date', 'sent_total', 'notices', 'held', 'limit_notice_sent', 'summary_sent_at')
+
+    @admin.display(description='In summary')
+    def held_count(self, obj):
+        return len(obj.held or [])

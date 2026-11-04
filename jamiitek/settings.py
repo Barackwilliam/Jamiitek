@@ -318,6 +318,9 @@ else:
 EMAIL_REAL_BACKEND = EMAIL_BACKEND
 EMAIL_BACKEND = 'apps.email_backend.OwnerNoticeBackend'
 OWNER_NOTICE_EMAIL = os.getenv('OWNER_NOTICE_EMAIL', 'info@jamiitek.com').strip()
+# Email za siku zikifika hapa, taarifa za moja moja zinasimama; mmiliki anapata muhtasari mmoja baada ya
+# siku (apps/management/commands/owner_notice_summary.py). 0 = hakuna kikomo.
+OWNER_NOTICE_DAILY_LIMIT = int(os.getenv('OWNER_NOTICE_DAILY_LIMIT', '150') or 0)
 
 PORTAL_BASE_URL = os.getenv('PORTAL_BASE_URL', 'https://jamiitek.com/portal/')
  

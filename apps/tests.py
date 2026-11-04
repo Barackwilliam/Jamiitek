@@ -1337,3 +1337,37 @@ class OwnerNoticeTest(TestCase):
         from django.core.mail import send_mail
         send_mail('Hello', 'x', None, ['juma@example.com'])
         self.assertEqual(len(mail.outbox), 1)
+
+
+@override_settings(EMAIL_BACKEND='apps.email_backend.OwnerNoticeBackend',
+                   EMAIL_REAL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
+                   OWNER_NOTICE_EMAIL='info@jamiitek.com', EMAIL_HOST_USER='info@jamiitek.com',
+                   OWNER_NOTICE_DAILY_LIMIT=4)
+class OwnerNoticeDailyLimitTest(TestCase):
+    """Email za siku zikifika kikomo: taarifa za moja moja zinasimama, mmiliki anapata muhtasari mmoja."""
+
+    def test_notices_pause_at_the_limit_and_a_summary_follows(self):
+        from datetime import timedelta
+        from django.core.management import call_command
+        from django.utils import timezone
+        from .models import OwnerNoticeDay
+        from apps.utils.customer_email import send_customer_email
+        for i in range(4):
+            send_customer_email(f'mteja{i}@example.com', f'Reminder {i}', 'Hello,\n\nHi.', category='renewal')
+        to_owner = [m for m in mail.outbox if m.to == ['info@jamiitek.com']]
+        self.assertEqual(len([m for m in mail.outbox if m.to != ['info@jamiitek.com']]), 4)   # wateja wote
+        self.assertEqual(sum('was sent' in m.subject for m in to_owner), 2)        # kabla ya kikomo
+        self.assertEqual(sum('paused for today' in m.subject for m in to_owner), 1)  # mara moja tu
+        day = OwnerNoticeDay.objects.get()
+        self.assertEqual([h['subject'] for h in day.held], ['Reminder 2', 'Reminder 3'])
+
+        call_command('owner_notice_summary', quiet=True)                            # leo bado haijaisha
+        self.assertFalse(any('Summary' in m.subject for m in mail.outbox))
+        OwnerNoticeDay.objects.filter(pk=day.pk).update(date=timezone.localdate() - timedelta(days=1))
+        call_command('owner_notice_summary', quiet=True)
+        call_command('owner_notice_summary', quiet=True)                            # haurudiwi
+        summaries = [m for m in mail.outbox if 'Summary: 2 customer emails' in m.subject]
+        self.assertEqual(len(summaries), 1)
+        self.assertEqual(summaries[0].to, ['info@jamiitek.com'])
+        self.assertIn('mteja3@example.com', summaries[0].body)
+        self.assertIn('Reminder 3', summaries[0].body)

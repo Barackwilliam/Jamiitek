@@ -316,6 +316,7 @@ class OwnerNoticeBackend(BaseEmailBackend):
             n = self.inner.send_messages([message]) or 0
             sent += n
             if n:
+                _count(n)
                 try:
                     self._notice(message)
                 except Exception:
@@ -344,16 +345,84 @@ class OwnerNoticeBackend(BaseEmailBackend):
         first = _who(customers[0]) or customers[0]
         subject = f'📤 {first} was sent: {(message.subject or "")[:90]}'
         when = timezone.localtime().strftime('%d %b %Y, %H:%M')
-        text, html = render_customer_email(
-            subject,
-            f'Hello,\n\nA customer email has just been sent from the system.',
-            rows=[('To', ', '.join(people)), ('About', kind_name), ('Subject', message.subject or '—'),
-                  ('Sent', f'{when} (EAT)')],
-            label='Sent to a customer', chip=('📤 Sent', 'info'),
-        )
+
+        # Kikomo cha siku: email za leo zikifika OWNER_NOTICE_DAILY_LIMIT, taarifa za moja moja zinasimama
+        # na zinaingia kwenye muhtasari wa siku (amri owner_notice_summary). Taarifa moja ya kujulisha
+        # kwamba kikomo kimefikiwa inatumwa mara ya kwanza tu.
+        if _over_limit():
+            first_time = _hold({'to': ', '.join(people), 'about': kind_name,
+                                'subject': (message.subject or '')[:200], 'time': when})
+            if first_time:
+                self._send_owner(owner, '📊 Customer email notices paused for today — summary coming',
+                                 f'Hello,\n\nToday the system has already sent {_limit()} emails. To save the daily '
+                                 'email allowance, the individual "was sent" notices stop here for today.\n\n'
+                                 'You will get one summary of every customer email sent after this point, '
+                                 'shortly after midnight.',
+                                 label='Daily limit reached', chip=('⏸ Paused', 'warning'))
+                _count(1)
+            return
+        self._send_owner(owner, subject, 'Hello,\n\nA customer email has just been sent from the system.',
+                         rows=[('To', ', '.join(people)), ('About', kind_name),
+                               ('Subject', message.subject or '—'), ('Sent', f'{when} (EAT)')],
+                         label='Sent to a customer', chip=('📤 Sent', 'info'))
+        _count(1, notice=True)
+
+    def _send_owner(self, owner, subject, body, **kw):
         from django.core.mail import EmailMultiAlternatives
+        from apps.utils.customer_email import render_customer_email
+        text, html = render_customer_email(subject, body, **kw)
         note = EmailMultiAlternatives(subject=subject[:200], body=text, to=[owner],
                                       from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
                                       headers={'X-JT-Owner-Notice': '1', 'X-JT-Category': 'owner_notice'})
         note.attach_alternative(html, 'text/html')
-        self.inner.send_messages([note])
+        return self.inner.send_messages([note])
+
+
+# ── Hesabu ya siku (OwnerNoticeDay) ────────────────────────────────
+
+def _limit():
+    return int(getattr(settings, 'OWNER_NOTICE_DAILY_LIMIT', 150) or 0)
+
+
+def _today_row():
+    from django.utils import timezone
+    from apps.models import OwnerNoticeDay
+    row, _ = OwnerNoticeDay.objects.get_or_create(date=timezone.localdate())
+    return row
+
+
+def _count(n, notice=False):
+    """Hesabu email zilizotumwa leo. Kosa hapa halivunji utumaji."""
+    try:
+        from django.db.models import F
+        from apps.models import OwnerNoticeDay
+        row = _today_row()
+        upd = {'sent_total': F('sent_total') + n}
+        if notice:
+            upd['notices'] = F('notices') + 1
+        OwnerNoticeDay.objects.filter(pk=row.pk).update(**upd)
+    except Exception:
+        logger.exception('Hesabu ya email za leo haikusasishwa')
+
+
+def _over_limit():
+    limit = _limit()
+    if not limit:
+        return False
+    try:
+        return _today_row().sent_total >= limit
+    except Exception:
+        return False
+
+
+def _hold(item):
+    """Weka email kwenye muhtasari wa leo. Inarudisha True ikiwa ni ya kwanza (taarifa ya kikomo itumwe)."""
+    from django.db import transaction
+    from apps.models import OwnerNoticeDay
+    with transaction.atomic():
+        row = OwnerNoticeDay.objects.select_for_update().get(pk=_today_row().pk)
+        row.held = (list(row.held or []) + [item])[-1000:]
+        first = not row.limit_notice_sent
+        row.limit_notice_sent = True
+        row.save(update_fields=['held', 'limit_notice_sent'])
+    return first

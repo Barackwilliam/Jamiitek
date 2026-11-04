@@ -2159,3 +2159,25 @@ class NewsletterSubscriber(models.Model):
 
     def __str__(self):
         return self.email
+
+
+class OwnerNoticeDay(models.Model):
+    """Hesabu ya email za siku moja (apps/email_backend.OwnerNoticeBackend).
+
+    Mpango wa bure wa Brevo una email 300 kwa siku, na kila email ya mteja inafuatwa na taarifa kwa mmiliki.
+    Email za siku zikifika OWNER_NOTICE_DAILY_LIMIT (150), taarifa za moja moja zinasimama: zinahifadhiwa
+    hapa (`held`) na mmiliki anapata muhtasari mmoja baada ya siku kuisha (amri owner_notice_summary)."""
+    date = models.DateField(unique=True)
+    sent_total = models.PositiveIntegerField(default=0, help_text="Email zote zilizotumwa siku hii")
+    notices = models.PositiveIntegerField(default=0, help_text="Taarifa za moja moja zilizotumwa kwa mmiliki")
+    held = models.JSONField(default=list, blank=True, help_text="Email za wateja zilizosubiri muhtasari")
+    limit_notice_sent = models.BooleanField(default=False)
+    summary_sent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-date']
+        verbose_name = 'Owner email notices (per day)'
+        verbose_name_plural = 'Owner email notices (per day)'
+
+    def __str__(self):
+        return f'{self.date}: {self.sent_total} sent, {len(self.held or [])} in summary'
