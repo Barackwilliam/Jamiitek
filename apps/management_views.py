@@ -625,10 +625,6 @@ def management_login(request):
             error = lockout_message(request)
         else:
             error = 'Invalid credentials or insufficient permissions.'
-            from apps.security import attempts_left_message
-            warn = attempts_left_message(request)
-            if warn:
-                error = f'{error} {warn}'
     return render(request, 'management/login.html', {
         'error': error, 'next': request.GET.get('next', ''),
     })

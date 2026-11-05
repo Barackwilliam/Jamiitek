@@ -710,12 +710,20 @@ class StaffDeviceLockoutTest(TestCase):
         self.assertTrue(self.client.cookies.get(DEVICE_COOKIE).value)
 
     def test_third_wrong_attempt_locks_this_device_even_for_the_right_password(self):
-        self.assertContains(self._staff(self.wrong), '2 attempts left')
-        self.assertContains(self._staff(self.wrong), '1 attempt left')
-        self.assertContains(self._staff(self.wrong), 'locked for 30 minutes')
+        self._staff(self.wrong); self._staff(self.wrong)
+        self.assertContains(self._staff(self.wrong), 'Too many failed sign-in attempts')
         r = self._staff(self.pw)
-        self.assertContains(r, 'Too many incorrect attempts on this device')
+        self.assertContains(r, 'Too many failed sign-in attempts')
         self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_messages_do_not_explain_the_lock(self):
+        # Mshambulizi asijue kwamba ni kifaa tu kilichofungwa, wala amebaki na majaribio mangapi
+        import re
+        pages = [self._staff(self.wrong), self._staff(self.wrong), self._staff(self.wrong), self._staff(self.pw)]
+        for r in pages:
+            msg = re.search(r'class="msg"[^>]*>(.*?)</div>', r.content.decode(), re.S).group(1).lower()
+            for leak in ('device', 'attempt left', 'attempts left', 'minute'):
+                self.assertNotIn(leak, msg)
 
     def test_other_device_of_the_same_staff_still_signs_in(self):
         from django.test import Client
@@ -749,7 +757,8 @@ class StaffDeviceLockoutTest(TestCase):
         for _ in range(3):
             self.client.post('/portal/login/', {'username': 'mkuu', 'password': self.wrong})
         r = self.client.post('/portal/login/', {'username': 'mkuu', 'password': self.pw})
-        self.assertContains(r, 'Too many incorrect attempts on this device')
+        self.assertContains(r, 'Too many failed sign-in attempts')
+        self.assertNotIn('_auth_user_id', self.client.session)
 
     def test_password_reset_clears_the_lock_on_this_device(self):
         from .security import clear_staff_device_lock, staff_device_locked_until

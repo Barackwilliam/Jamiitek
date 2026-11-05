@@ -120,8 +120,6 @@ def _count_staff_device_failure(request, username):
     except ValueError:
         cache.set(count_key, 1, STAFF_DEVICE_LOCK_SECONDS)
         count = 1
-    if request is not None:
-        request.login_attempts_left = max(STAFF_DEVICE_MAX - count, 0)
     if count >= STAFF_DEVICE_MAX:
         until = time.time() + STAFF_DEVICE_LOCK_SECONDS
         cache.set(lock_key, until, STAFF_DEVICE_LOCK_SECONDS)
@@ -129,7 +127,6 @@ def _count_staff_device_failure(request, username):
         if request is not None:
             request.login_locked = True
             request.login_locked_device = True
-            request.login_locked_until = until
         log.warning('Staff device lockout started (30 min): user=%r device=%s ip=%s',
                     username, device_id(request)[:12], get_client_ip(request))
 
@@ -149,26 +146,9 @@ def login_locked(request, username):
 
 
 def lockout_message(request=None):
-    if request is not None and getattr(request, 'login_locked_device', False):
-        mins = 30
-        until = getattr(request, 'login_locked_until', None)
-        if until:
-            mins = max(1, int((until - time.time() + 59) // 60))
-        return (f'Too many incorrect attempts on this device. For your security, signing in '
-                f'from this device is locked for {mins} minute{"s" if mins != 1 else ""}. '
-                'Try again later, or reset your password at /account/password-reset/.')
-    return ('Too many failed sign-in attempts. For your security this account '
-            'is locked for 15 minutes. Try again later, or reset your password at '
-            '/account/password-reset/ to unlock it now.')
-
-
-def attempts_left_message(request):
-    """Onyo la kabla ya kufungwa (staff): "1 attempt left …". None kama halihitajiki."""
-    left = getattr(request, 'login_attempts_left', None)
-    if left is None or left <= 0 or left >= STAFF_DEVICE_MAX:
-        return None
-    return (f'{left} attempt{"s" if left != 1 else ""} left before sign-in from this device '
-            'is locked for 30 minutes.')
+    """Ujumbe mmoja mfupi kwa kila aina ya kufuli. Kwa makusudi HAUSEMI ni kifaa, akaunti au IP,
+    wala muda uliobaki — maelezo hayo yangemsaidia mshambulizi kujua jinsi ya kuzunguka kufuli."""
+    return 'Too many failed sign-in attempts. Please try again later.'
 
 
 class ThrottledModelBackend(ModelBackend):
@@ -182,7 +162,6 @@ class ThrottledModelBackend(ModelBackend):
             if until:
                 request.login_locked = True
                 request.login_locked_device = True
-                request.login_locked_until = until
                 log.warning('Login blocked (staff device locked): user=%r ip=%s',
                             username, get_client_ip(request))
                 raise PermissionDenied

@@ -199,10 +199,6 @@ def portal_login(request):
                 error = lockout_message(request)
             else:
                 error = 'Invalid username or password.'
-                from apps.security import attempts_left_message
-                warn = attempts_left_message(request)   # akaunti za staff tu
-                if warn:
-                    error = f'{error} {warn}'
 
     return render(request, 'portal/login.html', {
         'error': error, 'next': request.GET.get('next', ''),
