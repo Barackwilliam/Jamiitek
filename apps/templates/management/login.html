@@ -1,94 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Command Access — JamiiTek</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/fontawesome.min.css" rel="stylesheet" media="print" onload="this.media='all'">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/solid.min.css" rel="stylesheet" media="print" onload="this.media='all'">
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    :root{--bg:#050810;--cyan:#00d4ff;--purple:#8b5cf6;--green:#00ff88;--red:#ff3b5c;--border:rgba(255,255,255,0.07);--text:rgba(255,255,255,0.85);--text-2:rgba(255,255,255,0.4);--mono:'JetBrains Mono',monospace;--head:'Syne',sans-serif;--body:'Space Grotesk',sans-serif}
-    body{font-family:var(--body);background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
-    /* Grid */
-    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.04) 1px,transparent 1px);background-size:50px 50px;pointer-events:none}
-    /* Glow orbs */
-    .orb{position:fixed;border-radius:50%;filter:blur(80px);pointer-events:none;animation:drift 8s ease-in-out infinite}
-    .orb-1{width:400px;height:400px;background:rgba(0,212,255,0.06);top:-100px;left:-100px;animation-delay:0s}
-    .orb-2{width:300px;height:300px;background:rgba(139,92,246,0.08);bottom:-50px;right:-50px;animation-delay:-4s}
-    @keyframes drift{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(30px,20px) scale(1.05);}}
-    /* Scan line */
-    .scan{position:fixed;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(0,212,255,0.4),transparent);animation:scan 5s linear infinite;pointer-events:none}
-    @keyframes scan{from{top:0}to{top:100%}}
+{% extends 'auth/_shell.html' %}
+{% block title %}Command Access — JamiiTek{% endblock %}
+{% block tag %}Staff{% endblock %}
+{% block form %}
+<h1>Staff access</h1>
+<p class="sub">Authentication required for the management panel.</p>
 
-    .container{position:relative;z-index:10;width:100%;max-width:420px;padding:20px}
-    .card{background:rgba(255,255,255,0.025);border:1px solid rgba(0,212,255,0.15);border-radius:20px;padding:40px;backdrop-filter:blur(20px);box-shadow:0 24px 80px rgba(0,0,0,0.5),0 0 60px rgba(0,212,255,0.04)}
-    .logo{font-family:var(--head);font-size:28px;font-weight:800;background:linear-gradient(135deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px}
-    .tag{font-family:var(--mono);font-size:11px;color:var(--text-2);letter-spacing:2px;text-transform:uppercase;margin-bottom:28px;display:flex;align-items:center;gap:8px}
-    .tag::before,.tag::after{content:'';flex:1;height:1px;background:var(--border)}
-    h1{font-family:var(--head);font-size:22px;font-weight:800;color:var(--text);margin-bottom:5px}
-    p.sub{font-size:13.5px;color:var(--text-2);margin-bottom:28px}
-    .f-group{margin-bottom:18px}
-    .f-label{display:block;font-family:var(--mono);font-size:10px;font-weight:600;color:rgba(0,212,255,0.6);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:7px}
-    .f-input{width:100%;padding:11px 14px;background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.1);border-radius:10px;font-family:var(--body);font-size:14px;color:var(--text);outline:none;transition:all 0.2s}
-    .f-input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,212,255,0.1);background:rgba(255,255,255,0.06)}
-    .f-input::placeholder{color:rgba(255,255,255,0.2)}
-    .f-pw{position:relative}
-    .f-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,0.3);cursor:pointer;font-size:15px;padding:4px;transition:color 0.2s}
-    .f-eye:hover{color:var(--cyan)}
-    .err-box{background:rgba(255,59,92,0.08);border:1px solid rgba(255,59,92,0.2);border-radius:10px;padding:11px 14px;color:var(--red);font-size:13px;margin-bottom:20px;display:flex;align-items:center;gap:9px}
-    .submit-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--cyan),var(--purple));color:var(--bg);border:none;border-radius:10px;font-family:var(--head);font-weight:700;font-size:15px;cursor:pointer;transition:all 0.2s;letter-spacing:0.5px;margin-top:4px;position:relative;overflow:hidden}
-    .submit-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.1),transparent);opacity:0;transition:opacity 0.2s}
-    .submit-btn:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(0,212,255,0.3)}
-    .submit-btn:hover::before{opacity:1}
-    .portal-link{text-align:center;margin-top:18px;font-size:13px;color:var(--text-2)}
-    .portal-link a{color:var(--cyan);font-weight:600;text-decoration:none}
-    .portal-link a:hover{text-decoration:underline}
-    .sys-info{font-family:var(--mono);font-size:10px;color:var(--text-2);text-align:center;margin-top:16px;opacity:0.5}
-  </style>
-</head>
-<body>
-<div class="orb orb-1"></div>
-<div class="orb orb-2"></div>
-<div class="scan"></div>
-<div class="container">
-  <div class="card">
-    <div class="logo">JamiiTek</div>
-    <div class="tag">Command Center</div>
-    <h1>Staff Access</h1>
-    <p class="sub">Authentication required for management panel.</p>
+{% for m in messages %}<div class="msg" role="alert"><span aria-hidden="true">🛡</span><span>{{ m }}</span></div>{% endfor %}
+{% if error %}<div class="msg" role="alert"><span aria-hidden="true">⚠</span><span>{{ error }}</span></div>{% endif %}
 
-    {% for m in messages %}<div class="err-box"><i class="fas fa-shield-halved fa-sm"></i> {{ m }}</div>{% endfor %}
-    {% if error %}<div class="err-box"><i class="fas fa-circle-exclamation fa-sm"></i> {{ error }}</div>{% endif %}
-
-    <form method="post">
-      {% csrf_token %}
-      <input type="hidden" name="next" value="{{ next }}">
-      <div class="f-group">
-        <label class="f-label">Username</label>
-        <input type="text" name="username" class="f-input" placeholder="staff_username" autofocus autocomplete="username" required>
-      </div>
-      <div class="f-group">
-        <label class="f-label">Password</label>
-        <div class="f-pw">
-          <input type="password" name="password" id="pw" class="f-input" placeholder="••••••••••" style="padding-right:42px" required>
-          <button type="button" class="f-eye" onclick="togglePw()"><i class="fas fa-eye" id="eyeIco"></i></button>
-        </div>
-        <a href="{% url 'password_reset' %}?from=staff" style="display:block;text-align:right;margin-top:8px;font-size:12.5px;font-weight:600;text-decoration:none;color:var(--cyan)">Forgot password?</a>
-      </div>
-      <button type="submit" class="submit-btn">AUTHENTICATE <i class="fas fa-arrow-right"></i></button>
-    </form>
-
-    <div class="portal-link">Client? <a href="{% url 'portal_login' %}">Access client portal →</a></div>
-    <div class="sys-info">JamiiTek Management System v2.0</div>
+<form method="post">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ next }}">
+  <div class="field">
+    <label for="username">Username</label>
+    <input type="text" id="username" name="username" placeholder="staff_username" autofocus autocomplete="username" autocapitalize="none" spellcheck="false" required>
   </div>
-</div>
-<script>
-function togglePw(){const i=document.getElementById('pw');const e=document.getElementById('eyeIco');i.type=i.type==='password'?'text':'password';e.className=i.type==='text'?'fas fa-eye-slash':'fas fa-eye';}
-</script>
-{% if TURNSTILE_ENABLED %}
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-{% endif %}
-</body>
-</html>
+  <div class="field">
+    <label for="pw">Password</label>
+    <div class="pw">
+      <input type="password" name="password" id="pw" placeholder="••••••••••" autocomplete="current-password" required>
+      <button type="button" onclick="togglePw(this)" aria-controls="pw" aria-pressed="false">Show</button>
+    </div>
+    <a class="forgot" href="{% url 'password_reset' %}?from=staff">Forgot password?</a>
+  </div>
+  <button type="submit" class="submit">Authenticate →</button>
+</form>
+
+<p class="alt">Client? <a href="{% url 'portal_login' %}">Access client portal →</a></p>
+{% endblock %}
