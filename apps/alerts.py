@@ -191,11 +191,12 @@ def dispatch(alerts, dry_run=False):
     """Tuma alerts ambazo hazijatumwa hivi karibuni.
 
     Alerts zote mpya za ukaguzi mmoja zinatumwa kwenye ujumbe MMOJA (email moja), si moja moja —
-    tovuti tano zenye domain zilizoisha zilileta email tano mfululizo.
+    tovuti tano zenye domain zilizoisha zilileta email tano mfululizo. Email ina kadi moja kwa
+    kila alert; Telegram/WhatsApp zinapata maandishi ya combined_message().
     """
     fresh = [a for a in alerts if not _recently_sent(a)]
     if fresh and not dry_run:
-        notify(combined_message(fresh))
+        notify(combined_message(fresh), email=email_parts(fresh))
         for a in fresh:
             IntegrationAuditLog.record(
                 'alert', website=a.website,
@@ -203,11 +204,69 @@ def dispatch(alerts, dry_run=False):
     return fresh
 
 
+_ORDER = {'critical': 0, 'warning': 1, 'info': 2}
+
+
 def combined_message(alerts):
     if len(alerts) == 1:
         return alerts[0].as_message()
-    order = {'critical': 0, 'warning': 1, 'info': 2}
-    alerts = sorted(alerts, key=lambda a: order[a.level])
+    alerts = sorted(alerts, key=lambda a: _ORDER[a.level])
     icon = {'critical': '🔴', 'warning': '🟡', 'info': '🔵'}[alerts[0].level]
     head = f'{icon} <b>{len(alerts)} alerts need attention</b>'
     return head + '\n\n' + '\n\n'.join(a.as_message() for a in alerts)
+
+
+# ══════════════════════════════════════════════════════════════════
+#  EMAIL — kadi moja kwa kila alert
+# ══════════════════════════════════════════════════════════════════
+
+# kiambishi cha key -> (lebo ya Kiingereza, maandishi ya kiungo)
+_KINDS = {
+    'down': ('Site down', 'Open website'),
+    'susp': ('Service suspended', 'Open website'),
+    'domexp': ('Domain expiring', 'Renew domain'),
+    'ssl': ('SSL ending', 'Check SSL'),
+    'sync': ('Sync stopped', 'Check integration'),
+    'disk': ('Storage almost full', 'Open website'),
+    'bill': ('Hosting ending', 'Open website'),
+}
+
+
+def _domain(w):
+    dom = next(iter(w.domains.all()), None)        # .all() inatumia prefetch ya collect()
+    if dom:
+        return dom.domain_name
+    from urllib.parse import urlparse
+    return urlparse(w.url or '').netloc
+
+
+def alert_card(a):
+    from . import alert_email
+    from .notify import _plain
+    prefix = a.key.split(':', 1)[0]
+    tag, action = _KINDS.get(prefix, (a.title, 'Open website'))
+    if prefix == 'domexp' and 'IMEISHA' in a.title:
+        tag = 'Domain expired'
+    if prefix == 'sync' and '—' in a.title:
+        tag = f"{tag} · {a.title.split('—', 1)[1].strip()}"
+    w = a.website
+    meta = ' · '.join(x for x in (_domain(w), w.client.name) if x)
+    return alert_email.card(a.level, _plain(a.body), tag=tag, title=w.name, meta=meta,
+                            url=alert_email.admin_url(f'/manage/websites/{w.pk}/'), action=action)
+
+
+def email_parts(alerts):
+    """(subject, maandishi, html) ya email ya alerts."""
+    from . import alert_email
+    alerts = sorted(alerts, key=lambda a: _ORDER[a.level])
+    icon = {'critical': '🔴', 'warning': '🟡', 'info': '🔵'}[alerts[0].level]
+    n = len(alerts)
+    if n == 1:
+        c = alert_card(alerts[0])
+        subject = f"[JamiiTek] {icon} {c['tag']} — {alerts[0].website.name}"
+        heading = '1 thing needs your attention'
+    else:
+        subject = f'[JamiiTek] {icon} {n} alerts need attention'
+        heading = f'{n} things need your attention'
+    body, html = alert_email.render(subject, [alert_card(a) for a in alerts], heading=heading, counts=n > 1)
+    return subject[:150], body, html

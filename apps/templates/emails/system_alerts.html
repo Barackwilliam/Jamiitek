@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<title>{{ subject }}</title>
+{# Alerts za mfumo kwa mmiliki: muhtasari mweusi juu, kisha kadi moja kwa kila alert (chaguo la mmiliki "A"). #}
+{# Inline styles kwa sababu Gmail na programu nyingi za email zinaondoa <style>. #}
+</head>
+<body style="margin:0;padding:0;background:#eef1f6;font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f172a;">
+<div style="max-width:560px;margin:0 auto;padding:24px 12px;">
+  <table width="100%" role="presentation" style="border-collapse:collapse;"><tr>
+    <td style="padding:0 4px 14px;">
+      <span style="display:inline-block;width:32px;height:32px;line-height:32px;border-radius:10px;text-align:center;color:#ffffff;font-weight:900;font-size:16px;background-color:#4f46e5;background-image:linear-gradient(135deg,#06b6d4,#8b5cf6);vertical-align:middle;">J</span><span style="display:inline-block;margin-left:10px;font-weight:800;font-size:16px;color:#0f172a;vertical-align:middle;">Jamii<span style="color:#0891b2;">Tek</span></span>
+    </td>
+    <td align="right" style="padding:0 4px 14px;font-size:12px;color:#64748b;">{{ label }}</td>
+  </tr></table>
+
+  <div style="background:#0f172a;border-radius:20px;padding:22px 22px 18px;color:#ffffff;">
+    <div style="font-size:12px;color:#94a3b8;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;">{{ kicker }}</div>
+    <div style="font-size:22px;font-weight:800;margin-top:6px;line-height:1.3;color:#ffffff;">{{ heading }}</div>
+    {% if counts %}
+    <table width="100%" role="presentation" style="margin-top:14px;border-collapse:separate;border-spacing:6px 0;"><tr>
+      {% for c in counts %}
+      <td align="center" style="padding:10px 4px;background:{{ c.bg }};border-radius:12px;">
+        <div style="font-size:20px;font-weight:800;color:{{ c.color }};">{{ c.n }}</div>
+        <div style="font-size:11px;color:#475569;">{{ c.name }}</div>
+      </td>
+      {% endfor %}
+    </tr></table>
+    {% endif %}
+  </div>
+
+  {% for card in cards %}
+  <div style="background:#ffffff;border-radius:16px;margin-top:12px;overflow:hidden;box-shadow:0 4px 16px rgba(15,23,42,0.06);border-left:5px solid {{ card.color }};">
+    <div style="padding:16px 18px;">
+      <div style="font-size:11px;font-weight:800;letter-spacing:1px;color:{{ card.color }};text-transform:uppercase;">{{ card.icon }} {{ card.level_name }}{% if card.tag %} · {{ card.tag }}{% endif %}</div>
+      {% if card.title %}<div style="font-size:17px;font-weight:800;color:#0f172a;margin-top:6px;">{{ card.title }}</div>{% endif %}
+      {% if card.meta %}<div style="font-size:13px;color:#64748b;margin-top:2px;">{{ card.meta }}</div>{% endif %}
+      {% if card.note %}<div style="font-size:13px;font-weight:700;color:#0f172a;margin-top:10px;">{{ card.note }}</div>{% endif %}
+      {% if card.body %}<div style="font-size:14px;color:#334155;line-height:1.6;margin-top:10px;background:{{ card.bg }};border-radius:10px;padding:10px 12px;">{{ card.body|linebreaksbr }}</div>{% endif %}
+      {% if card.url %}<a href="{{ card.url }}" style="display:inline-block;margin-top:12px;font-size:13px;font-weight:700;color:{{ card.color }};text-decoration:none;">{{ card.action }} &rarr;</a>{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+
+  <a href="{{ admin_url }}" style="display:block;margin-top:16px;text-align:center;padding:14px;border-radius:14px;background:#0f172a;color:#ffffff;font-weight:700;font-size:15px;text-decoration:none;">Open JamiiTek admin</a>
+
+  <div style="padding:16px 8px;text-align:center;font-size:12px;color:#94a3b8;line-height:1.7;">
+    {{ footer_note }}<br>
+    <a href="mailto:info@jamiitek.com" style="color:#0891b2;text-decoration:none;">info@jamiitek.com</a> · JamiiTek Technologies
+  </div>
+</div>
+</body>
+</html>

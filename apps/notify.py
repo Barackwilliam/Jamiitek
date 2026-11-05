@@ -73,20 +73,40 @@ def _plain(text):
     return text.replace('`', '').strip()
 
 
-# Rangi ya kibandiko kutokana na alama ya mwanzo wa ujumbe
-_LEVELS = (('🔴', ('🔴 Critical', 'danger')), ('⚠', ('⚠ Warning', 'warning')), ('🟡', ('🟡 Warning', 'warning')),
-           ('🔵', ('🔵 Info', 'info')), ('🟢', ('🟢 OK', 'success')), ('🌐', ('🌐 Domain', 'success')),
-           ('🛠', ('🛠 New order', 'success')))
+# Kiwango cha taarifa kutokana na alama ya mwanzo wa ujumbe: (kiwango, jina kwenye kadi)
+_LEVELS = (('🔴', ('critical', 'Critical')), ('⚠', ('warning', 'Warning')), ('🟡', ('warning', 'Warning')),
+           ('🔵', ('info', 'Info')), ('🟢', ('ok', 'OK')), ('🌐', ('ok', 'Domain')),
+           ('🛠', ('ok', 'New order')))
 
 
-def _email(text):
+def _render_notice(text):
+    """Taarifa ya kawaida ya notify() (bot imezimika, Pesapal, n.k.) kama kadi moja ya mtindo wa alerts."""
+    from apps import alert_email
+    lines = _plain(text).splitlines()
+    title = (lines[0] if lines else '') or 'JamiiTek notice'
+    rest = '\n'.join(lines[1:]).strip()
+    level, name = next((v for icon, v in _LEVELS if title.startswith(icon)), ('info', 'Notice'))
+    heading = title
+    for icon, _v in _LEVELS:
+        if heading.startswith(icon):
+            heading = heading[len(icon):].lstrip('\ufe0f ').strip() or title
+            break
+    subject = f'[JamiiTek] {title}'[:150]
+    cards = [alert_email.card(level, rest, level_name=name)] if rest else []
+    body, html = alert_email.render(subject, cards, heading=heading, kicker='System notice',
+                                    footer_note='Sent automatically by JamiiTek', label='System notice')
+    return subject, body, html
+
+
+def _email(text, email=None):
     """
-    Email kwa mmiliki, kwa template ya JamiiTek (emails/customer_notice.html).
+    Email kwa mmiliki, kwa template ya alerts (emails/system_alerts.html).
 
     Telegram na Green API zinahitaji usanidi wa ziada. Email inafanya
     kazi tayari (Brevo), kwa hiyo hii ndiyo backend ya uhakika — na
     taarifa isiyofika si taarifa.
 
+    `email=(subject, maandishi, html)` ikitolewa (mfano alerts.dispatch), inatumwa kama ilivyo.
     ALERT_EMAIL ikiwekwa, inatumika. Vinginevyo EMAIL_HOST_USER, kisha OWNER_NOTICE_EMAIL.
     """
     from django.conf import settings
@@ -96,18 +116,8 @@ def _email(text):
         return False
     try:
         from django.core.mail import EmailMultiAlternatives
-        from apps.utils.customer_email import render_customer_email
-        body = _plain(text)
-        lines = body.splitlines()
-        title = (lines[0] if lines else '') or 'JamiiTek notice'
-        rest = '\n'.join(lines[1:]).strip()
-        chip = next((c for icon, c in _LEVELS if title.startswith(icon)), ('🔔 System', 'info'))
-        subject = f'[JamiiTek] {title}'[:150]
-        html_text, html = render_customer_email(
-            subject, f'{title}\n\n{rest}' if rest else title, label='System alert', chip=chip,
-            button=('Open JamiiTek admin', getattr(settings, 'SITE_BASE_URL', 'https://www.jamiitek.com').rstrip('/')
-                    + '/manage/'))
-        msg = EmailMultiAlternatives(subject=subject, body=html_text, to=[to],
+        subject, body, html = email or _render_notice(text)
+        msg = EmailMultiAlternatives(subject=subject, body=body, to=[to],
                                      from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
                                      headers={'X-JT-Category': 'alert'})
         msg.attach_alternative(html, 'text/html')
@@ -121,15 +131,16 @@ def _email(text):
 BACKENDS = [_telegram, _green_api, _email]
 
 
-def notify(text):
+def notify(text, email=None):
     """
     Tuma kwa backends zote zilizowekwa.
+    `email=(subject, maandishi, html)` ni email iliyoandaliwa tayari; backends nyingine zinapata `text`.
     Rudisha idadi iliyofanikiwa. Kamwe haitupi exception.
     """
     sent = 0
     for backend in BACKENDS:
         try:
-            if backend(text):
+            if (backend(text, email=email) if email is not None and backend is _email else backend(text)):
                 sent += 1
         except Exception as e:
             logger.warning('notify backend: %s', type(e).__name__)
