@@ -38,6 +38,14 @@ a:hover{text-decoration:underline}
 .form{width:100%;max-width:400px}
 h1{font:800 28px Sora,sans-serif;letter-spacing:-.5px}
 .sub{font-size:15px;color:var(--muted);margin:8px 0 20px;line-height:1.5}
+/* Kichwa cha login (chaguo la mmiliki "6"): herufi kubwa za dhahabu zenye nafasi, katikati, na mistari pembeni */
+.title{display:flex;align-items:center;justify-content:center;gap:12px}
+.title::before,.title::after{content:"";flex:1;max-width:46px;height:1px}
+.title::before{background:linear-gradient(90deg,transparent,#fbbf24)}
+.title::after{background:linear-gradient(90deg,#fbbf24,transparent)}
+.title h1{font:700 clamp(17px,5.4vw,21px) Sora,sans-serif;letter-spacing:6px;margin-right:-6px;text-transform:uppercase;
+  color:#fbbf24;white-space:nowrap;text-align:center}
+.title + .sub{text-align:center}
 .msg{display:flex;gap:9px;padding:11px 13px;border-radius:12px;margin-bottom:16px;font-size:14px;line-height:1.5;
   background:rgba(251,113,133,.1);border:1px solid rgba(251,113,133,.35);color:#fecdd3}
 .fld{margin-top:16px}
@@ -57,8 +65,13 @@ h1{font:800 28px Sora,sans-serif;letter-spacing:-.5px}
 .submit:hover{filter:brightness(1.08)}.submit:active{transform:translateY(1px)}
 .alt{text-align:center;margin-top:18px;font-size:14px;color:var(--muted)}
 .alt a{font-weight:700}
-.small{text-align:center;margin-top:14px;font-size:13px;color:var(--muted)}
-.small a{color:var(--muted);text-decoration:underline}
+.pill-row{text-align:center;margin-top:18px}
+/* Kiungo cha pili (staff ↔ portal): kibandiko kidogo, si kitufe kinachoshindana na "Sign in" */
+.pill{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.85);font-weight:600;font-size:13.5px;
+  text-decoration:none!important;transition:background .15s,border-color .15s,color .15s}
+.pill:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.26);color:#fff}
+.pill svg{flex:none}
 .mobile-brand{display:none}
 @media(max-width:860px){
   .w{grid-template-columns:1fr}

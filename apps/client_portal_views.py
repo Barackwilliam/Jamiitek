@@ -196,7 +196,7 @@ def portal_login(request):
                     return redirect(nxt)
             elif getattr(request, 'login_locked', False):
                 from apps.security import lockout_message
-                error = lockout_message()
+                error = lockout_message(request)
             else:
                 error = 'Invalid username or password.'
 

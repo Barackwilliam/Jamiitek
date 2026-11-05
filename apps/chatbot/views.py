@@ -373,7 +373,7 @@ def chatbot_login(request):
 
         if getattr(request, 'login_locked', False):
             from apps.security import lockout_message
-            messages.error(request, lockout_message())
+            messages.error(request, lockout_message(request))
         else:
             messages.error(request, "Invalid username or password.")
 

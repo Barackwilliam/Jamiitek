@@ -130,7 +130,7 @@ def builder_login(request):
     error = None
     if getattr(request, 'login_locked', False):
         from apps.security import lockout_message
-        error = lockout_message()
+        error = lockout_message(request)
         form.errors.pop('__all__', None)
     return render(request, 'builder/auth.html', {
         'mode': 'login', 'form': form, 'next': nxt, 'from_template': _template_for_next(nxt),

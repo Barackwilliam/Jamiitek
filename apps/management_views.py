@@ -622,7 +622,7 @@ def management_login(request):
             return redirect(nxt)
         if getattr(request, 'login_locked', False):
             from apps.security import lockout_message
-            error = lockout_message()
+            error = lockout_message(request)
         else:
             error = 'Invalid credentials or insufficient permissions.'
     return render(request, 'management/login.html', {

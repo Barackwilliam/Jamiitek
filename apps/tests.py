@@ -689,6 +689,87 @@ class SecurityHardeningTest(TestCase):
         self.assertIn('no-store', r.get('Cache-Control', ''))
 
 
+class StaffDeviceLockoutTest(TestCase):
+    """Staff: makosa 3 kwenye kifaa kimoja → login kwenye kifaa hicho imefungwa dakika 30."""
+
+    def setUp(self):
+        import secrets
+        from django.contrib.auth.models import User
+        from django.core.cache import cache
+        cache.clear()
+        self.pw = secrets.token_urlsafe(16)
+        self.wrong = secrets.token_urlsafe(10)              # nywila mbaya, si thabiti
+        self.staff = User.objects.create_user('mkuu', 'mkuu@example.com', self.pw, is_staff=True)
+        self.client.get('/manage/login/')                     # kifaa kinapata cookie yake
+
+    def _staff(self, password, client=None):
+        return (client or self.client).post('/manage/login/', {'username': 'mkuu', 'password': password})
+
+    def test_login_page_gives_the_device_a_cookie(self):
+        from .security import DEVICE_COOKIE
+        self.assertTrue(self.client.cookies.get(DEVICE_COOKIE).value)
+
+    def test_third_wrong_attempt_locks_this_device_even_for_the_right_password(self):
+        self._staff(self.wrong); self._staff(self.wrong)
+        self.assertContains(self._staff(self.wrong), 'Too many failed sign-in attempts')
+        r = self._staff(self.pw)
+        self.assertContains(r, 'Too many failed sign-in attempts')
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_messages_do_not_explain_the_lock(self):
+        # Mshambulizi asijue kwamba ni kifaa tu kilichofungwa, wala amebaki na majaribio mangapi
+        import re
+        pages = [self._staff(self.wrong), self._staff(self.wrong), self._staff(self.wrong), self._staff(self.pw)]
+        for r in pages:
+            msg = re.search(r'class="msg"[^>]*>(.*?)</div>', r.content.decode(), re.S).group(1).lower()
+            for leak in ('device', 'attempt left', 'attempts left', 'minute'):
+                self.assertNotIn(leak, msg)
+
+    def test_other_device_of_the_same_staff_still_signs_in(self):
+        from django.test import Client
+        from .security import DEVICE_COOKIE
+        for _ in range(3):
+            self._staff(self.wrong)
+        other = Client()
+        other.cookies[DEVICE_COOKIE] = 'kifaa-kingine'
+        r = self._staff(self.pw, client=other)
+        self.assertEqual(r.status_code, 302)
+        self.assertIn('_auth_user_id', other.session)
+
+    def test_device_unlocks_after_30_minutes(self):
+        import time
+        for _ in range(3):
+            self._staff(self.wrong)
+        later = time.time() + 31 * 60
+        with mock.patch('apps.security.time.time', return_value=later):
+            r = self._staff(self.pw)
+        self.assertEqual(r.status_code, 302)
+        self.assertIn('_auth_user_id', self.client.session)
+
+    def test_success_resets_the_device_counter(self):
+        self._staff(self.wrong); self._staff(self.wrong)
+        self._staff(self.pw)
+        self.client.logout()
+        self._staff(self.wrong); self._staff(self.wrong)
+        self.assertEqual(self._staff(self.pw).status_code, 302)
+
+    def test_staff_account_is_device_locked_on_the_client_portal_too(self):
+        for _ in range(3):
+            self.client.post('/portal/login/', {'username': 'mkuu', 'password': self.wrong})
+        r = self.client.post('/portal/login/', {'username': 'mkuu', 'password': self.pw})
+        self.assertContains(r, 'Too many failed sign-in attempts')
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_password_reset_clears_the_lock_on_this_device(self):
+        from .security import clear_staff_device_lock, staff_device_locked_until
+        for _ in range(3):
+            r = self._staff(self.wrong)
+        req = r.wsgi_request
+        self.assertTrue(staff_device_locked_until(req, 'mkuu'))
+        clear_staff_device_lock(req, 'mkuu')
+        self.assertEqual(self._staff(self.pw).status_code, 302)
+
+
 class SecurityFixesTest(NoPingMixin, TestCase):
     """Matundu yaliyogunduliwa kwenye ukaguzi wa usalama — yasirudi."""
 

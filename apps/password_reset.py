@@ -136,6 +136,9 @@ class ConfirmView(auth_views.PasswordResetConfirmView):
         cache.delete(_key('user', user.get_username()))
         if user.email:
             cache.delete(_key('user', user.email))
+        # Kufuli ya staff ya kifaa hiki (makosa 3) inaondoka pia — nywila mpya imethibitishwa kwa email
+        from apps.security import clear_staff_device_lock
+        clear_staff_device_lock(self.request, user.get_username())
         # Sessions nyingine zote za mtumiaji huyu zinakufa: session hash
         # inatokana na nywila, kwa hiyo Django inazikataa zenyewe.
         log.warning('Password reset imekamilika: user=%s ip=%s', user, get_client_ip(self.request))
