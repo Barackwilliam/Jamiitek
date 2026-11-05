@@ -65,27 +65,53 @@ def _strip_html(text):
     return re.sub(r'<[^>]+>', '', text)
 
 
+def _plain(text):
+    """Maandishi bila alama za WhatsApp/Telegram (<b>, *, **, `) — kwa kichwa na maandishi ya email."""
+    import re
+    text = re.sub(r'<[^>]+>', '', text or '')
+    text = re.sub(r'\*{1,2}([^*\n]+)\*{1,2}', r'\1', text)
+    return text.replace('`', '').strip()
+
+
+# Rangi ya kibandiko kutokana na alama ya mwanzo wa ujumbe
+_LEVELS = (('🔴', ('🔴 Critical', 'danger')), ('⚠', ('⚠ Warning', 'warning')), ('🟡', ('🟡 Warning', 'warning')),
+           ('🔵', ('🔵 Info', 'info')), ('🟢', ('🟢 OK', 'success')), ('🌐', ('🌐 Domain', 'success')),
+           ('🛠', ('🛠 New order', 'success')))
+
+
 def _email(text):
     """
-    Email kwa mmiliki.
+    Email kwa mmiliki, kwa template ya JamiiTek (emails/customer_notice.html).
 
     Telegram na Green API zinahitaji usanidi wa ziada. Email inafanya
     kazi tayari (Brevo), kwa hiyo hii ndiyo backend ya uhakika — na
     taarifa isiyofika si taarifa.
 
-    ALERT_EMAIL ikiwekwa, inatumika. Vinginevyo EMAIL_HOST_USER.
+    ALERT_EMAIL ikiwekwa, inatumika. Vinginevyo EMAIL_HOST_USER, kisha OWNER_NOTICE_EMAIL.
     """
-    to = (os.getenv('ALERT_EMAIL', '') or os.getenv('EMAIL_HOST_USER', '')).strip()
+    from django.conf import settings
+    to = (os.getenv('ALERT_EMAIL', '') or os.getenv('EMAIL_HOST_USER', '')
+          or getattr(settings, 'OWNER_NOTICE_EMAIL', '') or getattr(settings, 'EMAIL_HOST_USER', '')).strip()
     if not to:
         return False
     try:
-        from django.core.mail import send_mail
-        from django.conf import settings
-        body = _strip_html(text)
-        subject = body.splitlines()[0][:120] if body.strip() else 'Taarifa ya JamiiTek'
-        send_mail(f'[JamiiTek] {subject}', body,
-                  getattr(settings, 'DEFAULT_FROM_EMAIL', to), [to],
-                  fail_silently=False)
+        from django.core.mail import EmailMultiAlternatives
+        from apps.utils.customer_email import render_customer_email
+        body = _plain(text)
+        lines = body.splitlines()
+        title = (lines[0] if lines else '') or 'JamiiTek notice'
+        rest = '\n'.join(lines[1:]).strip()
+        chip = next((c for icon, c in _LEVELS if title.startswith(icon)), ('🔔 System', 'info'))
+        subject = f'[JamiiTek] {title}'[:150]
+        html_text, html = render_customer_email(
+            subject, f'{title}\n\n{rest}' if rest else title, label='System alert', chip=chip,
+            button=('Open JamiiTek admin', getattr(settings, 'SITE_BASE_URL', 'https://www.jamiitek.com').rstrip('/')
+                    + '/manage/'))
+        msg = EmailMultiAlternatives(subject=subject, body=html_text, to=[to],
+                                     from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
+                                     headers={'X-JT-Category': 'alert'})
+        msg.attach_alternative(html, 'text/html')
+        msg.send(fail_silently=False)
         return True
     except Exception as e:
         logger.warning('notify email: %s', e)

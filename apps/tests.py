@@ -1433,3 +1433,33 @@ class ActivityLogTest(TestCase):
         self.assertNotIn('juma', html)
         call_command('activity_digest', quiet=True)                           # haurudiwi leo
         self.assertEqual(sum('Today on JamiiTek' in m.subject for m in mail.outbox), 1)
+
+
+@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+class AlertEmailTest(TestCase):
+    """Alerts za mfumo: email yenye template ya JamiiTek, na alerts za ukaguzi mmoja kwenye email moja."""
+
+    def _site(self, name):
+        import datetime
+        from .models import Client, ManagedWebsite
+        c = Client.objects.create(name=name, email=f'{name.lower()}@x.co.tz')
+        d = datetime.date.today()
+        return ManagedWebsite.objects.create(client=c, name=name, hosting_start_date=d,
+                                             hosting_end_date=d + datetime.timedelta(days=100), monthly_cost=1)
+
+    def test_alerts_of_one_check_come_in_one_templated_email_and_are_not_repeated(self):
+        from . import alerts
+        a = alerts.Alert('domexp:1', 'critical', 'Domain IMEISHA', 'Ilipitwa siku 20 zilizopita.', self._site('Em'))
+        b = alerts.Alert('ssl:2', 'warning', 'SSL inakaribia kuisha', 'Siku 5 zimebaki.', self._site('Tembo'))
+        with mock.patch.dict('os.environ', {'ALERT_EMAIL': 'info@jamiitek.com'}):
+            self.assertEqual(len(alerts.dispatch([b, a])), 2)
+            self.assertEqual(alerts.dispatch([a, b]), [])                  # cooldown: hazirudiwi
+        self.assertEqual(len(mail.outbox), 1)
+        msg = mail.outbox[0]
+        self.assertEqual(msg.to, ['info@jamiitek.com'])
+        self.assertEqual(msg.subject, '[JamiiTek] 🔴 2 alerts need attention')
+        self.assertNotIn('*', msg.subject + msg.body)
+        html = msg.alternatives[0][0]
+        for text in ('System alert', 'Critical', 'Domain IMEISHA', 'Em — Em', 'SSL inakaribia kuisha'):
+            self.assertIn(text, html)
+        self.assertLess(html.index('Domain IMEISHA'), html.index('SSL inakaribia'))   # hatari kwanza
