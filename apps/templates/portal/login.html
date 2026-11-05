@@ -3,7 +3,7 @@
 {% block head %}{% if TURNSTILE_ENABLED %}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>{% endif %}{% endblock %}
 {% block tag %}Client portal{% endblock %}
 {% block form %}
-<h1>Welcome back</h1>
+<div class="title"><h1>Welcome back</h1></div>
 <p class="sub">Sign in to manage your websites and services.</p>
 
 {% if error %}<div class="msg" role="alert"><span aria-hidden="true">⚠</span><span>{{ error }}</span></div>{% endif %}

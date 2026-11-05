@@ -38,6 +38,14 @@ a:hover{text-decoration:underline}
 .form{width:100%;max-width:400px}
 h1{font:800 28px Sora,sans-serif;letter-spacing:-.5px}
 .sub{font-size:15px;color:var(--muted);margin:8px 0 20px;line-height:1.5}
+/* Kichwa cha login (chaguo la mmiliki "6"): herufi kubwa za dhahabu zenye nafasi, katikati, na mistari pembeni */
+.title{display:flex;align-items:center;justify-content:center;gap:12px}
+.title::before,.title::after{content:"";flex:1;max-width:46px;height:1px}
+.title::before{background:linear-gradient(90deg,transparent,#fbbf24)}
+.title::after{background:linear-gradient(90deg,#fbbf24,transparent)}
+.title h1{font:700 clamp(17px,5.4vw,21px) Sora,sans-serif;letter-spacing:6px;margin-right:-6px;text-transform:uppercase;
+  color:#fbbf24;white-space:nowrap;text-align:center}
+.title + .sub{text-align:center}
 .msg{display:flex;gap:9px;padding:11px 13px;border-radius:12px;margin-bottom:16px;font-size:14px;line-height:1.5;
   background:rgba(251,113,133,.1);border:1px solid rgba(251,113,133,.35);color:#fecdd3}
 .fld{margin-top:16px}
