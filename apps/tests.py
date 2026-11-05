@@ -1439,6 +1439,12 @@ class ActivityLogTest(TestCase):
 class AlertEmailTest(TestCase):
     """Alerts za mfumo: email yenye template ya JamiiTek, na alerts za ukaguzi mmoja kwenye email moja."""
 
+    @staticmethod
+    def _sent(subject):
+        # Kazi za nyuma (DailyTasksMiddleware) zinakimbia kwenye threads na zinaweza kuongeza email zao
+        # kwenye mail.outbox wakati wa jaribio — chagua za jaribio hili kwa kichwa chake.
+        return [m for m in mail.outbox if m.subject == subject]
+
     def _site(self, name):
         import datetime
         from .models import Client, ManagedWebsite
@@ -1454,10 +1460,10 @@ class AlertEmailTest(TestCase):
         with mock.patch.dict('os.environ', {'ALERT_EMAIL': 'info@jamiitek.com'}):
             self.assertEqual(len(alerts.dispatch([b, a])), 2)
             self.assertEqual(alerts.dispatch([a, b]), [])                  # cooldown: hazirudiwi
-        self.assertEqual(len(mail.outbox), 1)
-        msg = mail.outbox[0]
+        sent = self._sent('[JamiiTek] 🔴 2 alerts need attention')
+        self.assertEqual(len(sent), 1)
+        msg = sent[0]
         self.assertEqual(msg.to, ['info@jamiitek.com'])
-        self.assertEqual(msg.subject, '[JamiiTek] 🔴 2 alerts need attention')
         self.assertNotIn('*', msg.subject + msg.body)
         html = msg.alternatives[0][0]
         for text in ('System alerts', '2 things need your attention', 'Domain expired', 'SSL ending',
@@ -1471,8 +1477,7 @@ class AlertEmailTest(TestCase):
         a = alerts.Alert('sync:9', 'warning', 'Sync imekufa — render', 'Saa 6+.\n<code>timeout</code>', self._site('Tembo'))
         with mock.patch.dict('os.environ', {'ALERT_EMAIL': 'info@jamiitek.com'}):
             alerts.dispatch([a])
-        msg = mail.outbox[0]
-        self.assertEqual(msg.subject, '[JamiiTek] 🟡 Sync stopped · render — Tembo')
+        msg, = self._sent('[JamiiTek] 🟡 Sync stopped · render — Tembo')
         html = msg.alternatives[0][0]
         self.assertIn('1 thing needs your attention', html)
         self.assertNotIn('&lt;code&gt;', html)
@@ -1483,8 +1488,7 @@ class AlertEmailTest(TestCase):
         with mock.patch.dict('os.environ', {'ALERT_EMAIL': 'info@jamiitek.com', 'TELEGRAM_BOT_TOKEN': '',
                                             'GREEN_API_ID': ''}):
             notify('🔴 <b>JamiiBot imezimika</b>\nHaijajibu kwa dakika 10.')
-        msg = mail.outbox[0]
-        self.assertEqual(msg.subject, '[JamiiTek] 🔴 JamiiBot imezimika')
+        msg, = self._sent('[JamiiTek] 🔴 JamiiBot imezimika')
         html = msg.alternatives[0][0]
         for text in ('System notice', 'JamiiBot imezimika', 'Haijajibu kwa dakika 10.', 'Open JamiiTek admin'):
             self.assertIn(text, html)
