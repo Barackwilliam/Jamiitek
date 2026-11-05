@@ -188,15 +188,26 @@ def _recently_sent(alert):
 
 
 def dispatch(alerts, dry_run=False):
-    """Tuma alerts ambazo hazijatumwa hivi karibuni."""
-    sent = []
-    for a in alerts:
-        if _recently_sent(a):
-            continue
-        if not dry_run:
-            notify(a.as_message())
+    """Tuma alerts ambazo hazijatumwa hivi karibuni.
+
+    Alerts zote mpya za ukaguzi mmoja zinatumwa kwenye ujumbe MMOJA (email moja), si moja moja —
+    tovuti tano zenye domain zilizoisha zilileta email tano mfululizo.
+    """
+    fresh = [a for a in alerts if not _recently_sent(a)]
+    if fresh and not dry_run:
+        notify(combined_message(fresh))
+        for a in fresh:
             IntegrationAuditLog.record(
                 'alert', website=a.website,
                 detail={'key': a.key, 'level': a.level, 'title': a.title})
-        sent.append(a)
-    return sent
+    return fresh
+
+
+def combined_message(alerts):
+    if len(alerts) == 1:
+        return alerts[0].as_message()
+    order = {'critical': 0, 'warning': 1, 'info': 2}
+    alerts = sorted(alerts, key=lambda a: order[a.level])
+    icon = {'critical': '🔴', 'warning': '🟡', 'info': '🔵'}[alerts[0].level]
+    head = f'{icon} <b>{len(alerts)} alerts need attention</b>'
+    return head + '\n\n' + '\n\n'.join(a.as_message() for a in alerts)
