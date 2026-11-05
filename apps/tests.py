@@ -1573,3 +1573,81 @@ class AlertEmailTest(TestCase):
         html = msg.alternatives[0][0]
         for text in ('System notice', 'JamiiBot imezimika', 'Haijajibu kwa dakika 10.', 'Open JamiiTek admin'):
             self.assertIn(text, html)
+
+
+class PortalDesignSwitchTest(TestCase):
+    """Admin anachagua muonekano wa Client Portal (Classic / Neon Bento) kwa wateja wote."""
+
+    def setUp(self):
+        import datetime
+        import secrets
+        from decimal import Decimal
+        from django.contrib.auth.models import User
+        from django.core.cache import cache
+        from .accounts_link import ensure_client_profile
+        from .models import ManagedWebsite
+        cache.clear()
+        self.user = User.objects.create_user('mteja_design', 'md@example.com', secrets.token_urlsafe(16))
+        self.client_profile = ensure_client_profile(self.user)
+        d = datetime.date.today()
+        ManagedWebsite.objects.create(client=self.client_profile, name='Duka Design', url='https://dukadesign.co.tz',
+                                      hosting_start_date=d - datetime.timedelta(days=30),
+                                      hosting_end_date=d + datetime.timedelta(days=20), monthly_cost=Decimal('25000'))
+        self.staff = User.objects.create_user('mkuu_design', 'mk@example.com', secrets.token_urlsafe(16), is_staff=True)
+
+    def _as_staff(self):
+        self.client.force_login(self.staff)
+        s = self.client.session
+        s['staff_2fa_ok'] = self.staff.pk
+        s.save()
+
+    def _set(self, design):
+        from .models import PortalSettings
+        cfg = PortalSettings.load()
+        cfg.design = design
+        cfg.save()
+
+    def test_classic_is_the_default(self):
+        from .models import PortalSettings
+        self.assertEqual(PortalSettings.current_design(), 'classic')
+        self.client.force_login(self.user)
+        r = self.client.get('/portal/')
+        self.assertTemplateUsed(r, 'portal/dashboard.html')
+        self.assertNotContains(r, 'class="bento"')
+
+    def test_bento_dashboard_and_chrome(self):
+        self._set('bento')
+        self.client.force_login(self.user)
+        r = self.client.get('/portal/')
+        self.assertTemplateUsed(r, 'portal/dashboard_bento.html')
+        for text in ('class="bento"', 'css/portal_bento', 'bt-rail', 'Next renewal', 'Duka Design', 'dukadesign.co.tz'):
+            self.assertContains(r, text)
+        r = self.client.get('/portal/billing/')                    # kurasa za ndani zinapata menyu ya bento pia
+        self.assertContains(r, 'bt-rail')
+
+    def test_bento_without_websites(self):
+        from .models import ManagedWebsite
+        ManagedWebsite.objects.all().delete()
+        self._set('bento')
+        self.client.force_login(self.user)
+        self.assertContains(self.client.get('/portal/'), 'No website yet')
+
+    def test_staff_switches_design_from_manage(self):
+        from .models import PortalSettings
+        self._as_staff()
+        r = self.client.get('/manage/portal-design/')
+        self.assertContains(r, 'Neon Bento')
+        self.client.post('/manage/portal-design/', {'design': 'bento'})
+        self.assertEqual(PortalSettings.current_design(), 'bento')      # cache inasasishwa mara moja
+        self.assertEqual(PortalSettings.load().updated_by, self.staff)
+        self.client.post('/manage/portal-design/', {'design': 'haipo'})
+        self.assertEqual(PortalSettings.current_design(), 'bento')
+        self.client.post('/manage/portal-design/', {'design': 'classic'})
+        self.assertEqual(PortalSettings.current_design(), 'classic')
+
+    def test_clients_cannot_change_the_design(self):
+        from .models import PortalSettings
+        self.client.force_login(self.user)
+        r = self.client.post('/manage/portal-design/', {'design': 'bento'})
+        self.assertNotEqual(r.status_code, 200)
+        self.assertEqual(PortalSettings.current_design(), 'classic')

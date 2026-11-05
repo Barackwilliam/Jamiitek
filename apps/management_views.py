@@ -1165,6 +1165,35 @@ def storage_health(request):
 
 
 @staff_required
+def manage_portal_design(request):
+    """Chagua muonekano wa Client Portal kwa wateja wote: Classic (ya sasa) au Neon Bento."""
+    from apps.models import PortalSettings
+    cfg = PortalSettings.load()
+    if request.method == 'POST':
+        choice = request.POST.get('design', '')
+        if choice not in dict(PortalSettings.DESIGNS):
+            messages.error(request, 'Chaguo si sahihi.')
+        elif choice != cfg.design:
+            cfg.design = choice
+            cfg.updated_by = request.user
+            cfg.save()
+            messages.success(request, f'Wateja sasa wanaona: {cfg.get_design_display()}.')
+        return redirect('manage_portal_design')
+    cards = [
+        {'value': 'classic', 'name': 'Classic (ya sasa)', 'swatch': 'linear-gradient(135deg,#050810,#0b1830 60%,#00d4ff)',
+         'note': 'Muonekano uliopo: sidebar kamili yenye maandishi, chati na kadi za takwimu.'},
+        {'value': 'bento', 'name': 'Neon Bento', 'swatch': 'linear-gradient(135deg,#4c1d95,#1e1b4b 55%,#f472b6)',
+         'note': 'Vigae vikubwa vya rangi: kigae cha "Next renewal" chenye Pay now, pete za siku za hosting, '
+                 'menyu ya ikoni kwenye kompyuta na menyu ya chini kwenye simu.'},
+    ]
+    for c in cards:
+        c['on'] = c['value'] == cfg.design
+    return render(request, 'management/portal_design.html', {
+        'title': 'Muonekano wa Portal', 'cards': cards, 'cfg': cfg,
+    })
+
+
+@staff_required
 def manage_ai(request):
     """AI inayoandika kwenye JamiiTek nzima: chagua Gemini Flash / Gemini Pro / Groq, na jaribu."""
     from apps import llm

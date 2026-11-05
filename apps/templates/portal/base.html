@@ -26,11 +26,12 @@
   <link href="{% static 'css/skeleton.css' %}" rel="stylesheet">
   <link href="{% static 'css/portal.css' %}" rel="stylesheet">
 
+  {% if portal_design == 'bento' %}<link href="{% static 'css/portal_bento.css' %}" rel="stylesheet">{% endif %}
   {% block extra_css %}{% endblock %}
 
   <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
 </head>
-<body>
+<body{% if portal_design == 'bento' %} class="bento"{% endif %}>
 <!-- SIDEBAR -->
 <aside class="jt-sb" id="jtSb">
   <div class="sb-top">
@@ -65,6 +66,7 @@
     </div>
   </div>
 </aside>
+{% if portal_design == 'bento' %}{% include 'portal/_bento_nav.html' %}{% endif %}
 <div id="mobOv" onclick="closeSb()" style="display:none;position:fixed;inset:0;z-index:290;background:rgba(0,0,0,0.5)"></div>
 
 <!-- TOPBAR -->

@@ -1,0 +1,27 @@
+{% load static %}{% comment %} Neon Bento (PortalSettings.design == 'bento'): menyu ya ikoni (kompyuta) na menyu ya chini (simu).
+Sidebar ya kawaida inabaki kama "More" kwenye simu (kitufe cha ☰ / More). {% endcomment %}
+{% with u=request.resolver_match.url_name %}
+<nav class="bt-rail" aria-label="Portal">
+  <a href="{% url 'portal_dashboard' %}" class="bt-logo" aria-label="Overview"><img src="{% static 'images/logo-96.webp' %}" alt="" width="40" height="35"></a>
+  <a href="{% url 'portal_dashboard' %}" class="{% if u == 'portal_dashboard' %}on{% endif %}" title="Overview" aria-label="Overview"><i class="fas fa-house"></i></a>
+  <a href="{% url 'portal_website_list' %}" class="{% if 'portal_website' in u or 'site_file' in u or u == 'portal_hosting_config' %}on{% endif %}" title="My Websites" aria-label="My Websites"><i class="fas fa-globe"></i></a>
+  <a href="{% url 'portal_domains' %}" class="{% if u == 'portal_domains' or u == 'portal_dns_manager' %}on{% endif %}" title="My Domains" aria-label="My Domains"><i class="fas fa-at"></i></a>
+  <a href="{% url 'portal_email_hosting' %}" class="{% if u == 'portal_email_hosting' %}on{% endif %}" title="Email Hosting" aria-label="Email Hosting"><i class="fas fa-envelope"></i></a>
+  <a href="{% url 'portal_billing' %}" class="{% if 'billing' in u or 'payment' in u or 'invoice' in u %}on{% endif %}" title="Billing &amp; Payments" aria-label="Billing and Payments"><i class="fas fa-credit-card"></i></a>
+  <a href="{% url 'portal_receipt_list' %}" class="{% if 'receipt' in u %}on{% endif %}" title="My Receipts" aria-label="My Receipts"><i class="fas fa-receipt"></i></a>
+  <a href="{% url 'portal_notifications' %}" class="{% if 'notifications' in u %}on{% endif %}" title="Messages" aria-label="Messages"><i class="fas fa-bell"></i></a>
+  <a href="{% url 'portal_support' %}" class="{% if 'support' in u %}on{% endif %}" title="Support" aria-label="Support"><i class="fas fa-headset"></i></a>
+  <span class="bt-sp"></span>
+  <a href="/chatbot/dashboard/" title="JamiiBot" aria-label="JamiiBot"><i class="fas fa-robot"></i></a>
+  <a href="/builder/" title="Web Builder" aria-label="Web Builder"><i class="fas fa-table-cells-large"></i></a>
+  <a href="{% url 'portal_profile' %}" class="{% if 'profile' in u %}on{% endif %}" title="Profile" aria-label="Profile"><i class="fas fa-user"></i></a>
+  <a href="{% url 'portal_logout' %}" title="Sign out" aria-label="Sign out" class="bt-out" onclick="return confirm('Sign out?')"><i class="fas fa-power-off"></i></a>
+</nav>
+<nav class="bt-bnav" aria-label="Portal">
+  <a href="{% url 'portal_dashboard' %}" class="{% if u == 'portal_dashboard' %}on{% endif %}" aria-label="Overview"><i class="fas fa-house"></i></a>
+  <a href="{% url 'portal_website_list' %}" class="{% if 'portal_website' in u %}on{% endif %}" aria-label="My Websites"><i class="fas fa-globe"></i></a>
+  <a href="{% url 'portal_billing' %}" class="bt-fab" aria-label="Pay"><i class="fas fa-credit-card"></i></a>
+  <a href="{% url 'portal_notifications' %}" class="{% if 'notifications' in u %}on{% endif %}" aria-label="Messages"><i class="fas fa-bell"></i></a>
+  <button type="button" onclick="toggleSb()" aria-label="More"><i class="fas fa-bars"></i></button>
+</nav>
+{% endwith %}

@@ -1139,3 +1139,23 @@ class ActivityRuleAdmin(admin.ModelAdmin):
         from .activity import ensure_rules
         ensure_rules()
         return super().changelist_view(request, extra_context)
+
+
+# ── Muonekano wa Client Portal (Classic / Neon Bento) ─────────────────
+from .models import PortalSettings  # noqa: E402
+
+
+@admin.register(PortalSettings)
+class PortalSettingsAdmin(admin.ModelAdmin):
+    list_display = ('design', 'updated_by', 'updated_at')
+    readonly_fields = ('updated_by', 'updated_at')
+
+    def has_add_permission(self, request):
+        return not PortalSettings.objects.exists()       # mmoja tu
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def save_model(self, request, obj, form, change):
+        obj.updated_by = request.user
+        super().save_model(request, obj, form, change)

@@ -1,0 +1,50 @@
+/* Client Portal — "Neon Bento" (PortalSettings.design == 'bento').
+   Inapakiwa JUU ya portal.css: inabadilisha rangi/fonts za kurasa zote za portal, inaficha sidebar ya
+   kawaida kwenye kompyuta (menyu ya ikoni inachukua nafasi yake) na kuongeza menyu ya chini kwenye simu. */
+@font-face{font-family:Sora;font-weight:700;font-display:swap;src:url("../fonts/sora-700.woff2") format('woff2')}
+@font-face{font-family:Sora;font-weight:800;font-display:swap;src:url("../fonts/sora-800.woff2") format('woff2')}
+@font-face{font-family:Inter;font-weight:400;font-display:swap;src:url("../fonts/inter-400.woff2") format('woff2')}
+@font-face{font-family:Inter;font-weight:500;font-display:swap;src:url("../fonts/inter-500.woff2") format('woff2')}
+@font-face{font-family:Inter;font-weight:600;font-display:swap;src:url("../fonts/inter-600.woff2") format('woff2')}
+
+body.bento{
+  --bg:#0b0d14; --bg2:#0f1220; --card:#12162a; --card-s:#181d33; --border:#1d2338; --border-s:rgba(139,92,246,.35);
+  --cyan:#22d3ee; --purple:#8b5cf6; --pink:#f472b6; --green:#34d399; --red:#f87171; --yellow:#fbbf24;
+  --text:#e2e8f0; --text-2:#94a3b8; --text-3:#64748b;
+  --head:Sora,sans-serif; --body:Inter,sans-serif; --r:14px; --r-lg:22px; --rail:84px;
+  background:var(--bg); font-family:var(--body);
+}
+body.bento::before{display:none}
+body.bento .jt-topbar{background:rgba(11,13,20,.88);border-bottom-color:var(--border)}
+body.bento .tb-title{font-family:var(--head);font-weight:700}
+
+/* Menyu ya ikoni (kompyuta) */
+.bt-rail,.bt-bnav{display:none}
+@media(min-width:992px){
+  body.bento .jt-sb{display:none}
+  body.bento .jt-topbar{left:var(--rail)}
+  body.bento .jt-main{margin-left:var(--rail)}
+  .bt-rail{display:flex;flex-direction:column;align-items:center;gap:8px;position:fixed;top:0;left:0;bottom:0;width:var(--rail);
+    padding:16px 0;z-index:310;background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto}
+  .bt-rail a{width:48px;height:48px;flex:none;display:grid;place-items:center;border-radius:15px;color:var(--text-3);font-size:18px;
+    transition:background .15s,color .15s}
+  .bt-rail a:hover{background:var(--card-s);color:#fff}
+  .bt-rail a.on{background:linear-gradient(135deg,var(--purple),var(--cyan));color:#fff;box-shadow:0 10px 24px rgba(139,92,246,.35)}
+  .bt-rail .bt-logo{width:auto;height:auto;margin-bottom:10px}
+  .bt-rail .bt-logo img{width:40px;height:35px;background:#fff;border-radius:12px;padding:3px}
+  .bt-rail .bt-sp{flex:1}
+  .bt-rail .bt-out:hover{color:var(--red)}
+}
+
+/* Menyu ya chini (simu) */
+@media(max-width:991px){
+  body.bento .jt-main{padding-bottom:110px}
+  .bt-bnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:250;justify-content:space-around;align-items:center;
+    padding:10px 10px calc(12px + env(safe-area-inset-bottom));background:rgba(15,18,32,.96);border-top:1px solid var(--border);
+    backdrop-filter:blur(12px)}
+  .bt-bnav a,.bt-bnav button{width:48px;height:48px;display:grid;place-items:center;border-radius:15px;color:var(--text-3);
+    font-size:19px;background:none;border:0;cursor:pointer}
+  .bt-bnav a.on{background:linear-gradient(135deg,var(--purple),var(--cyan));color:#fff}
+  .bt-bnav .bt-fab{width:58px;height:58px;margin-top:-28px;border-radius:19px;color:#1e1b4b;
+    background:linear-gradient(135deg,var(--yellow),var(--pink));box-shadow:0 10px 24px rgba(244,114,182,.4)}
+}

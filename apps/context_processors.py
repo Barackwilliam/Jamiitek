@@ -21,6 +21,7 @@ def turnstile_context(request):
 _NAV_EXACT = {
     'management_dashboard': 'dashboard',
     'manage_ai': 'ai',
+    'manage_portal_design': 'portal_design',
     'manage_builder': 'builder',
     'manage_chatbot': 'chatbot',
     'manage_bot_clients': 'bot_clients',
@@ -79,3 +80,11 @@ def ai_health(request):
         except Exception:
             return None
     return {'ai_health': load}
+
+
+def portal_design(request):
+    """Design ya Client Portal ('classic' | 'bento') kwa kurasa za /portal/ tu."""
+    if not request.path.startswith('/portal/'):
+        return {}
+    from apps.models import PortalSettings
+    return {'portal_design': PortalSettings.current_design()}
