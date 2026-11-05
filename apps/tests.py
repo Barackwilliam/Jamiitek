@@ -1460,6 +1460,31 @@ class AlertEmailTest(TestCase):
         self.assertEqual(msg.subject, '[JamiiTek] 🔴 2 alerts need attention')
         self.assertNotIn('*', msg.subject + msg.body)
         html = msg.alternatives[0][0]
-        for text in ('System alert', 'Critical', 'Domain IMEISHA', 'Em — Em', 'SSL inakaribia kuisha'):
+        for text in ('System alerts', '2 things need your attention', 'Domain expired', 'SSL ending',
+                     'Ilipitwa siku 20 zilizopita.', 'Renew domain', f'/manage/websites/{a.website.pk}/'):
             self.assertIn(text, html)
-        self.assertLess(html.index('Domain IMEISHA'), html.index('SSL inakaribia'))   # hatari kwanza
+        self.assertLess(html.index('Domain expired'), html.index('SSL ending'))   # hatari kwanza
+        self.assertLess(msg.body.index('Domain expired'), msg.body.index('SSL ending'))
+
+    def test_single_alert_names_the_problem_and_the_site_in_the_subject(self):
+        from . import alerts
+        a = alerts.Alert('sync:9', 'warning', 'Sync imekufa — render', 'Saa 6+.\n<code>timeout</code>', self._site('Tembo'))
+        with mock.patch.dict('os.environ', {'ALERT_EMAIL': 'info@jamiitek.com'}):
+            alerts.dispatch([a])
+        msg = mail.outbox[0]
+        self.assertEqual(msg.subject, '[JamiiTek] 🟡 Sync stopped · render — Tembo')
+        html = msg.alternatives[0][0]
+        self.assertIn('1 thing needs your attention', html)
+        self.assertNotIn('&lt;code&gt;', html)
+        self.assertNotIn('Critical</div>', html)                                      # hakuna visanduku vya idadi
+
+    def test_other_notices_use_the_same_card_template(self):
+        from .notify import notify
+        with mock.patch.dict('os.environ', {'ALERT_EMAIL': 'info@jamiitek.com', 'TELEGRAM_BOT_TOKEN': '',
+                                            'GREEN_API_ID': ''}):
+            notify('🔴 <b>JamiiBot imezimika</b>\nHaijajibu kwa dakika 10.')
+        msg = mail.outbox[0]
+        self.assertEqual(msg.subject, '[JamiiTek] 🔴 JamiiBot imezimika')
+        html = msg.alternatives[0][0]
+        for text in ('System notice', 'JamiiBot imezimika', 'Haijajibu kwa dakika 10.', 'Open JamiiTek admin'):
+            self.assertIn(text, html)
