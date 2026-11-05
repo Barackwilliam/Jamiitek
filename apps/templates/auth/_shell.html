@@ -57,8 +57,13 @@ h1{font:800 28px Sora,sans-serif;letter-spacing:-.5px}
 .submit:hover{filter:brightness(1.08)}.submit:active{transform:translateY(1px)}
 .alt{text-align:center;margin-top:18px;font-size:14px;color:var(--muted)}
 .alt a{font-weight:700}
-.small{text-align:center;margin-top:14px;font-size:13px;color:var(--muted)}
-.small a{color:var(--muted);text-decoration:underline}
+.pill-row{text-align:center;margin-top:18px}
+/* Kiungo cha pili (staff ↔ portal): kibandiko kidogo, si kitufe kinachoshindana na "Sign in" */
+.pill{display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.85);font-weight:600;font-size:13.5px;
+  text-decoration:none!important;transition:background .15s,border-color .15s,color .15s}
+.pill:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.26);color:#fff}
+.pill svg{flex:none}
 .mobile-brand{display:none}
 @media(max-width:860px){
   .w{grid-template-columns:1fr}

@@ -8,7 +8,6 @@
 
 {% if error %}<div class="msg" role="alert"><span aria-hidden="true">⚠</span><span>{{ error }}</span></div>{% endif %}
 
-{% include 'includes/one_account_note.html' %}
 
 <form method="post">
   {% csrf_token %}
@@ -32,5 +31,5 @@
 </form>
 
 <p class="alt">Don't have an account? <a href="{% url 'portal_register' %}">Create one</a></p>
-<p class="small">🛡 <a href="{% url 'management_login' %}">Staff / Management panel</a></p>
+<p class="pill-row"><a class="pill" href="{% url 'management_login' %}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Staff / Management panel</a></p>
 {% endblock %}
