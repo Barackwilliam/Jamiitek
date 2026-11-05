@@ -666,17 +666,28 @@ JT.carousel('tmTrack', 'tmPrev', 'tmNext', null);
     }
     box.className = 'dres is-on dres--' + kind; box.innerHTML = html;
   }
+  // Ombi moja tu kwa wakati: utafutaji uleule ukiendelea haurudiwi, na jibu la utafutaji wa zamani
+  // halifuniki jipya (mtu akibofya pendekezo jingine kabla jibu la kwanza halijarudi).
+  // Majibu yaliyofanikiwa yanakumbukwa kwa dakika 2, kwa hiyo kurudi kwenye jina lilelile hakuendi kwa registry tena.
+  var seq = 0, busy = '', seen = {};
   function search(value, extension){
+    var url = ENDPOINT + '?q=' + encodeURIComponent(value) + (extension ? '&tld=' + encodeURIComponent(extension) : '');
+    if (url === busy) return;
+    var hit = seen[url];
+    if (hit && Date.now() - hit.t < 120000) { render(hit.d); return; }
+    var mine = ++seq; busy = url;
     box.className = 'dres is-on dres--warn';
     box.innerHTML = '<div class="dres__top"><span class="dres__ico"><span class="spin"></span></span><div><h3>Searching&hellip;</h3><p>Checking this domain with the registry.</p></div></div>';
     btn.disabled = true;
-    fetch(ENDPOINT + '?q=' + encodeURIComponent(value) + (extension ? '&tld=' + encodeURIComponent(extension) : ''), {headers:{'X-Requested-With':'XMLHttpRequest'}})
-      .then(function(r){ return r.json(); }).then(render)
+    fetch(url, {headers:{'X-Requested-With':'XMLHttpRequest'}})
+      .then(function(r){ return r.json().then(function(d){ if (r.ok) seen[url] = {t: Date.now(), d: d}; return d; }); })
+      .then(function(d){ if (mine === seq) render(d); })
       .catch(function(){
+        if (mine !== seq) return;
         box.className = 'dres is-on dres--warn';
         box.innerHTML = '<div class="dres__top"><span class="dres__ico">' + ICON.warn + '</span><div><h3>Connection problem</h3><p>We could not reach the checker. Try again, or contact us directly.</p></div></div>';
       })
-      .then(function(){ btn.disabled = false; });
+      .then(function(){ if (mine === seq) { btn.disabled = false; busy = ''; } });
   }
   form.addEventListener('submit', function(e){ e.preventDefault(); var v = input.value.trim(); if (v) search(v, tld.value); });
   box.addEventListener('click', function(e){ var chip = e.target.closest('.chip'); if (!chip) return; input.value = chip.dataset.domain; search(chip.dataset.domain, ''); });

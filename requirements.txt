@@ -2,6 +2,7 @@
 Django==5.1.6
 gunicorn==23.0.0
 whitenoise==6.9.0
+Brotli==1.1.0             # WhiteNoise inatengeneza .br za static files (ndogo ~10% kuliko gzip)
 psycopg2-binary==2.9.10
 dj-database-url==2.3.0
 redis==5.0.8
