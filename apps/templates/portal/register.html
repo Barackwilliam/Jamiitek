@@ -1,71 +1,32 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Create Account — JamiiTek Portal</title>
-  <meta name="robots" content="noindex">
-  <meta name="theme-color" content="#050810">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@700;800&display=swap" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@700;800&display=swap"></noscript>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"></noscript>
-  {% if TURNSTILE_ENABLED %}
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-  {% endif %}
-  {% comment %}
-    Usajili wa portal kama hatua 3 (Wewe → Website → Usalama). Rangi ni zile
-    zile za awali. Fomu bado ni MOJA inayotumwa mara moja (majina ya fields
-    hayajabadilika), kwa hiyo view haihitaji kubadilika. JS isipofanya kazi,
-    hatua zote zinaonekana pamoja na kitufe cha kutuma.
-  {% endcomment %}
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    :root{--bg:#050810;--cyan:#00d4ff;--purple:#8b5cf6;--green:#00ff88;--red:#ff3b5c;--amber:#ffb800;--border:rgba(255,255,255,0.08);--text:rgba(255,255,255,0.9);--text-2:rgba(255,255,255,0.55);--text-3:rgba(255,255,255,0.35);--mono:'JetBrains Mono',monospace;--head:'Syne',sans-serif;--body:'Space Grotesk',sans-serif;--grad:linear-gradient(135deg,var(--purple),var(--cyan))}
-    html{-webkit-text-size-adjust:100%}
-    body{font-family:var(--body);background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
-    body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.03) 1px,transparent 1px);background-size:44px 44px;pointer-events:none}
-    .orb{position:fixed;border-radius:50%;filter:blur(90px);pointer-events:none}
-    .orb-1{width:380px;height:380px;background:rgba(139,92,246,0.12);top:-120px;right:-120px}
-    .orb-2{width:300px;height:300px;background:rgba(0,212,255,0.08);bottom:-80px;left:-80px}
-    a{color:inherit;text-decoration:none}
-    button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
-
-    .page{position:relative;z-index:2;width:100%;max-width:1040px;margin:0 auto;padding:0 18px calc(110px + env(safe-area-inset-bottom));display:grid;grid-template-columns:minmax(0,1fr);gap:22px}
-    .intro,.card{min-width:0}
-    @media(min-width:920px){.page{grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:48px;align-items:start;padding:48px 28px 60px}}
-
-    /* ── Upau wa juu (simu) ── */
-    .top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;margin:0 -18px;padding:calc(12px + env(safe-area-inset-top)) 18px 12px;background:rgba(5,8,16,.82);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
-    .top__back{display:grid;place-items:center;width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text-2)}
-    .logo{font-family:var(--head);font-size:21px;font-weight:800;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-    .top__step{margin-left:auto;font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--text-2)}
-    @media(min-width:920px){.top{display:none}}
-
-    /* ── Upande wa maelezo ── */
-    .intro h1{font-family:var(--head);font-size:clamp(26px,6.4vw,40px);line-height:1.08;font-weight:800;letter-spacing:-.01em}
-    .intro h1 span{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-    .intro p{margin-top:10px;font-size:15px;line-height:1.6;color:var(--text-2)}
-    .intro .logo{display:none;font-size:26px;margin-bottom:28px}
-    .intro .back{display:none;align-items:center;gap:8px;margin-bottom:22px;font-family:var(--mono);font-size:11px;letter-spacing:1px;color:var(--text-3)}
-    .intro .back:hover{color:var(--purple)}
-    @media(min-width:920px){.intro{position:sticky;top:48px}.intro .back{display:flex;width:max-content}.intro .logo{display:block;width:max-content}}
-    .perks{display:flex;gap:10px;margin:18px -18px 0;padding:2px 18px 4px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
-    .perks::-webkit-scrollbar{display:none}
-    .perk{flex:0 0 auto;width:178px;scroll-snap-align:start;display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid var(--border)}
-    .perk i{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;font-size:14px;color:#fff;background:var(--c)}
-    .perk b{font-size:14px;font-weight:600}
-    .perk small{font-size:12.5px;line-height:1.45;color:var(--text-2)}
-    @media(min-width:920px){.perks{flex-direction:column;margin:28px 0 0;padding:0;overflow:visible}.perk{width:auto;flex-direction:row;align-items:flex-start;gap:14px}.perk i{flex:none}.perk span{display:grid;gap:3px}}
-    .perk span{display:grid;gap:3px}
-
-    /* ── Kadi ya fomu ── */
-    .card{background:rgba(255,255,255,0.025);border:1px solid rgba(139,92,246,0.18);border-radius:22px;padding:20px 18px 22px;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);box-shadow:0 24px 80px rgba(0,0,0,0.45)}
-    @media(min-width:520px){.card{padding:30px 30px 28px}}
-    /* backdrop-filter ingefanya .nav (position:fixed) ifuate kadi badala ya skrini */
-    @media(max-width:919px){.card{-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(14,18,30,.92)}}
-
-    /* Hatua (stepper) */
+{% extends 'auth/_shell.html' %}
+{% block title %}Create Account — JamiiTek Portal{% endblock %}
+{% block tag %}Client portal{% endblock %}
+{% block head %}
+{% comment %}
+  Usajili wa portal kama hatua 3 (Wewe → Website → Usalama), kwa mtindo wa login (auth/_shell.html).
+  Fomu bado ni MOJA inayotumwa mara moja (majina ya fields hayajabadilika), kwa hiyo view haihitaji
+  kubadilika. JS isipofanya kazi, hatua zote zinaonekana pamoja na kitufe cha kutuma.
+{% endcomment %}
+<script>document.documentElement.classList.add('js')</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"></noscript>
+{% if TURNSTILE_ENABLED %}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>{% endif %}
+<style>
+:root{--purple:#8b5cf6;--green:#34d399;--red:#fb7185;--amber:#fbbf24;--border:rgba(255,255,255,0.1);
+  --text:rgba(255,255,255,0.92);--text-2:rgba(255,255,255,0.62);--text-3:rgba(255,255,255,0.42);
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;--head:Sora,sans-serif;--body:Inter,sans-serif;
+  --grad:linear-gradient(90deg,#06b6d4,#8b5cf6)}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.form{max-width:440px}
+.back{display:inline-flex;align-items:center;gap:8px;margin-bottom:18px;font-weight:600;font-size:13.5px;color:var(--text-2)}
+.back:hover{color:#fff}
+.art h2{font:800 26px Sora,sans-serif;color:#fff;text-align:center;line-height:1.2}
+.art h2 span{color:var(--cyan)}
+.perks{display:grid;gap:10px;max-width:520px;margin:18px auto 0;width:100%}
+.perk{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)}
+.perk i{display:grid;place-items:center;width:34px;height:34px;flex:none;border-radius:10px;font-size:14px;color:#fff;background:var(--c)}
+.perk span{display:grid;gap:2px}.perk b{font-size:14.5px;font-weight:600;color:#fff}.perk small{font-size:13px;line-height:1.45;color:#cbd5e1}
+.art .hero{max-width:440px}
+@media(max-width:860px){.art h2,.perks{display:none}}
     .stepper{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:22px}
     .st{display:grid;gap:7px;text-align:left}
     .st__bar{height:4px;border-radius:4px;background:rgba(255,255,255,.08);overflow:hidden}
@@ -155,32 +116,27 @@
     .alt a{color:var(--purple);font-weight:600}
     .secure{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;font-family:var(--mono);font-size:11px;letter-spacing:.5px;color:var(--text-3)}
     @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-  </style>
-  <script>document.documentElement.classList.add('js')</script>
-</head>
-<body>
-<div class="orb orb-1"></div><div class="orb orb-2"></div>
-
-<div class="page">
-  <header class="top">
-    <a href="{% url 'portal_login' %}" class="top__back" aria-label="Back to sign in"><i class="fas fa-arrow-left"></i></a>
-    <span class="logo">JamiiTek</span>
-    <span class="top__step" data-step-label>STEP 1 / 3</span>
-  </header>
-
-  <aside class="intro">
-    <a href="{% url 'portal_login' %}" class="back"><i class="fas fa-arrow-left fa-xs"></i> BACK TO SIGN IN</a>
-    <div class="logo">JamiiTek</div>
-    <h1>Your website, <span>all in one place.</span></h1>
-    <p>Create your client account in about a minute. Once our team links your website, you can follow everything from here.</p>
-    <div class="perks" aria-label="What you get">
-      <div class="perk" style="--c:linear-gradient(135deg,#8b5cf6,#6d28d9)"><i class="fas fa-server"></i><span><b>Hosting status</b><small>See if your site is online, SSL and renewal dates.</small></span></div>
-      <div class="perk" style="--c:linear-gradient(135deg,#00b4d8,#0077b6)"><i class="fas fa-receipt"></i><span><b>Payments &amp; invoices</b><small>Every payment and receipt in one list.</small></span></div>
-      <div class="perk" style="--c:linear-gradient(135deg,#10b981,#047857)"><i class="fas fa-headset"></i><span><b>Support requests</b><small>Ask for changes and follow their progress.</small></span></div>
-    </div>
-  </aside>
-
-  <main class="card">
+.alt a{color:var(--cyan)}
+.field:focus-within{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(34,211,238,.18)}
+.field:focus-within>i{color:var(--cyan)}
+.nav{background:rgba(15,23,42,.94)}
+@media(min-width:861px){.nav{position:static;padding:0;margin-top:22px;background:none;border:0;-webkit-backdrop-filter:none;backdrop-filter:none}}
+@media(max-width:860px){.side{padding-bottom:calc(110px + env(safe-area-inset-bottom))}}
+</style>
+{% endblock %}
+{% block art_caption %}
+<h2>Your website, <span>all in one place.</span></h2>
+<div class="perks" aria-label="What you get">
+  <div class="perk" style="--c:linear-gradient(135deg,#8b5cf6,#6d28d9)"><i class="fas fa-server"></i><span><b>Hosting status</b><small>See if your site is online, SSL and renewal dates.</small></span></div>
+  <div class="perk" style="--c:linear-gradient(135deg,#00b4d8,#0077b6)"><i class="fas fa-receipt"></i><span><b>Payments &amp; invoices</b><small>Every payment and receipt in one list.</small></span></div>
+  <div class="perk" style="--c:linear-gradient(135deg,#10b981,#047857)"><i class="fas fa-headset"></i><span><b>Support requests</b><small>Ask for changes and follow their progress.</small></span></div>
+</div>
+{% endblock %}
+{% block form %}
+<a href="{% url 'portal_login' %}" class="back"><i class="fas fa-arrow-left fa-xs"></i> Back to sign in</a>
+<h1>Create your account</h1>
+<p class="sub">Create your client account in about a minute. Once our team links your website, you can follow everything from here.</p>
+<div class="card">
     <div class="stepper" aria-hidden="true">
       <div class="st is-on" data-st="0"><div class="st__bar"><i></i></div><div class="st__lbl"><em>1</em>You</div></div>
       <div class="st" data-st="1"><div class="st__bar"><i></i></div><div class="st__lbl"><em>2</em>Website</div></div>
@@ -269,9 +225,9 @@
 
     <div class="alt">Already have an account? <a href="{% url 'portal_login' %}">Sign in</a></div>
     <div class="secure"><i class="fas fa-lock"></i> Encrypted · we never share your details</div>
-  </main>
-</div>
-
+  </div>
+{% endblock %}
+{% block scripts %}
 <script>
 (function(){
   var form=document.getElementById('regForm'), panes=[].slice.call(form.querySelectorAll('[data-pane]')),
@@ -359,5 +315,4 @@
   if(err){var t=err.textContent.toLowerCase(); go(/username|password|uthibitisho/.test(t)?2:0)} else go(0,false);
 })();
 </script>
-</body>
-</html>
+{% endblock %}

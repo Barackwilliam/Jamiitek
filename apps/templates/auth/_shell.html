@@ -1,0 +1,99 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0b1020">
+<title>{% block title %}Sign in — JamiiTek{% endblock %}</title>
+<link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+{# Mtindo wa login (chaguo la mmiliki "6.5": giza, picha ya vifaa kushoto, fomu kulia). #}
+{# Fonts ni zetu wenyewe (static) — hakuna Google Fonts wala Font Awesome kwenye ukurasa huu. #}
+<link rel="preload" as="font" type="font/woff2" href="{% static 'fonts/inter-400.woff2' %}" crossorigin>
+<link rel="preload" as="font" type="font/woff2" href="{% static 'fonts/sora-800.woff2' %}" crossorigin>
+<style>
+@font-face{font-family:Sora;font-weight:800;font-display:swap;src:url({% static 'fonts/sora-800.woff2' %}) format('woff2')}
+@font-face{font-family:Sora;font-weight:700;font-display:swap;src:url({% static 'fonts/sora-700.woff2' %}) format('woff2')}
+@font-face{font-family:Inter;font-weight:400;font-display:swap;src:url({% static 'fonts/inter-400.woff2' %}) format('woff2')}
+@font-face{font-family:Inter;font-weight:500;font-display:swap;src:url({% static 'fonts/inter-500.woff2' %}) format('woff2')}
+@font-face{font-family:Inter;font-weight:600;font-display:swap;src:url({% static 'fonts/inter-600.woff2' %}) format('woff2')}
+:root{--bg:#0f172a;--text:#fff;--muted:rgba(255,255,255,.62);--line:rgba(255,255,255,.14);--field:rgba(255,255,255,.06);
+  --cyan:#22d3ee;--btn:linear-gradient(90deg,#06b6d4,#8b5cf6);--red:#fb7185}
+*{box-sizing:border-box;margin:0;padding:0}
+html{color-scheme:dark}
+body{min-height:100vh;background:var(--bg);color:var(--text);font-family:Inter,-apple-system,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--cyan);text-decoration:none}
+a:hover{text-decoration:underline}
+.w{display:grid;grid-template-columns:1.1fr 1fr;min-height:100vh}
+.art{display:flex;flex-direction:column;padding:44px 48px;
+  background:radial-gradient(700px 400px at 30% 20%,rgba(6,182,212,.25),transparent),radial-gradient(600px 400px at 80% 90%,rgba(139,92,246,.25),transparent),#0b1020}
+.art .hero{display:block;width:100%;max-width:560px;height:auto;margin:auto;filter:drop-shadow(0 30px 40px rgba(0,0,0,.45))}
+.art p{font-weight:600;font-size:15px;color:#cbd5e1;text-align:center}
+.brand{display:flex;align-items:center;gap:11px;color:#fff;text-decoration:none!important}
+.brand img{width:40px;height:35px;border-radius:10px;background:#fff;padding:3px}
+.brand b{font:800 21px Sora,sans-serif}.brand b span{color:var(--cyan)}
+.brand small{font:600 11px Inter,sans-serif;letter-spacing:1.4px;text-transform:uppercase;color:rgba(255,255,255,.6);
+  margin-left:4px;padding-left:12px;border-left:1px solid rgba(255,255,255,.25)}
+.side{display:flex;align-items:center;justify-content:center;padding:40px}
+.form{width:100%;max-width:400px}
+h1{font:800 28px Sora,sans-serif;letter-spacing:-.5px}
+.sub{font-size:15px;color:var(--muted);margin:8px 0 20px;line-height:1.5}
+.msg{display:flex;gap:9px;padding:11px 13px;border-radius:12px;margin-bottom:16px;font-size:14px;line-height:1.5;
+  background:rgba(251,113,133,.1);border:1px solid rgba(251,113,133,.35);color:#fecdd3}
+.fld{margin-top:16px}
+.fld label{display:block;margin-bottom:7px;font-weight:600;font-size:13.5px;color:rgba(255,255,255,.82)}
+.fld input{width:100%;height:50px;border-radius:12px;border:1.5px solid var(--line);background:var(--field);
+  padding:0 15px;font:500 16px Inter,sans-serif;color:#fff;outline:none;transition:border-color .15s,box-shadow .15s}
+.fld input::placeholder{color:rgba(255,255,255,.3)}
+.fld input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(34,211,238,.18)}
+.pw{position:relative}.pw input{padding-right:70px}
+.pw button{position:absolute;right:6px;top:7px;height:36px;padding:0 10px;border:0;border-radius:8px;background:transparent;
+  color:var(--muted);font:600 13px Inter,sans-serif;cursor:pointer}
+.pw button:hover{color:#fff;background:rgba(255,255,255,.06)}
+.forgot{display:block;text-align:right;margin-top:9px;font-weight:600;font-size:13.5px}
+.ts{margin-top:16px;max-width:100%;overflow:hidden}
+.submit{width:100%;height:52px;margin-top:18px;border:0;border-radius:12px;background:var(--btn);color:#fff;
+  font:700 16px Inter,sans-serif;cursor:pointer;transition:filter .15s,transform .05s}
+.submit:hover{filter:brightness(1.08)}.submit:active{transform:translateY(1px)}
+.alt{text-align:center;margin-top:18px;font-size:14px;color:var(--muted)}
+.alt a{font-weight:700}
+.small{text-align:center;margin-top:14px;font-size:13px;color:var(--muted)}
+.small a{color:var(--muted);text-decoration:underline}
+.mobile-brand{display:none}
+@media(max-width:860px){
+  .w{grid-template-columns:1fr}
+  .art{padding:20px 20px 0}
+  .art .hero{max-width:300px;margin:14px auto -6px}
+  .art p{display:none}
+  .side{padding:24px 20px 40px;align-items:flex-start;background:var(--bg);border-radius:22px 22px 0 0;position:relative}
+}
+/* Simu ndogo sana: Turnstile (upana 300px) inapunguzwa ili isizidi fomu */
+@media(max-width:340px){.ts .cf-turnstile{transform:scale(.9);transform-origin:left top}}
+</style>
+{% block head %}{% endblock %}
+</head>
+<body>
+<div class="w">
+  <div class="art">
+    <a class="brand" href="https://www.jamiitek.com/"><img src="{% static 'images/logo-96.webp' %}" alt="" width="40" height="35"><b>Jamii<span>Tek</span></b><small>{% block tag %}Client portal{% endblock %}</small></a>
+    <img class="hero" src="{% static 'images/hero-devices-800.webp' %}" srcset="{% static 'images/hero-devices-640.webp' %} 640w, {% static 'images/hero-devices-800.webp' %} 844w, {% static 'images/hero-devices.webp' %} 1266w"
+         sizes="(max-width:860px) 300px, 50vw" alt="JamiiTek websites shown on a laptop, tablet and phone" width="844" height="566" fetchpriority="high">
+    {% block art_caption %}<p>Websites, hosting, domains, JamiiBot and billing — one account.</p>{% endblock %}
+  </div>
+  <main class="side">
+    <div class="form">
+      {% block form %}{% endblock %}
+    </div>
+  </main>
+</div>
+<script>
+function togglePw(btn){
+  var i = document.getElementById('pw'), show = i.type === 'password';
+  i.type = show ? 'text' : 'password';
+  btn.textContent = show ? 'Hide' : 'Show';
+  btn.setAttribute('aria-pressed', show ? 'true' : 'false');
+}
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
