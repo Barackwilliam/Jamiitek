@@ -40,12 +40,12 @@ h1{font:800 28px Sora,sans-serif;letter-spacing:-.5px}
 .sub{font-size:15px;color:var(--muted);margin:8px 0 20px;line-height:1.5}
 .msg{display:flex;gap:9px;padding:11px 13px;border-radius:12px;margin-bottom:16px;font-size:14px;line-height:1.5;
   background:rgba(251,113,133,.1);border:1px solid rgba(251,113,133,.35);color:#fecdd3}
-.field{margin-top:16px}
-.field label{display:block;margin-bottom:7px;font-weight:600;font-size:13.5px;color:rgba(255,255,255,.82)}
-.field input{width:100%;height:50px;border-radius:12px;border:1.5px solid var(--line);background:var(--field);
+.fld{margin-top:16px}
+.fld label{display:block;margin-bottom:7px;font-weight:600;font-size:13.5px;color:rgba(255,255,255,.82)}
+.fld input{width:100%;height:50px;border-radius:12px;border:1.5px solid var(--line);background:var(--field);
   padding:0 15px;font:500 16px Inter,sans-serif;color:#fff;outline:none;transition:border-color .15s,box-shadow .15s}
-.field input::placeholder{color:rgba(255,255,255,.3)}
-.field input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(34,211,238,.18)}
+.fld input::placeholder{color:rgba(255,255,255,.3)}
+.fld input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(34,211,238,.18)}
 .pw{position:relative}.pw input{padding-right:70px}
 .pw button{position:absolute;right:6px;top:7px;height:36px;padding:0 10px;border:0;border-radius:8px;background:transparent;
   color:var(--muted);font:600 13px Inter,sans-serif;cursor:pointer}
@@ -78,7 +78,7 @@ h1{font:800 28px Sora,sans-serif;letter-spacing:-.5px}
     <a class="brand" href="https://www.jamiitek.com/"><img src="{% static 'images/logo-96.webp' %}" alt="" width="40" height="35"><b>Jamii<span>Tek</span></b><small>{% block tag %}Client portal{% endblock %}</small></a>
     <img class="hero" src="{% static 'images/hero-devices-800.webp' %}" srcset="{% static 'images/hero-devices-640.webp' %} 640w, {% static 'images/hero-devices-800.webp' %} 844w, {% static 'images/hero-devices.webp' %} 1266w"
          sizes="(max-width:860px) 300px, 50vw" alt="JamiiTek websites shown on a laptop, tablet and phone" width="844" height="566" fetchpriority="high">
-    <p>Websites, hosting, domains, JamiiBot and billing — one account.</p>
+    {% block art_caption %}<p>Websites, hosting, domains, JamiiBot and billing — one account.</p>{% endblock %}
   </div>
   <main class="side">
     <div class="form">

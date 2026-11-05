@@ -13,11 +13,11 @@
 <form method="post">
   {% csrf_token %}
   <input type="hidden" name="next" value="{{ next }}">
-  <div class="field">
+  <div class="fld">
     <label for="username">Username or email</label>
     <input type="text" id="username" name="username" placeholder="your_username" autofocus autocomplete="username" autocapitalize="none" spellcheck="false" required>
   </div>
-  <div class="field">
+  <div class="fld">
     <label for="pw">Password</label>
     <div class="pw">
       <input type="password" name="password" id="pw" placeholder="••••••••" autocomplete="current-password" required>
