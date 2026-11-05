@@ -124,6 +124,14 @@ a:hover .hl,.hl a:hover{color:var(--blue)}
 .frame{position:relative;overflow:hidden;border-radius:4px;background:#d7e3ee}
 .frame .img{transition:transform .5s ease}
 a:hover .frame .img{transform:scale(1.035)}
+/* Skeleton: picha ikichelewa, kisanduku chake kinang'aa hadi ifike. Mng'ao uko NYUMA ya picha, kwa hiyo
+   ikifika inaufunika; script iliyo chini inausimamisha (.is-loaded). Bila JavaScript, picha bado inaufunika. */
+.frame:not(.is-loaded)::before{content:"";position:absolute;inset:0;z-index:0;
+  background:linear-gradient(90deg,transparent 0,rgba(255,255,255,.55) 50%,transparent 100%);
+  transform:translateX(-100%);animation:bz-shimmer 1.3s ease-in-out infinite}
+.frame .img{position:relative;z-index:1}
+@keyframes bz-shimmer{to{transform:translateX(100%)}}
+@media(prefers-reduced-motion:reduce){.frame::before{animation:none!important;display:none}}
 .sec-h{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 18px;
   padding-bottom:10px;border-bottom:2px solid var(--ink)}
 .sec-h h2{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--ink);margin:0;
@@ -197,3 +205,17 @@ a:hover .frame .img{transform:scale(1.035)}
   .bz-search-toggle{background:#fff;color:var(--blue);width:36px;height:36px}
 }
 </style>
+<script>
+/* Simamisha mng'ao wa skeleton picha ikishafika (au ikishindwa). Kisanduku kisicho na picha (.ph) hakina cha kusubiri. */
+(function(){
+  function done(img){ var f = img.closest && img.closest('.frame'); if (f) f.classList.add('is-loaded'); }
+  document.addEventListener('load', function(e){ if (e.target.matches && e.target.matches('.frame .img')) done(e.target); }, true);
+  document.addEventListener('error', function(e){ if (e.target.matches && e.target.matches('.frame .img')) done(e.target); }, true);
+  document.addEventListener('DOMContentLoaded', function(){
+    document.querySelectorAll('.frame').forEach(function(f){
+      var img = f.querySelector('img.img');
+      if (!img || (img.complete && img.naturalWidth)) f.classList.add('is-loaded');
+    });
+  });
+})();
+</script>
