@@ -300,7 +300,7 @@ def portal_dashboard(request):
         except Exception:
             pass
 
-    return render(request, 'portal/dashboard.html', {
+    ctx = {
         'bot_plans':     bot_plans,
         'title':         'My Dashboard',
         'client':        client,
@@ -320,7 +320,39 @@ def portal_dashboard(request):
         'health':        health,
         'bot_client':    bot_client,
         'bot_config':    bot_config,
-    })
+    }
+
+    from apps.models import PortalSettings
+    if PortalSettings.current_design() == 'bento':
+        ctx.update(_bento_context(websites, history, today, ph_service))
+        ctx['bento_bot_from'] = min((p.price_tzs for p in bot_plans), default=None)
+        return render(request, 'portal/dashboard_bento.html', ctx)
+    return render(request, 'portal/dashboard.html', ctx)
+
+
+def _bento_context(websites, history, today, ph_service):
+    """Data ya ziada ya dashboard ya "Neon Bento": malipo yanayofuata, pete za siku, na chati ya kuchelewa."""
+    from urllib.parse import urlparse
+    sites = []
+    for w in websites:
+        raw = (w.hosting_end_date - today).days
+        cov = ph_service.coverage_bar(w, today)
+        left_pct = 0 if cov['expired'] else max(100 - cov['percent'], 4)
+        tone = 'bad' if raw <= 7 or w.status == 'suspended' else ('warn' if raw <= 30 else 'ok')
+        sites.append({'w': w, 'host': urlparse(w.url or '').netloc or w.url, 'days': max(raw, 0), 'raw': raw,
+                      'left_pct': left_pct, 'tone': tone,
+                      # mzunguko wa pete: urefu wa duara ni 163.4 (r=26)
+                      'dash_offset': round(163.4 * (1 - left_pct / 100), 1)})
+    active = [x for x in sites if x['w'].status != 'terminated']
+    nxt = min(active, key=lambda x: x['raw']) if active else None
+
+    bars = []
+    chart = history.get('chart') or {}
+    for label, val, name in zip(chart.get('labels', []), chart.get('values', []), chart.get('names', [])):
+        late = max(int(val or 0), 0)
+        bars.append({'label': label, 'late': late, 'name': name,
+                     'height': max(min(late, 30) * 4, 8)})          # 30+ siku = urefu wa juu kabisa
+    return {'bento_sites': sites, 'bento_next': nxt, 'bento_bars': bars}
 
 
 # ── MY WEBSITES ────────────────────────────────────────────────────

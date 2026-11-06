@@ -2121,6 +2121,48 @@ class AIConfig(models.Model):
         return cls.objects.order_by('pk').first() or cls.objects.create()
 
 
+class PortalSettings(models.Model):
+    """Muonekano wa Client Portal kwa wateja wote — mmoja tu, unabadilishwa /manage/portal-design/ au Django admin."""
+    DESIGNS = [
+        ('classic', 'Classic (ya sasa)'),
+        ('bento', 'Neon Bento'),
+    ]
+    CACHE_KEY = 'portal:design'
+
+    design = models.CharField(max_length=20, choices=DESIGNS, default='classic')
+    updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='+')
+
+    class Meta:
+        verbose_name = 'Portal design'
+        verbose_name_plural = 'Portal design'
+
+    def __str__(self):
+        return self.get_design_display()
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        from django.core.cache import cache
+        cache.delete(self.CACHE_KEY)
+
+    @classmethod
+    def load(cls):
+        return cls.objects.order_by('pk').first() or cls.objects.create()
+
+    @classmethod
+    def current_design(cls):
+        """Design inayotumika sasa ('classic' | 'bento'), kwenye cache dakika 5 — portal haiulizi DB kila ukurasa."""
+        from django.core.cache import cache
+        design = cache.get(cls.CACHE_KEY)
+        if design is None:
+            try:
+                design = cls.load().design
+            except Exception:
+                design = 'classic'          # DB ikishindwa, portal ibaki kama ilivyozoeleka
+            cache.set(cls.CACHE_KEY, design, 300)
+        return design if design in dict(cls.DESIGNS) else 'classic'
+
+
 class StaticSiteRepo(models.Model):
     """
     Repo ya GitHub ya website ya static ya mteja (Render inaichapisha kila commit).

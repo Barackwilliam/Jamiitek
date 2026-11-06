@@ -1,0 +1,38 @@
+{% extends 'management/base.html' %}
+{% block title %}Muonekano wa Portal{% endblock %}
+{% block content %}
+<style>
+  .pd-top h1{font-family:var(--head);font-size:22px;font-weight:800;margin:0}
+  .pd-top p{color:var(--text-2);font-size:13px;margin:6px 0 18px;max-width:720px;line-height:1.6}
+  .pd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+  .pd-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+  .pd-card.on{border-color:#10d98a;box-shadow:0 0 0 1px #10d98a inset}
+  .pd-sw{height:110px}
+  .pd-body{padding:14px 18px 18px;display:flex;flex-direction:column;gap:10px;flex:1}
+  .pd-body h2{font-size:16px;margin:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .pd-tag{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;background:rgba(16,217,138,.12);color:#10d98a;border:1px solid rgba(16,217,138,.3)}
+  .pd-body p{margin:0;font-size:13px;color:var(--text-2);line-height:1.55}
+  .pd-b{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 16px;border-radius:10px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1px solid #3b82f6;background:#3b82f6;color:#fff;margin-top:auto;align-self:flex-start}
+  .pd-meta{margin-top:16px;font-size:12.5px;color:var(--text-2)}
+</style>
+<div class="pd-top">
+  <h1>🎨 Muonekano wa Portal</h1>
+  <p>Chagua jinsi <b>Client Portal</b> (/portal/) inavyoonekana kwa wateja wote. Badiliko linaonekana kwa wateja mara moja, na unaweza kurudi kwenye design nyingine wakati wowote — data ya wateja haibadiliki.</p>
+</div>
+<div class="pd-grid">
+  {% for c in cards %}
+  <div class="pd-card{% if c.on %} on{% endif %}">
+    <div class="pd-sw" style="background:{{ c.swatch }}"></div>
+    <div class="pd-body">
+      <h2>{{ c.name }}{% if c.on %} <span class="pd-tag">Inatumika</span>{% endif %}</h2>
+      <p>{{ c.note }}</p>
+      {% if not c.on %}
+      <form method="post">{% csrf_token %}<input type="hidden" name="design" value="{{ c.value }}">
+        <button class="pd-b"><i class="fas fa-check"></i> Tumia hii</button></form>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% if cfg.updated_by %}<div class="pd-meta">Ilibadilishwa mwisho na {{ cfg.updated_by.get_username }} · {{ cfg.updated_at|date:"d M Y, H:i" }}</div>{% endif %}
+{% endblock %}

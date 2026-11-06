@@ -159,6 +159,7 @@ TEMPLATES = [
                 'apps.context_processors.sidebar_nav',
                 'apps.context_processors.social_links',
                 'apps.context_processors.ai_health',
+                'apps.context_processors.portal_design',
 
             ],
         },

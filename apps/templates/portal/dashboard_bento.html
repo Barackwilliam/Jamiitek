@@ -1,0 +1,185 @@
+{% extends 'portal/base.html' %}
+{% load humanize %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Overview{% endblock %}
+{% block content %}
+{% comment %} Dashboard ya "Neon Bento" (PortalSettings.design == 'bento'). Data ni ileile ya portal/dashboard.html,
+pamoja na bento_next / bento_sites / bento_bars kutoka _bento_context(). {% endcomment %}
+<style>
+.bn-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 18px;flex-wrap:wrap}
+.bn-head h1{font:800 30px var(--head);color:#fff;letter-spacing:-.6px;margin:0}
+.bn-head h1 span{background:linear-gradient(90deg,#fbbf24,#f472b6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.bn-head p{font-size:14px;color:var(--text-3);margin:4px 0 0}
+.bn-av{display:flex;align-items:center;gap:10px;padding:6px 14px 6px 6px;border-radius:999px;background:var(--card-s);border:1px solid var(--border);color:#fff;font-weight:600;font-size:14px}
+.bn-av i{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#f472b6,#8b5cf6);display:grid;place-items:center;font:700 14px var(--head);font-style:normal}
+.bn{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+.bt{border-radius:24px;padding:22px;background:var(--card);border:1px solid var(--border);position:relative;overflow:hidden;min-width:0}
+.bt h3{font:700 16px var(--head);color:#fff;margin:0}
+.bt-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
+.bt-h a{font-size:13px;color:#a78bfa;font-weight:600}
+.hero{grid-column:span 6;grid-row:span 2;min-height:300px;border:0;
+  background:radial-gradient(400px 260px at 100% 0,rgba(244,114,182,.35),transparent 60%),linear-gradient(160deg,#4c1d95,#1e1b4b 60%,#0f172a)}
+.hero.bad{background:radial-gradient(400px 260px at 100% 0,rgba(248,113,113,.35),transparent 60%),linear-gradient(160deg,#7f1d1d,#3b0d16 60%,#0f172a)}
+.hero small{font:700 11px var(--head);letter-spacing:3px;color:#fbcfe8;text-transform:uppercase}
+.hero .n{font:800 64px var(--head);color:#fff;line-height:1;margin-top:14px}.hero .n span{font-size:24px}
+.hero .s{color:#e9d5ff;font-size:14.5px;margin-top:10px;max-width:320px;line-height:1.5}
+.hero .pay{position:absolute;left:22px;right:22px;bottom:22px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-radius:16px;background:rgba(255,255,255,.12);backdrop-filter:blur(10px);color:#fff;font-weight:600}
+.hero .pay small{display:block;letter-spacing:2px;font-size:10px;color:#e9d5ff}
+.hero .pay a{display:flex;align-items:center;gap:8px;background:#fff;color:#4c1d95;padding:10px 15px;border-radius:12px;font-size:14px;font-weight:700;white-space:nowrap}
+.k{grid-column:span 2}.k .ic{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;color:#0b0d14;font-size:17px}
+.k b{display:block;font:800 30px var(--head);color:#fff;margin-top:16px}.k small{color:var(--text-2);font-size:13px}
+.k.wide{grid-column:span 6;background:linear-gradient(160deg,#064e3b,#0f172a)}
+.sites{grid-column:span 7}.tim{grid-column:span 5}.phs{grid-column:span 7}.msg{grid-column:span 5}
+.sc{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.si{display:block;padding:16px;border-radius:18px;background:var(--card-s);border:1px solid #232a40;color:inherit;transition:border-color .15s}
+.si:hover{border-color:rgba(139,92,246,.5)}
+.si .tp{display:flex;justify-content:space-between;align-items:center;gap:8px}.si b{font:700 15px var(--head);color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.si small{display:block;color:var(--text-3);font-size:12.5px;margin:3px 0 14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;color:#0b0d14;background:#34d399;flex:none;text-transform:uppercase}
+.badge.off{background:#f87171}
+.gauge{display:flex;align-items:center;gap:14px}.gauge svg{flex:none}.gauge div{font-size:12.5px;color:var(--text-2);line-height:1.55}.gauge div b{font:600 14px var(--body);color:#fff}
+.bars{display:flex;align-items:flex-end;gap:10px;height:150px}
+.bars div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px;height:100%;font-size:11.5px;color:var(--text-3);min-width:0}
+.bars i{width:100%;border-radius:12px;display:block}
+.ph{display:flex;gap:12px;align-items:center;padding:10px 0}
+.ph>i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none;font-size:14px}
+.ph b{color:#fff;font-size:14px;font-weight:600}.ph small{display:block;color:var(--text-3);font-size:12px}
+.ph em{margin-left:auto;font-style:normal;font-weight:700;font-size:12.5px;white-space:nowrap}
+.ok{color:#34d399}.late{color:#f472b6}
+.gap{margin-top:10px;padding:10px 12px;border-radius:12px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);font-size:13px;color:#fecaca}
+.m{display:flex;gap:10px;align-items:center;padding:9px 0;color:inherit}.m>i{width:10px;height:10px;border-radius:50%;background:#f472b6;flex:none}
+.m b{color:#fff;font-size:13.5px;font-weight:600}.m small{display:block;font-size:12px;color:var(--text-3)}
+.qa{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.qa a{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 4px;border-radius:14px;background:var(--card-s);font-size:12px;color:var(--text);font-weight:600}
+.qa a i{color:#a78bfa;font-size:16px}
+.bot{grid-column:span 12;display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:linear-gradient(120deg,#052e2b,#12162a 60%)}
+.bot .ic{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;background:#25d366;color:#052e16;font-size:24px;flex:none}
+.bot p{margin:4px 0 0;color:var(--text-2);font-size:13.5px;max-width:560px}
+.bot .acts{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}
+.bot .acts a{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px;border-radius:12px;font-weight:700;font-size:14px}
+.bot .p1{background:#25d366;color:#052e16}.bot .p2{border:1px solid var(--border);color:#fff}
+.empty{color:var(--text-3);font-size:13.5px;padding:18px 0;text-align:center}
+@media(max-width:991px){
+  .bn-head h1{font-size:24px}.bn-av b{display:none}.bn-av{padding:4px}
+  .bn{grid-template-columns:1fr 1fr;gap:12px}
+  .hero{grid-column:span 2;grid-row:auto;min-height:260px}.hero .n{font-size:52px}
+  .k,.k.wide{grid-column:span 1}.sites,.tim,.phs,.msg,.bot{grid-column:span 2}
+  .bt{padding:18px;border-radius:20px}.bot .acts{margin-left:0}
+}
+</style>
+
+{% for alert in alerts %}
+<div class="jt-alert jt-alert-{{ alert.type }} mb-2">
+  <i class="fas {% if alert.type == 'danger' %}fa-circle-exclamation{% else %}fa-triangle-exclamation{% endif %}" style="flex-shrink:0;margin-top:2px"></i>
+  <span>{{ alert.msg|safe }}</span>
+</div>
+{% endfor %}
+
+<div class="bn-head">
+  <div>
+    <h1>Hey <span>{{ client.name.split.0|default:"there" }}</span> 👋</h1>
+    <p>Your JamiiTek overview · {{ today|date:"d M Y" }}</p>
+  </div>
+  <a href="{% url 'portal_profile' %}" class="bn-av"><i>{{ client.name|first|upper }}</i><b>{{ client.name }}</b></a>
+</div>
+
+<div class="bn">
+  {% if bento_next %}{% with n=bento_next %}
+  <div class="bt hero{% if n.raw <= 0 %} bad{% endif %}">
+    <small>{% if n.raw <= 0 %}Hosting expired{% else %}Next renewal{% endif %}</small>
+    {% if n.raw <= 0 %}
+      <div class="n">0<span> days</span></div>
+      <div class="s">{{ n.w.name }} hosting ended on {{ n.w.hosting_end_date|date:"d M Y" }}. Renew now to keep it online.</div>
+    {% else %}
+      <div class="n">{{ n.days }}<span> day{{ n.days|pluralize }}</span></div>
+      <div class="s">{{ n.w.name }} hosting ends on {{ n.w.hosting_end_date|date:"d M Y" }}. Renew early to stay online.</div>
+    {% endif %}
+    <div class="pay"><div>TZS {{ n.w.monthly_cost|floatformat:0|intcomma }}<small>PER MONTH</small></div>
+      <a href="{% url 'portal_billing' %}"><i class="fas fa-credit-card"></i> Pay now</a></div>
+  </div>
+  {% endwith %}{% else %}
+  <div class="bt hero">
+    <small>Welcome</small>
+    <div class="n" style="font-size:40px">No website yet</div>
+    <div class="s">Once JamiiTek links your website to this account, its hosting, renewals and payments show up here.</div>
+    <div class="pay"><div>Need help?<small>WE REPLY FAST</small></div><a href="{% url 'portal_support' %}"><i class="fas fa-headset"></i> Support</a></div>
+  </div>
+  {% endif %}
+
+  <a href="{% url 'portal_website_list' %}" class="bt k"><div class="ic" style="background:#22d3ee"><i class="fas fa-globe"></i></div><b>{{ websites|length }}</b><small>Websites · {{ health.active }} live</small></a>
+  <a href="{% url 'portal_domains' %}" class="bt k"><div class="ic" style="background:#a78bfa"><i class="fas fa-at"></i></div><b>{{ domains|length }}</b><small>Domains · {{ health.domains_ok }} active</small></a>
+  <a href="{% url 'portal_email_hosting' %}" class="bt k"><div class="ic" style="background:#fbbf24"><i class="fas fa-envelope"></i></div><b>{{ email_plans|length }}</b><small>Email plans</small></a>
+  <a href="{% url 'portal_billing' %}" class="bt k wide"><div class="ic" style="background:#34d399"><i class="fas fa-check"></i></div>
+    <b>{{ pay_stats.on_time_pct }}%</b><small>Paid on time · {{ pay_stats.total_phases }} phase{{ pay_stats.total_phases|pluralize }}{% if pay_stats.current_streak %} · streak {{ pay_stats.current_streak }}{% endif %}</small></a>
+
+  <div class="bt sites">
+    <div class="bt-h"><h3>My websites</h3><a href="{% url 'portal_website_list' %}">View all →</a></div>
+    {% if bento_sites %}
+    <div class="sc">
+      {% for x in bento_sites %}
+      <a class="si" href="{% url 'portal_website_detail' x.w.pk %}">
+        <div class="tp"><b>{{ x.w.name }}</b><span class="badge{% if x.w.status != 'active' %} off{% endif %}">{% if x.w.status == 'active' %}Live{% else %}{{ x.w.get_status_display }}{% endif %}</span></div>
+        <small>{{ x.host }}</small>
+        <div class="gauge">
+          <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="26" fill="none" stroke="#232a40" stroke-width="7"/>
+            <circle cx="32" cy="32" r="26" fill="none" stroke="{% if x.tone == 'ok' %}#22d3ee{% elif x.tone == 'warn' %}#fbbf24{% else %}#f87171{% endif %}" stroke-width="7" stroke-linecap="round" stroke-dasharray="163.4" stroke-dashoffset="{{ x.dash_offset }}" transform="rotate(-90 32 32)"/>
+            <text x="32" y="37" text-anchor="middle" font-family="Sora,sans-serif" font-weight="800" font-size="15" fill="#fff">{{ x.days }}</text></svg>
+          <div>days of hosting left<br><b>until {{ x.w.hosting_end_date|date:"d M Y" }}</b><br>TZS {{ x.w.monthly_cost|floatformat:0|intcomma }} / month</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}<div class="empty">No websites linked to your account yet.</div>{% endif %}
+  </div>
+
+  <div class="bt tim">
+    <div class="bt-h"><h3>Payment timing</h3><span style="font-size:12.5px;color:var(--text-3)">days late per payment</span></div>
+    {% if bento_bars %}
+    <div class="bars">
+      {% for b in bento_bars|slice:"-8:" %}
+      <div title="{{ b.name }} · {% if b.late %}{{ b.late }} days late{% else %}on time{% endif %}"><i style="height:{{ b.height }}px;background:{% if b.late %}linear-gradient(180deg,#f472b6,#be185d){% else %}linear-gradient(180deg,#34d399,#0d9488){% endif %}"></i>{{ b.label }}</div>
+      {% endfor %}
+    </div>
+    {% else %}<div class="empty">No payments recorded yet.</div>{% endif %}
+  </div>
+
+  <div class="bt phs">
+    <div class="bt-h"><h3>Payment phases</h3><a href="{% url 'portal_billing' %}">Billing →</a></div>
+    {% for ph in history.phases|slice:":5" %}
+    <div class="ph">
+      <i style="{% if ph.status == 'late' %}background:rgba(244,114,182,.15);color:#f472b6{% else %}background:rgba(52,211,153,.15);color:#34d399{% endif %}" class="fas {% if ph.status == 'late' %}fa-clock{% else %}fa-check{% endif %}"></i>
+      <div><b>Phase {{ ph.index }} — {{ ph.months }} month{{ ph.months|pluralize }}</b>
+        <small>{{ ph.website_name }} · {{ ph.period_start|date:"d M" }} → {{ ph.period_end|date:"d M Y" }}</small></div>
+      <em class="{% if ph.status == 'late' %}late{% else %}ok{% endif %}">{% if ph.status == 'early' %}{{ ph.days_late|cut:"-" }}d early{% elif ph.status == 'on_time' %}On time{% else %}{{ ph.days_late }} days late{% endif %}</em>
+    </div>
+    {% empty %}<div class="empty">No payment phases yet.</div>
+    {% endfor %}
+    {% if history.gaps %}<div class="gap"><i class="fas fa-triangle-exclamation"></i> {{ history.stats.total_days_unpaid }} day{{ history.stats.total_days_unpaid|pluralize }} not covered by a payment. <a href="{% url 'portal_billing' %}" style="color:#fff;font-weight:600">See details</a></div>{% endif %}
+  </div>
+
+  <div class="bt msg">
+    <div class="bt-h"><h3>Messages</h3><a href="{% url 'portal_notifications' %}">All</a></div>
+    {% for n in notifications|slice:":4" %}
+    <a class="m" href="{% url 'portal_notifications' %}"><i></i><div><b>{{ n.subject|truncatechars:48 }}</b><small>{% if n.website %}{{ n.website.name }} · {% endif %}{{ n.sent_at|date:"d M Y" }}</small></div></a>
+    {% empty %}<div class="empty">No messages yet.</div>
+    {% endfor %}
+    <div class="qa">
+      <a href="{% url 'portal_receipt_list' %}"><i class="fas fa-receipt"></i>Receipts</a>
+      <a href="{% url 'portal_domains' %}"><i class="fas fa-at"></i>Domains</a>
+      <a href="{% url 'portal_support' %}"><i class="fas fa-headset"></i>Support</a>
+      <a href="{% url 'portal_profile' %}"><i class="fas fa-user"></i>Profile</a>
+    </div>
+  </div>
+
+  <div class="bt bot">
+    <div class="ic"><i class="fab fa-whatsapp"></i></div>
+    {% if bot_client %}
+    <div><h3>JamiiBot</h3><p>Your WhatsApp AI assistant{% if bot_config and bot_config.business_name %} for {{ bot_config.business_name }}{% endif %}. Open its dashboard to see chats and settings.</p></div>
+    <div class="acts"><a class="p1" href="/chatbot/dashboard/"><i class="fas fa-robot"></i> Bot dashboard</a><a class="p2" href="/chatbot/conversations/">Chats</a></div>
+    {% else %}
+    <div><h3>Answer customers on WhatsApp 24/7</h3><p>JamiiBot replies in Swahili and English, shares your services and takes orders.{% if bento_bot_from %} Plans from TZS {{ bento_bot_from|intcomma }}/month.{% endif %}</p></div>
+    <div class="acts"><a class="p1" href="/chatbot/register/"><i class="fab fa-whatsapp"></i> Get my bot</a><a class="p2" href="/bot/">Learn more</a></div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
