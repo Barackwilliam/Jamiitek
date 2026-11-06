@@ -1651,3 +1651,67 @@ class PortalDesignSwitchTest(TestCase):
         r = self.client.post('/manage/portal-design/', {'design': 'bento'})
         self.assertNotEqual(r.status_code, 200)
         self.assertEqual(PortalSettings.current_design(), 'classic')
+
+
+class BentoBillingTest(TestCase):
+    """Billing ya Neon Bento: fomu za kulipa ni zilezile za Classic."""
+
+    def setUp(self):
+        import datetime
+        import secrets
+        from decimal import Decimal
+        from django.contrib.auth.models import User
+        from django.core.cache import cache
+        from .accounts_link import ensure_client_profile
+        from .models import ManagedWebsite
+        cache.clear()
+        self.user = User.objects.create_user('mteja_bill', 'mb@example.com', secrets.token_urlsafe(16))
+        self.profile = ensure_client_profile(self.user)
+        d = datetime.date.today()
+        self.site = ManagedWebsite.objects.create(client=self.profile, name='Bill Shop', url='https://billshop.co.tz',
+                                                  hosting_start_date=d - datetime.timedelta(days=50),
+                                                  hosting_end_date=d + datetime.timedelta(days=10),
+                                                  monthly_cost=Decimal('20000'))
+        self.client.force_login(self.user)
+
+    def _bento(self):
+        from .models import PortalSettings
+        cfg = PortalSettings.load()
+        cfg.design = 'bento'
+        cfg.save()
+
+    def test_classic_billing_still_used_by_default(self):
+        r = self.client.get('/portal/billing/')
+        self.assertTemplateUsed(r, 'portal/billing.html')
+        self.assertTemplateUsed(r, 'portal/_pay_form.html')
+
+    def test_bento_billing_single_site(self):
+        self._bento()
+        r = self.client.get('/portal/billing/')
+        self.assertTemplateUsed(r, 'portal/billing_bento.html')
+        self.assertTemplateUsed(r, 'portal/_pay_form.html')
+        self.assertTemplateUsed(r, 'portal/_pay_scripts.html')
+        for text in ('Account balance', 'Bill Shop', 'Due in 10 days', 'name="transaction_ref"', 'id="invForm"', 'NMB Bank Tanzania'):
+            self.assertContains(r, text)
+
+    def test_bento_billing_multi_site_uses_multi_form(self):
+        import datetime
+        from decimal import Decimal
+        from .models import ManagedWebsite
+        d = datetime.date.today()
+        ManagedWebsite.objects.create(client=self.profile, name='Bill Clinic', url='https://billclinic.co.tz',
+                                      hosting_start_date=d - datetime.timedelta(days=10),
+                                      hosting_end_date=d + datetime.timedelta(days=200), monthly_cost=Decimal('30000'))
+        self._bento()
+        r = self.client.get('/portal/billing/')
+        self.assertContains(r, 'id="multiPayForm"')
+        self.assertContains(r, 'Bill Clinic')
+
+    def test_payment_proof_from_bento_page_is_recorded(self):
+        from .models import ClientNotification
+        self._bento()
+        r = self.client.post('/portal/billing/submit/', {'website': self.site.pk, 'months_covered': 3,
+                                                         'amount': 57000, 'transaction_ref': 'REF123',
+                                                         'payment_method': 'NMB Bank Transfer'})
+        self.assertEqual(r.status_code, 302)
+        self.assertTrue(ClientNotification.objects.filter(website=self.site).exists())

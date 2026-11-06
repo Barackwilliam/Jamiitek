@@ -424,7 +424,18 @@ def portal_billing(request):
         'reference_format': 'WEBSITE NAME + PHONE',
     }
  
-    return render(request, 'portal/billing.html', {
+    from apps.models import PortalSettings
+    bento = PortalSettings.current_design() == 'bento'
+    bento_lines = []
+    if bento:
+        for line in account['lines']:
+            cov = ph_service.coverage_bar(line['website'])
+            left = 0 if cov['expired'] else max(100 - cov['percent'], 4)
+            bento_lines.append(dict(line, left_pct=left, dash_offset=round(163.4 * (1 - left / 100), 1),
+                                    days=max(line['days_left'], 0)))
+    tpl = 'portal/billing_bento.html' if bento else 'portal/billing.html'
+    return render(request, tpl, {
+        'bento_lines': bento_lines,
         'title': 'Billing & Payments',
         'client': client,
         'websites': websites,

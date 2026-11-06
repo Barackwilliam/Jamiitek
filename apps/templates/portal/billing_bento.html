@@ -1,0 +1,176 @@
+{% extends 'portal/base.html' %}
+{% load humanize %}
+{% block title %}Billing & Payments{% endblock %}
+{% block page_title %}Billing &amp; Payments{% endblock %}
+{% block content %}
+{% comment %} Billing ya "Neon Bento" (PortalSettings.design == 'bento'). Fomu za kulipa na JavaScript yake ni zilezile za
+Classic (_pay_form.html, _pay_scripts.html) — hapa ni mpangilio na muonekano tu. {% endcomment %}
+{% include 'portal/_billing_styles.html' %}
+<style>
+.bb-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:4px 0 18px;flex-wrap:wrap}
+.bb-head h1{font:800 28px var(--head);color:#fff;letter-spacing:-.5px;margin:0}
+.bb-head h1 span{background:linear-gradient(90deg,#fbbf24,#f472b6);-webkit-background-clip:text;background-clip:text;color:transparent}
+.bb-head p{font-size:14px;color:var(--text-3);margin:4px 0 0}
+.bb-help{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 16px;border-radius:14px;background:var(--card-s);border:1px solid var(--border);color:#fff;font-weight:600;font-size:14px}
+.bb{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+.bt{border-radius:24px;padding:22px;background:var(--card);border:1px solid var(--border);position:relative;overflow:hidden;min-width:0}
+.bt h3{font:700 16px var(--head);color:#fff;margin:0}
+.bt-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.bt-h span{font-size:12.5px;color:var(--text-3)}
+.hero{grid-column:span 6;grid-row:span 2;min-height:280px;border:0;
+  background:radial-gradient(400px 260px at 100% 0,rgba(244,114,182,.35),transparent 60%),linear-gradient(160deg,#4c1d95,#1e1b4b 60%,#0f172a)}
+.hero.clear{background:radial-gradient(400px 260px at 100% 0,rgba(52,211,153,.30),transparent 60%),linear-gradient(160deg,#064e3b,#0f2a2a 60%,#0f172a)}
+.hero.owe{background:radial-gradient(400px 260px at 100% 0,rgba(248,113,113,.35),transparent 60%),linear-gradient(160deg,#7f1d1d,#3b0d16 60%,#0f172a)}
+.hero small{font:700 11px var(--head);letter-spacing:3px;color:rgba(255,255,255,.75);text-transform:uppercase}
+.hero .n{font:800 56px var(--head);color:#fff;line-height:1;margin-top:14px}.hero .n span{font-size:20px;opacity:.8;margin-right:6px}
+.hero .s{color:rgba(255,255,255,.85);font-size:14.5px;margin-top:10px;max-width:340px;line-height:1.5}
+.hero .go{position:absolute;left:22px;right:22px;bottom:22px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-radius:16px;background:rgba(255,255,255,.12);backdrop-filter:blur(10px);color:#fff;font-weight:600}
+.hero .go a{display:flex;align-items:center;gap:8px;background:#fff;color:#1e1b4b;padding:10px 15px;border-radius:12px;font-size:14px;font-weight:700;white-space:nowrap}
+.k{grid-column:span 3}.k .ic{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;color:#0b0d14;font-size:17px}
+.k b{display:block;font:800 30px var(--head);color:#fff;margin-top:14px}.k small{color:var(--text-2);font-size:13px}
+.sites{grid-column:span 12}
+.sc{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.si{padding:16px;border-radius:18px;background:var(--card-s);border:1px solid #232a40}
+.si .tp{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.si b{font:700 15px var(--head);color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.tag.green{background:rgba(52,211,153,.15);color:#34d399}.tag.yellow{background:rgba(251,191,36,.15);color:#fbbf24}.tag.red{background:rgba(248,113,113,.15);color:#f87171}
+.gauge{display:flex;align-items:center;gap:14px;margin-top:14px}.gauge svg{flex:none}
+.gauge div{font-size:12.5px;color:var(--text-2);line-height:1.55}.gauge div b{font:600 14px var(--body);color:#fff;white-space:normal}
+.payc{grid-column:span 7;scroll-margin-top:72px}.side{grid-column:span 5;display:flex;flex-direction:column;gap:16px}
+/* Fomu ya zamani ndani ya kigae: ondoa fremu yake ya nje, ibaki kwenye kigae cha bento */
+.payc .sec{background:transparent;border:0;box-shadow:none;margin:0}
+.payc .sec-head{padding:0 0 14px;border:0;background:none}
+.payc .sec-body{padding:0}
+.payc .sec-title{font:700 16px var(--head);color:#fff}
+.payc .jt-alert{display:block;line-height:1.6}.payc .jt-alert>i{margin-right:6px}
+.bank{background:linear-gradient(150deg,#1e1b4b,#12162a 55%);border-color:#2e2a5c}
+.bank .chip{width:44px;height:32px;border-radius:7px;background:linear-gradient(135deg,#fde68a,#d97706);margin-bottom:14px}
+.bank .row1{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid rgba(255,255,255,.08);font-size:13.5px}
+.bank .row1:first-of-type{border-top:0}
+.bank .row1 span{color:var(--text-3)}.bank .row1 b{color:#fff;font-weight:600;text-align:right}
+.bank .row1 .acc{font:700 18px var(--head);letter-spacing:1px;color:#fbbf24}
+.bank .cp{margin-left:8px;height:30px;padding:0 10px;border-radius:9px;border:1px solid var(--border);background:var(--card-s);color:#fff;font-size:12px;cursor:pointer}
+.bank .note{margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);font-size:12.5px;color:#fde68a}
+.st{display:flex;gap:12px;padding:9px 0}.st i{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;font-style:normal;font:700 13px var(--head);flex:none}
+.st b{display:block;color:#fff;font-size:14px;font-weight:600}.st small{color:var(--text-2);font-size:12.5px;line-height:1.5}
+.recent{grid-column:span 5}.phases{grid-column:span 7}
+.pr{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid rgba(255,255,255,.05)}.pr:first-of-type{border-top:0}
+.pr>i{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none;font-size:14px}
+.pr b{color:#fff;font-size:14px;font-weight:600}.pr small{display:block;color:var(--text-3);font-size:12px}
+.pr em{margin-left:auto;font-style:normal;font-weight:700;font-size:12.5px;white-space:nowrap;text-align:right}
+.pr em small{font-weight:500}
+.ok{color:#34d399}.late{color:#f472b6}
+.empty{color:var(--text-3);font-size:13.5px;padding:18px 0;text-align:center}
+@media(max-width:991px){
+  .bb-head h1{font-size:24px}
+  .bb{grid-template-columns:1fr 1fr;gap:12px}
+  .hero{grid-column:span 2;grid-row:auto;min-height:250px}.hero .n{font-size:46px}
+  .k{grid-column:span 1}.sites,.payc,.side,.recent,.phases{grid-column:span 2}
+  .bt{padding:18px;border-radius:20px}
+}
+</style>
+
+<div class="bb-head">
+  <div><h1>Billing <span>&amp; Payments</span></h1><p>Pay for hosting, send proof and see every payment you have made.</p></div>
+  <a href="{% url 'portal_support' %}" class="bb-help"><i class="fas fa-headset"></i> Payment help</a>
+</div>
+
+<div class="bb">
+  <div class="bt hero {% if account.balance > 0 %}{% if account.overdue_count %}owe{% endif %}{% else %}clear{% endif %}">
+    <small>Account balance</small>
+    <div class="n"><span>TZS</span>{{ account.balance|floatformat:0|intcomma }}</div>
+    {% if account.balance > 0 %}
+      <div class="s">{{ account.payable|length }} website{{ account.payable|length|pluralize }} need{{ account.payable|length|pluralize:"s," }} payment{% if account.overdue_count %} · {{ account.overdue_count }} overdue{% endif %}. Paying one website does not change the others.</div>
+    {% elif account.next_renewal %}
+      <div class="s">Everything is paid up{% if account.site_count > 1 %} across your {{ account.site_count }} websites{% endif %}. Next renewal {{ account.next_renewal|date:"d M Y" }}.</div>
+    {% else %}
+      <div class="s">Nothing to pay right now.</div>
+    {% endif %}
+    <div class="go"><div>{% if account.balance > 0 %}Pay now to stay online{% else %}Pay early for more months{% endif %}</div>
+      <a href="#payBox"><i class="fas fa-credit-card"></i> Pay now</a></div>
+  </div>
+
+  <div class="bt k"><div class="ic" style="background:#34d399"><i class="fas fa-check"></i></div><b>{{ pay_stats.on_time_pct }}%</b><small>Paid on time · {{ pay_stats.total_phases }} phase{{ pay_stats.total_phases|pluralize }}</small></div>
+  <div class="bt k"><div class="ic" style="background:#22d3ee"><i class="fas fa-receipt"></i></div><b>{{ payments.count }}</b><small>Payments made</small></div>
+  <div class="bt k"><div class="ic" style="background:#a78bfa"><i class="fas fa-globe"></i></div><b>{{ websites.count }}</b><small>Website{{ websites.count|pluralize }}</small></div>
+  <div class="bt k"><div class="ic" style="background:#fbbf24"><i class="fas fa-calendar"></i></div><b>{{ pay_stats.months_covered }}</b><small>Month{{ pay_stats.months_covered|pluralize }} covered</small></div>
+
+  <div class="bt sites">
+    <div class="bt-h"><h3>Hosting status</h3><span>{{ account.site_count }} website{{ account.site_count|pluralize }} · most urgent first</span></div>
+    {% if bento_lines %}
+    <div class="sc">
+      {% for l in bento_lines %}
+      <div class="si">
+        <div class="tp"><b>{{ l.website.name }}</b><span class="tag {{ l.tone }}">{{ l.label }}</span></div>
+        <div class="gauge">
+          <svg width="64" height="64" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="26" fill="none" stroke="#232a40" stroke-width="7"/>
+            <circle cx="32" cy="32" r="26" fill="none" stroke="{% if l.tone == 'green' %}#22d3ee{% elif l.tone == 'yellow' %}#fbbf24{% else %}#f87171{% endif %}" stroke-width="7" stroke-linecap="round" stroke-dasharray="163.4" stroke-dashoffset="{{ l.dash_offset }}" transform="rotate(-90 32 32)"/>
+            <text x="32" y="37" text-anchor="middle" font-family="Sora,sans-serif" font-weight="800" font-size="15" fill="#fff">{{ l.days }}</text></svg>
+          <div>{% if l.state == 'suspended' %}Suspended — pay to restore{% elif l.days_left < 0 %}Ended {{ l.website.hosting_end_date|date:"d M Y" }}{% else %}days left · ends <b>{{ l.website.hosting_end_date|date:"d M Y" }}</b>{% endif %}<br>TZS {{ l.website.monthly_cost|floatformat:0|intcomma }} / month</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}<div class="empty">No websites linked yet.</div>{% endif %}
+  </div>
+
+  <div class="bt payc" id="payBox">
+    {% include 'portal/_pay_form.html' %}
+  </div>
+
+  <div class="side">
+    <div class="bt bank">
+      <div class="chip"></div>
+      <div class="bt-h" style="margin-bottom:8px"><h3>Bank transfer</h3><span>NMB Bank — payment account</span></div>
+      <div class="row1"><span>Bank</span><b>NMB Bank Tanzania</b></div>
+      <div class="row1"><span>Account name</span><b>JamiiTek Technologies</b></div>
+      <div class="row1"><span>Account number</span><b><span class="acc" id="accNo">{{ payment_info.account_number }}</span><button type="button" class="cp" onclick="bbCopy(this)"><i class="fas fa-copy"></i> Copy</button></b></div>
+      <div class="row1"><span>Branch</span><b>Dar es Salaam</b></div>
+      <div class="row1"><span>Payment reference</span><b style="color:#fbbf24">{{ client.name|upper }}</b></div>
+      <div class="note"><i class="fas fa-triangle-exclamation fa-xs"></i> Use your <b>name</b> as the payment reference so we identify your payment quickly.</div>
+    </div>
+    <div class="bt">
+      <div class="bt-h"><h3>How to pay</h3></div>
+      <div class="st"><i style="background:rgba(34,211,238,.15);color:#22d3ee">1</i><div><b>Transfer to NMB</b><small>Send your payment to account {{ payment_info.account_number }}. Use your full name as the reference.</small></div></div>
+      <div class="st"><i style="background:rgba(167,139,250,.15);color:#a78bfa">2</i><div><b>Save the receipt</b><small>Note the transaction reference from the NMB SMS or receipt.</small></div></div>
+      <div class="st"><i style="background:rgba(251,191,36,.15);color:#fbbf24">3</i><div><b>Submit proof</b><small>Fill in the payment form with the amount and transaction reference.</small></div></div>
+      <div class="st"><i style="background:rgba(52,211,153,.15);color:#34d399">4</i><div><b>Activated in 24 hours</b><small>JamiiTek verifies the payment and extends your hosting. You get a notification.</small></div></div>
+    </div>
+  </div>
+
+  <div class="bt recent">
+    <div class="bt-h"><h3>Recent payments</h3><span>{{ pay_stats.months_covered }} month{{ pay_stats.months_covered|pluralize }} covered</span></div>
+    {% for p in payments|slice:":6" %}
+    <div class="pr"><i style="background:rgba(52,211,153,.15);color:#34d399" class="fas fa-check"></i>
+      <div><b>TZS {{ p.amount|floatformat:0|intcomma }}</b><small>{{ p.website.name }} · {{ p.payment_method|default:"Transfer" }}</small></div>
+      <em style="color:var(--text-2)">{{ p.payment_date|date:"d M Y" }}{% if p.transaction_ref %}<small style="display:block;color:var(--text-3)">{{ p.transaction_ref|truncatechars:14 }}</small>{% endif %}</em></div>
+    {% empty %}<div class="empty">No payments yet.</div>
+    {% endfor %}
+    <div style="margin-top:10px"><a href="{% url 'portal_receipt_list' %}" style="font-size:13px;font-weight:600;color:#a78bfa">My receipts →</a></div>
+  </div>
+
+  <div class="bt phases">
+    <div class="bt-h"><h3>All payment phases</h3><span>{{ pay_stats.on_time }} on time · {{ pay_stats.late }} late</span></div>
+    {% for ph in history.phases %}
+    <div class="pr">
+      <i style="{% if ph.status == 'late' %}background:rgba(244,114,182,.15);color:#f472b6{% else %}background:rgba(52,211,153,.15);color:#34d399{% endif %}" class="fas {% if ph.status == 'late' %}fa-clock{% else %}fa-check{% endif %}"></i>
+      <div><b>{{ ph.website_name }} — {{ ph.months }} month{{ ph.months|pluralize }}</b>
+        <small>Covered {{ ph.period_start|date:"d M Y" }} → {{ ph.period_end|date:"d M Y" }} · paid {{ ph.paid_on|date:"d M Y" }}</small></div>
+      <em class="{% if ph.status == 'late' %}late{% else %}ok{% endif %}">{% if ph.status == 'early' %}{{ ph.days_late|cut:"-" }}d early{% elif ph.status == 'on_time' %}On time{% else %}{{ ph.days_late }}d late{% endif %}</em>
+    </div>
+    {% empty %}<div class="empty">No payment phases yet.</div>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+function bbCopy(btn){
+  navigator.clipboard.writeText(document.getElementById('accNo').textContent.trim()).then(function(){
+    btn.innerHTML='<i class="fas fa-check"></i> Copied';
+    setTimeout(function(){btn.innerHTML='<i class="fas fa-copy"></i> Copy'},2000);
+  });
+}
+</script>
+{% include 'portal/_pay_scripts.html' %}
+{% endblock %}
