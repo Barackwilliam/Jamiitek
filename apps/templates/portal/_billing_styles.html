@@ -1,0 +1,126 @@
+{% comment %} Mitindo ya Billing (Classic na Neon Bento zinaitumia). {% endcomment %}
+<style>
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes countUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shine{0%{left:-100%}100%{left:200%}}
+.f0{animation:fadeUp .4s ease both}
+.f1{animation:fadeUp .4s .07s ease both}
+.f2{animation:fadeUp .4s .14s ease both}
+.f3{animation:fadeUp .4s .21s ease both}
+.f4{animation:fadeUp .4s .28s ease both}
+
+/* PAGE HEADER */
+.pg-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.pg-title{font-family:var(--head);font-size:24px;font-weight:800;color:var(--text);line-height:1;margin-bottom:4px}
+.pg-sub{font-family:var(--mono);font-size:11px;color:var(--text-3);letter-spacing:.5px}
+
+/* STAT CARDS */
+.bill-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.bsc{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;position:relative;overflow:hidden;transition:all .2s;cursor:default}
+.bsc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--ac,var(--purple))}
+.bsc::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(135deg,rgba(255,255,255,0) 60%,rgba(255,255,255,.02) 100%);pointer-events:none}
+.bsc:hover{transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.bsc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.bsc-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.bsc-badge{font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:100px;font-weight:700;letter-spacing:.5px}
+.bsc-val{font-family:var(--head);font-size:28px;font-weight:800;line-height:1;margin-bottom:4px}
+.bsc-label{font-size:11px;color:var(--text-3);font-family:var(--mono);text-transform:uppercase;letter-spacing:1px}
+.bsc-bar{height:3px;background:var(--bg2);border-radius:100px;margin-top:14px;overflow:hidden}
+.bsc-fill{height:100%;border-radius:100px;transition:width 1.4s cubic-bezier(.4,0,.2,1)}
+
+/* SECTION CARD */
+.sec{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:18px}
+.sec-head{padding:15px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.sec-title{font-family:var(--head);font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
+.sec-body{padding:20px}
+
+/* HOSTING STATUS CARDS */
+.hs-card{border-radius:12px;padding:16px 18px;margin-bottom:10px;position:relative;overflow:hidden;transition:all .2s}
+.hs-card:hover{transform:translateX(3px)}
+.hs-card.ok{background:rgba(0,255,136,.04);border:1px solid rgba(0,255,136,.12)}
+.hs-card.warn{background:rgba(255,184,0,.05);border:1px solid rgba(255,184,0,.15)}
+.hs-card.danger{background:rgba(255,59,92,.06);border:1px solid rgba(255,59,92,.18)}
+.hs-strip{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px}
+.hs-name{font-weight:700;font-size:15px;color:var(--text);margin-bottom:3px}
+.hs-url{font-family:var(--mono);font-size:10px;color:var(--text-3);margin-bottom:10px}
+.hs-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+/* COUNTDOWN */
+.countdown-ring{position:relative;display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;flex-shrink:0}
+.countdown-ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.countdown-num{font-family:var(--head);font-size:15px;font-weight:800;position:relative;z-index:1}
+
+/* BANK CARD */
+.bank-card{background:linear-gradient(135deg,#0a0f24,#0d1530);border:1px solid rgba(0,212,255,.18);border-radius:16px;padding:24px;position:relative;overflow:hidden}
+.bank-card::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;background:radial-gradient(circle,rgba(0,212,255,.08),transparent 70%);pointer-events:none}
+.bank-card::after{content:'';position:absolute;bottom:-20px;left:-20px;width:100px;height:100px;background:radial-gradient(circle,rgba(139,92,246,.06),transparent 70%);pointer-events:none}
+.bank-chip{width:36px;height:28px;border-radius:5px;background:linear-gradient(135deg,#c8a44b,#e8c76a);margin-bottom:16px}
+.bank-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.bank-row:last-child{border-bottom:none}
+.bank-key{font-family:var(--mono);font-size:10px;color:rgba(255,255,255,.3);letter-spacing:1.5px;text-transform:uppercase}
+.bank-val{font-weight:700;color:#fff}
+.acc-num{font-family:var(--mono);font-size:20px;font-weight:800;letter-spacing:3px;color:var(--cyan);text-shadow:0 0 20px rgba(0,212,255,.4)}
+.copy-btn{background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.2);border-radius:7px;padding:4px 10px;font-family:var(--mono);font-size:10px;color:var(--cyan);cursor:pointer;transition:all .2s}
+.copy-btn:hover{background:rgba(0,212,255,.2);transform:scale(1.05)}
+
+/* STEPS */
+.step-item{display:flex;gap:14px;align-items:flex-start;margin-bottom:16px;position:relative}
+.step-item::before{content:'';position:absolute;left:16px;top:34px;bottom:-8px;width:1px;background:var(--border)}
+.step-item:last-child::before{display:none}
+.step-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:800;flex-shrink:0;position:relative;z-index:1}
+.step-body{flex:1;padding-top:5px}
+.step-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px}
+.step-desc{font-size:12px;color:var(--text-2);line-height:1.65}
+
+/* PAYMENT TABLE */
+.pay-row{display:flex;align-items:center;justify-content:space-between;padding:13px 20px;border-bottom:1px solid var(--border);transition:background .15s}
+.pay-row:hover{background:rgba(255,255,255,.015)}
+.pay-row:last-child{border-bottom:none}
+.pay-amount{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--green)}
+.pay-meta{font-family:var(--mono);font-size:11px;color:var(--text-3)}
+.pay-tag{font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:5px;background:rgba(0,212,255,.08);color:var(--cyan);border:1px solid rgba(0,212,255,.15)}
+
+/* FORM */
+.f-section{margin-bottom:20px}
+.f-section-title{font-family:var(--mono);font-size:10px;color:var(--text-3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.f-section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+@media(max-width:992px){.bill-stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:576px){.bill-stats{grid-template-columns:repeat(2,1fr)}.countdown-ring{display:none}}
+
+/* ── DURATION CARDS (1/3/6/12 miezi) ── */
+.dur-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px;margin-bottom:6px}
+.dur-empty{grid-column:1/-1;font-family:var(--mono);font-size:12px;color:var(--text-3);padding:16px;text-align:center;border:1.5px dashed var(--border);border-radius:var(--r-lg)}
+.dur{position:relative;border:1.5px solid var(--border);border-radius:var(--r-lg);padding:15px 13px;cursor:pointer;background:var(--card);transition:.18s;text-align:center}
+.dur:hover{border-color:var(--border-s);transform:translateY(-1px)}
+.dur.on{border-color:var(--cyan);background:var(--cyan-d);box-shadow:0 0 0 3px rgba(0,212,255,.10)}
+.dur .d-lbl{font-family:var(--mono);font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.dur.on .d-lbl{color:var(--cyan)}
+.dur .d-price{font-family:var(--head);font-size:19px;font-weight:800;color:var(--text);line-height:1.15}
+.dur .d-per{font-family:var(--mono);font-size:10.5px;color:var(--text-3);margin-top:3px}
+.dur .d-save{display:inline-block;margin-top:8px;font-family:var(--mono);font-size:10px;font-weight:700;background:var(--green-d);color:var(--green);border:1px solid rgba(0,255,136,.25);border-radius:100px;padding:3px 9px}
+.dur .d-best{position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:9px;font-weight:700;background:var(--cyan);color:#04121e;padding:2px 9px;border-radius:100px;letter-spacing:.5px;white-space:nowrap}
+.amt-hint{font-family:var(--mono);font-size:11px;color:var(--text-3);margin-top:5px;min-height:15px}
+.amt-hint.ok{color:var(--green)}
+
+.inv-cta{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:10px;padding:11px 14px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg)}
+.inv-note{font-family:var(--mono);font-size:11.5px;color:var(--text-3)}
+.inv-btn{background:var(--purple-d);color:var(--purple);border:1px solid rgba(139,92,246,.3);border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;font-family:var(--mono);cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.2s}
+.inv-btn:hover{background:var(--purple);color:#fff;box-shadow:0 0 16px rgba(139,92,246,.3)}
+.amt-hint.warn{color:var(--yellow)}
+.ph-row2{display:flex;align-items:center;gap:13px;padding:12px 15px;border-bottom:1px solid var(--border)}
+.ph-row2:last-child{border-bottom:none}
+.ph-idx{width:26px;height:26px;border-radius:50%;background:var(--cyan-d);color:var(--cyan);
+  display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;
+  font-weight:700;flex-shrink:0;border:1px solid rgba(0,212,255,.2)}
+.ph-body{flex:1;min-width:0}
+.ph-body b{display:block;font-size:13.5px;color:var(--text)}
+.ph-body span{font-family:var(--mono);font-size:10.5px;color:var(--text-3)}
+.ph-badge{font-family:var(--mono);font-size:10px;padding:5px 11px;border-radius:100px;white-space:nowrap}
+.ph-badge.ok{background:var(--green-d);color:var(--green);border:1px solid rgba(0,255,136,.2)}
+.ph-badge.bad{background:var(--red-d);color:var(--red);border:1px solid rgba(255,59,92,.2)}
+
+.jt-spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,.25);border-top-color:currentColor;border-radius:50%;animation:jtspin .6s linear infinite;vertical-align:-2px}
+@keyframes jtspin{to{transform:rotate(360deg)}}
+</style>

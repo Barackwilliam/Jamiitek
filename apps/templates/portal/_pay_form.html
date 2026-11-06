@@ -1,0 +1,99 @@
+{% comment %} Fomu ya kulipa: website nyingi (_pay_multi) au moja. Billing ya Classic na Neon Bento zinaitumia. {% endcomment %}
+    <!-- SUBMIT PAYMENT FORM -->
+    {% if account.is_multi %}
+
+      {% include 'portal/_pay_multi.html' %}
+    {% else %}
+    <div class="sec f2">
+      <div class="sec-head">
+        <div class="sec-title"><i class="fas fa-upload" style="color:var(--green)"></i> Submit Payment Proof</div>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--green)">Verified in 24hrs</span>
+      </div>
+      <div class="sec-body">
+        {% if PESAPAL_ENABLED %}
+        <div style="background:linear-gradient(135deg,rgba(0,255,136,.12),rgba(0,212,255,.05));border:1.5px solid rgba(0,255,136,.4);border-radius:16px;padding:20px;margin-bottom:16px;position:relative;overflow:hidden">
+          <span style="position:absolute;top:12px;right:14px;background:var(--green);color:#04121e;font-family:var(--mono);font-size:9px;font-weight:800;padding:3px 10px;border-radius:100px;letter-spacing:.5px">RECOMMENDED</span>
+          <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px">
+            <i class="fas fa-bolt" style="color:var(--green);font-size:16px"></i>
+            <span style="font-size:17px;font-weight:900;color:var(--text)">Pay Online — Instant</span>
+          </div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text-2);line-height:1.6;margin-bottom:16px">Card · M-Pesa · Airtel Money · Tigo Pesa · Halopesa.<br>Hosting is extended automatically the moment payment clears — no 24hr wait.</div>
+          <button type="button" class="jt-btn btn-green" id="pspHostBtn" style="width:100%;justify-content:center;padding:15px;font-size:16px;font-weight:900;box-shadow:0 6px 20px rgba(0,255,136,.22)" onclick="payHostingPesapal(this)">
+            <i class="fas fa-lock"></i> Pay <span id="pspHostAmount"></span> Now
+          </button>
+          <div style="font-family:var(--mono);font-size:9.5px;color:var(--text-3);text-align:center;margin-top:10px">Pick a website & duration below, then tap Pay.</div>
+        </div>
+        <div style="text-align:center;font-family:var(--mono);font-size:10px;color:var(--text-3);text-transform:uppercase;letter-spacing:1px;margin-bottom:18px">— or pay by bank transfer below —</div>
+        {% endif %}
+        <div class="jt-alert jt-alert-info" style="margin-bottom:20px;font-size:13px">
+          <i class="fas fa-circle-info fa-sm" style="flex-shrink:0;margin-top:2px"></i>
+          {% if PESAPAL_ENABLED %}Pick a website &amp; duration below to pay online, or {% endif %}pay to the NMB account on the right, fill in the details below and submit. We verify manual payments within <strong>24 hours</strong>.
+        </div>
+        <form method="post" action="{% url 'portal_submit_payment' %}" onsubmit="return jtLoad(this,'Submitting…')">
+          {% csrf_token %}
+          <div class="f-section">
+            <div class="f-section-title">Website Details</div>
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="f-label">Which website is this payment for? *</label>
+                <select name="website" class="f-input" required>
+                  <option value="">— Select website —</option>
+                  {% for p in billing_plans %}<option value="{{ p.website.pk }}"{% if billing_plans|length == 1 %} selected{% endif %} data-opts="{% for o in p.options %}{{ o.months }}:{{ o.total|floatformat:0 }}:{{ o.per_month|floatformat:0 }}:{{ o.saving|floatformat:0 }}:{{ o.discount_pct|floatformat:0 }}{% if not forloop.last %},{% endif %}{% endfor %}">{{ p.website.name }} — TZS {{ p.website.monthly_cost|floatformat:0 }}/mo</option>{% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="f-section">
+            <div class="f-section-title">Payment Details</div>
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="f-label">Choose how long to pay for *</label>
+                <div class="dur-grid" id="durGrid">
+                  <div class="dur-empty">Select a website above to see prices</div>
+                </div>
+                <input type="hidden" name="months_covered" id="monthsInput" value="1">
+                <div class="inv-cta" id="invCta" style="display:none">
+                  <span class="inv-note">Need an invoice for your records?</span>
+                  <button type="button" class="inv-btn" onclick="requestInvoice()">
+                    <i class="fas fa-file-invoice"></i> Get invoice for this period
+                  </button>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="f-label">Amount Paid (TZS) *</label>
+                <input type="number" name="amount" id="amountInput" class="f-input" placeholder="e.g. 50000" required>
+                <div class="amt-hint" id="amtHint"></div>
+              </div>
+              <div class="col-md-6">
+                <label class="f-label">Payment Method</label>
+                <select name="payment_method" class="f-input">
+                  <option>NMB Bank Transfer</option>
+                  <option>M-Pesa</option>
+                  <option>Tigo Pesa</option>
+                  <option>Airtel Money</option>
+                  <option>Cash</option>
+                </select>
+              </div>
+
+
+
+              <div class="col-md-6">
+                <label class="f-label">Transaction Reference *</label>
+                <input type="text" name="transaction_ref" class="f-input" placeholder="e.g. NMB20240912345" required>
+              </div>
+              <div class="col-12">
+                <label class="f-label">Notes (optional)</label>
+                <textarea name="notes" class="f-input" style="min-height:65px" placeholder="Any additional information..."></textarea>
+              </div>
+              <div class="col-12">
+                <button type="submit" class="jt-btn btn-green" style="width:100%;justify-content:center;padding:12px 20px;font-size:14px">
+                  <i class="fas fa-paper-plane"></i> Submit Payment Proof
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    {% endif %}

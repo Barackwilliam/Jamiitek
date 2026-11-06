@@ -1,0 +1,130 @@
+{% comment %} JavaScript ya fomu ya kulipa + fomu fiche za invoice na PesaPal. {% endcomment %}
+<script>
+window.jtLoad = function(form,text){
+    const b=form.querySelector('button[type=submit]');
+    if(b && !b.disabled){
+      b.disabled=true;
+      b.innerHTML='<span class="jt-spin"></span> '+(text||'Please wait…');
+      b.style.opacity='.9'; b.style.cursor='wait';
+    }
+    return true;
+  };
+(function(){
+  const sel = document.querySelector('select[name="website"]');
+  const grid = document.getElementById('durGrid');
+  const monthsInput = document.getElementById('monthsInput');
+  const amountInput = document.getElementById('amountInput');
+  const hint = document.getElementById('amtHint');
+  if(!sel || !grid) return;
+
+  const LABELS = {1:'1 Month', 3:'3 Months', 6:'6 Months', 12:'12 Months'};
+  let current = [];
+
+  const fmt = n => Number(n).toLocaleString();
+
+  function renderOptions(){
+    const opt = sel.options[sel.selectedIndex];
+    const raw = opt ? opt.getAttribute('data-opts') : null;
+    if(!raw){
+      grid.innerHTML = '<div class="dur-empty">Select a website above to see prices</div>';
+      current = []; hint.textContent = ''; return;
+    }
+    current = raw.split(',').map(part => {
+      const [months,total,per,saving,pct] = part.split(':').map(Number);
+      return {months,total,per,saving,pct};
+    });
+    grid.innerHTML = current.map(o => `
+      <div class="dur" data-months="${o.months}" onclick="selectDuration(${o.months})">
+        ${o.months===12 ? '<span class="d-best">BEST VALUE</span>' : ''}
+        <div class="d-lbl">${LABELS[o.months]||o.months+' Months'}</div>
+        <div class="d-price">TZS ${fmt(o.total)}</div>
+        <div class="d-per">TZS ${fmt(o.per)} / month</div>
+        ${o.saving>0 ? `<div class="d-save">Save ${fmt(o.saving)} (${o.pct}%)</div>` : ''}
+      </div>`).join('');
+    selectDuration(Number(monthsInput.value) || 1);
+  }
+
+  window.selectDuration = function(months){
+    const chosen = current.find(o => o.months === months) || current[0];
+    if(!chosen) return;
+    monthsInput.value = chosen.months;
+    amountInput.value = chosen.total;
+    grid.querySelectorAll('.dur').forEach(el =>
+      el.classList.toggle('on', Number(el.dataset.months) === chosen.months));
+    document.getElementById('invCta').style.display = 'flex';
+    hint.className = 'amt-hint ok';
+    hint.textContent = chosen.saving > 0
+      ? `Covers ${chosen.months} months — you save TZS ${fmt(chosen.saving)}`
+      : `Covers ${chosen.months} month${chosen.months>1?'s':''}`;
+    const pha = document.getElementById('pspHostAmount');
+    if(pha) pha.textContent = 'TZS ' + fmt(chosen.total);
+  };
+
+  // Mteja mwenye website MOJA hakuwa na cha kuchagua, lakini "Pay Now"
+  // ilimwambia "select a website first" — chaguo lilikuwa juu ya "— Select
+  // website —", na lilikuwa CHINI ya kitufe, kwenye fomu ya benki.
+  const realOpts = [...sel.options].filter(o => o.value);
+  if (!sel.value && realOpts.length === 1) sel.value = realOpts[0].value;
+
+  function guideToPicker(){
+    sel.scrollIntoView({behavior:'smooth', block:'center'});
+    sel.focus({preventScroll:true});
+    sel.style.transition = 'box-shadow .3s';
+    sel.style.boxShadow = '0 0 0 3px rgba(0,255,136,.55)';
+    setTimeout(() => { sel.style.boxShadow = ''; }, 2200);
+  }
+
+  window.payHostingPesapal = function(btn){
+    let wid = sel.value;
+    if(!wid && realOpts.length === 1){ wid = sel.value = realOpts[0].value; renderOptions(); }
+    if(!wid){ guideToPicker(); return; }
+    const f = document.getElementById('pspHostForm');
+    f.action = '{% url "pesapal_pay_hosting" website_pk=0 %}'.replace('/0/', '/'+wid+'/');
+    document.getElementById('pspHostMonths').value = monthsInput.value || 1;
+    if(btn && !btn.disabled){
+      btn.disabled=true;
+      btn.innerHTML='<span class="jt-spin"></span> Redirecting to payment…';
+      btn.style.opacity='.9'; btn.style.cursor='wait';
+    }
+    f.submit();
+  };
+
+  amountInput?.addEventListener('input', function(){
+    const chosen = current.find(o => o.months === Number(monthsInput.value));
+    if(!chosen) return;
+    const v = Number(this.value)||0;
+    if(v === chosen.total){ hint.className='amt-hint ok';
+      hint.textContent = `Covers ${chosen.months} months`; }
+    else if(v < chosen.total){ hint.className='amt-hint warn';
+      hint.textContent = `TZS ${fmt(chosen.total - v)} less than the ${chosen.months}-month price`; }
+    else { hint.className='amt-hint warn';
+      hint.textContent = `TZS ${fmt(v - chosen.total)} more than the ${chosen.months}-month price`; }
+  });
+
+
+  window.requestInvoice = function(){
+    const wid = sel.value;
+    if(!wid){ alert('Please select a website first.'); return; }
+    document.getElementById('invWebsite').value = wid;
+    document.getElementById('invMonths').value = monthsInput.value || 1;
+    document.getElementById('invForm').submit();
+  };
+
+  sel.addEventListener('change', renderOptions);
+  renderOptions();
+})();
+</script>
+
+
+<form method="post" action="{% url 'portal_request_invoice' %}" id="invForm" style="display:none">
+  {% csrf_token %}
+  <input type="hidden" name="website" id="invWebsite">
+  <input type="hidden" name="months" id="invMonths">
+</form>
+
+{% if PESAPAL_ENABLED %}
+<form method="post" id="pspHostForm" style="display:none">
+  {% csrf_token %}
+  <input type="hidden" name="months" id="pspHostMonths" value="1">
+</form>
+{% endif %}
