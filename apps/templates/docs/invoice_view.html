@@ -14,7 +14,7 @@ Ankara ya mteja (docs_views.invoice_view). Sehemu mbili:
      pete ya asilimia iliyolipwa, hatua za ankara, kulipa (Pesapal / M-Pesa / Benki),
      PDF na kuchapisha, na kitambulisho cha uthibitisho.
   2. Karatasi ya ankara (nyeupe) — ndiyo inayochapishwa.
-Lugha mbili (?lang=en|sw). PDF ni docs/invoice_pdf.html — inaandaliwa nyuma ukurasa ukifunguka
+Kiingereza pekee (ankara na risiti zote ni kwa Kiingereza). PDF ni docs/invoice_pdf.html — inaandaliwa nyuma ukurasa ukifunguka
 (docs_views._warm_invoice_pdf), kwa hiyo kitufe cha PDF kinapakua papo hapo.
 {% endcomment %}
 <style>
@@ -182,6 +182,25 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
 .copy{flex-shrink:0;border:1px solid var(--p-ln);background:#fff;color:var(--navy);font:800 11px var(--ff);letter-spacing:.06em;padding:6px 11px;border-radius:9px;cursor:pointer}
 .copy:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
 .copy.ok{background:#16a34a;border-color:#16a34a;color:#fff}
+.btn.checking{justify-content:center;background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.btn.checking .dot{width:9px;height:9px;border-radius:50%;background:#f59e0b;animation:pl 1.6s infinite}
+.paid-box{margin:22px 44px 0;padding:18px;border-radius:16px;border:1px solid #bbf7d0;background:#f0fdf4}
+.pf{display:grid;gap:2px;padding:10px 12px;margin-bottom:10px;border-radius:12px;background:#fff;border:1px solid var(--p-ln);font-size:13px}
+.pf b{font-size:13.5px}.pf span{color:var(--p-mut)}.pf small{color:#b91c1c}
+.pf-approved b{color:#15803d}.pf-rejected b{color:#b91c1c}.pf-pending b{color:#b45309}
+.pf-cta{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:14px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;text-decoration:none;box-shadow:0 12px 28px rgba(22,163,74,.25);transition:transform .2s,box-shadow .2s}
+.pf-cta:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(22,163,74,.35)}
+.pf-cta>span:nth-child(2){flex:1;display:grid;gap:2px}.pf-cta b{font-size:15.5px}.pf-cta small{opacity:.85;font-size:12.5px}
+.pf-ico{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.18);flex-shrink:0}
+.pf-form summary{display:flex;align-items:center;gap:9px;cursor:pointer;list-style:none;font-weight:800;font-size:15px;color:#15803d}
+.pf-form summary::-webkit-details-marker{display:none}
+.pf-hint{margin:8px 0 12px;font-size:13px;color:var(--p-mut)}
+.pf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pf-grid label{display:grid;gap:5px;font-size:12px;font-weight:700;color:var(--p-mut);letter-spacing:.02em}
+.pf-grid .full{grid-column:1/-1}
+.pf-grid input,.pf-grid select,.pf-grid textarea{width:100%;font:500 14.5px var(--ff);color:var(--p-ink);padding:10px 12px;border-radius:10px;border:1px solid #cbd5e1;background:#fff}
+.pf-grid input:focus,.pf-grid select:focus,.pf-grid textarea:focus{outline:2px solid #86efac;border-color:#22c55e}
+.pf-send{margin-top:12px;width:100%;padding:13px;border:0;border-radius:12px;font:800 15px var(--ff);color:#fff;cursor:pointer;background:linear-gradient(135deg,#22c55e,#15803d)}
 .payref{margin:12px 44px 0;font-size:13px;color:var(--p-mut)}.payref b{color:var(--navy);font-family:var(--mono)}
 .hist{margin:0 44px;border:1px solid var(--p-ln);border-radius:14px;overflow:hidden}
 .hist div{display:flex;justify-content:space-between;gap:12px;padding:11px 16px;font-size:13.5px;border-top:1px solid var(--p-ln)}
@@ -240,7 +259,8 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
   .ph-r{display:none}
   .parties{grid-template-columns:1fr 1fr;margin:0 12px;border-radius:12px}
   .parties div{padding:9px 11px;font-size:12px;line-height:1.4}.parties small{font-size:9.5px;margin-bottom:2px}
-  .sec,.items,.paylist,.payref,.hist,.terms,.note,.stamp{margin-left:12px;margin-right:12px}
+  .sec,.items,.paylist,.payref,.hist,.terms,.note,.stamp,.paid-box{margin-left:12px;margin-right:12px}
+  .paid-box{padding:14px}.pf-grid{grid-template-columns:1fr}
   .sec{margin-top:18px;margin-bottom:8px;font-size:10.5px}
   .items{border-radius:12px}
   .it{grid-template-columns:repeat(3,1fr);gap:4px 10px;padding:10px 12px;font-size:13px}
@@ -268,7 +288,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media print{
   body{background:#fff;color:#000}
-  .sky,.top,.cmd,.flash,.help,.copy,.preview{display:none!important}
+  .sky,.top,.cmd,.flash,.help,.copy,.preview,.paid-box{display:none!important}
   .wrap{padding:0;max-width:none}.paper{box-shadow:none;border-radius:0;animation:none}
 }
 </style>
@@ -286,10 +306,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
         <small>{% if lang == 'sw' %}Tunajenga Mustakabali wa Kidijitali wa Tanzania{% else %}Building Tanzania's Digital Future{% endif %}</small></div>
     </div>
     <span class="secure-pill"><i></i><span>{% if lang == 'sw' %}Ankara halisi · Imethibitishwa{% else %}Verified invoice · Secure{% endif %}</span></span>
-    <nav class="lang" aria-label="Language">
-      <a href="?lang=en" class="{% if lang == 'en' %}on{% endif %}">EN</a>
-      <a href="?lang=sw" class="{% if lang == 'sw' %}on{% endif %}">SW</a>
-    </nav>
+
   </div>
 </header>
 
@@ -362,6 +379,14 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
           </button>
         </form>
         <div class="ways"><span>M-Pesa</span><span>Tigo Pesa</span><span>Airtel Money</span><span>{% if lang == 'sw' %}Kadi{% else %}Card{% endif %}</span></div>
+        {% endif %}
+        {% if invoice.shows_manual or not PESAPAL_ENABLED %}
+          {% if pending_proof %}
+          <a class="btn checking" href="{% url 'invoice_proof' invoice.token %}"><i class="dot"></i>{% if lang == 'sw' %}Tunahakiki malipo yako…{% else %}We are checking your payment…{% endif %}</a>
+          {% else %}
+          <a class="btn pay" href="{% url 'invoice_proof' invoice.token %}">
+            <svg class="i" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>{% if lang == 'sw' %}Nimelipa — tuma uthibitisho{% else %}I have paid — send proof{% endif %}</a>
+          {% endif %}
         {% endif %}
       {% endif %}
       <div class="two">
@@ -439,7 +464,25 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
         <div class="row"><span>{{ m.details }}</span><button type="button" class="copy" data-copy="{{ m.details }}">{% if lang == 'sw' %}NAKILI{% else %}COPY{% endif %}</button></div></div>
       {% endif %}{% endfor %}
     </div>
-    <div class="payref">{% if lang == 'sw' %}Tumia <b>{{ invoice.invoice_number }}</b> kama kumbukumbu ya malipo, kisha tutumie ujumbe wa uthibitisho.{% else %}Use <b>{{ invoice.invoice_number }}</b> as the payment reference, then send us the confirmation message.{% endif %}</div>
+    <div class="payref">{% if lang == 'sw' %}Tumia <b>{{ invoice.invoice_number }}</b> kama kumbukumbu ya malipo, kisha bonyeza <b>Nimelipa</b> hapa chini utume namba ya muamala.{% else %}Use <b>{{ invoice.invoice_number }}</b> as the payment reference, then press <b>I have paid</b> below and send the transaction ID.{% endif %}</div>
+    {% endif %}{% endif %}
+
+    {% if not invoice.is_paid and not preview %}{% if invoice.shows_manual or not PESAPAL_ENABLED %}
+    <section class="paid-box" id="paid">
+      {% for p in proofs %}
+      <div class="pf pf-{{ p.status }}">
+        <b>{% if p.status == 'pending' %}⏳ We are checking this payment{% elif p.status == 'approved' %}✅ Confirmed{% else %}✖ Not confirmed{% endif %}</b>
+        <span>{{ p.created_at|date:"j M Y, H:i" }}{% if p.reference %} · {{ p.reference }}{% endif %}{% if p.amount %} · {{ invoice.currency }} {{ p.amount|thousands }}{% endif %}</span>
+        {% if p.status == 'rejected' and p.review_note %}<small>{{ p.review_note }}</small>{% endif %}
+      </div>
+      {% endfor %}
+      <a class="pf-cta" href="{% url 'invoice_proof' invoice.token %}">
+        <span class="pf-ico"><svg class="i" viewBox="0 0 24 24"><path d="M12 16V4m0 0-4 4m4-4 4 4M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></span>
+        <span><b>{% if pending_proof %}Send another proof{% else %}I have paid — send proof of payment{% endif %}</b>
+          <small>Transaction ID, screenshot or PDF · takes 1 minute</small></span>
+        <svg class="i" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>
+      </a>
+    </section>
     {% endif %}{% endif %}
 
     {% if history or invoice.unlogged_paid %}

@@ -331,6 +331,14 @@ def send_new_proposal_notice(proposal, rows, total) -> bool:
 # 7. BULK — Run all expiry checks (call from management command or cron)
 # ══════════════════════════════════════════════════════════════════════════════
 
+def _renewal_open(kind, pk):
+    try:
+        from apps.renewals import has_open_invoice
+        return has_open_invoice(kind, pk)
+    except Exception:
+        return False
+
+
 def send_bulk_expiry_warnings():
     """
     Check ALL active websites and email plans and send warnings / auto-suspend.
@@ -376,6 +384,12 @@ def send_bulk_expiry_warnings():
         # Madirisha, si usawa kamili: siku 6 bado ni dirisha la 7.
         # `last_warning_stage` inazuia onyo lile lile kurudiwa kila siku.
         if not site.send_expiry_warnings:
+            skipped += 1
+            continue
+
+        # Ankara ya renewal iliyo wazi ina vikumbusho vyake (email + WhatsApp,
+        # pamoja na link ya kulipa) — usitume onyo la pili la jambo lilelile.
+        if _renewal_open('hosting', site.pk):
             skipped += 1
             continue
 
@@ -443,7 +457,7 @@ def send_bulk_expiry_warnings():
             continue
 
         # ── Expiry warnings ───────────────────────────────────────
-        if plan.send_expiry_warnings:
+        if plan.send_expiry_warnings and not _renewal_open('email', plan.pk):
             if raw_days in [plan.warning_days_before, 7, 3, 1]:
                 # Basic expiry warning email for email hosting
                 try:
@@ -477,6 +491,9 @@ def send_bulk_expiry_warnings():
 
     for domain in domains:
         raw_days = (domain.expiry_date - today).days
+        if _renewal_open('domain', domain.pk):
+            skipped += 1
+            continue
         if raw_days in [domain.warning_days_before, 14, 7, 3, 1]:
             ok = send_domain_expiry_warning(domain)
             sent += 1 if ok else 0

@@ -39,6 +39,7 @@ LABELS = {
     'handoff': 'JamiiBot', 'renewal': 'Hosting', 'payment': 'Payment', 'suspension': 'Service suspended',
     'restored': 'Service restored', 'expiry_warning': 'Reminder', 'builder_unpaid': 'Your website',
     'security': 'Account security', 'payment_reminder': 'Hosting reminder', 'notice': 'Notice',
+    'renewal_invoice': 'Renewal invoice', 'receipt': 'Payment receipt',
 }
 
 

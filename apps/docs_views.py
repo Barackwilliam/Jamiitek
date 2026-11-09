@@ -237,7 +237,8 @@ def _public_ctx(request, invoice):
     from apps.contact import contact
     from django.contrib.messages import get_messages
     c = contact()
-    return {'invoice': invoice, 'lang': _lang(request), 'contact': c,
+    # Ankara na risiti zote ni kwa Kiingereza (uamuzi wa mmiliki) — ?lang=sw haibadilishi kitu
+    return {'invoice': invoice, 'lang': 'en', 'contact': c,
             'items': invoice.items, 'history': invoice.payment_history,
             'flash': list(get_messages(request))}
 
@@ -257,6 +258,9 @@ def invoice_view(request, token):
     ctx = _public_ctx(request, invoice)
     ctx['qr'] = _invoice_qr(request, invoice)
     ctx['preview'] = invoice.status in ('draft', 'cancelled')
+    proofs = list(invoice.proofs.all()[:5])
+    ctx['proofs'] = proofs
+    ctx['pending_proof'] = any(p.status == 'pending' for p in proofs)
     _warm_invoice_pdf(request, invoice, ctx)
     return render(request, 'docs/invoice_view.html', ctx)
 
@@ -286,7 +290,9 @@ def invoice_list(request):
     if show not in dict(INVOICE_FILTERS):
         show = 'all'
 
-    qs = Invoice.objects.select_related('client')
+    from django.db.models import Count
+    qs = Invoice.objects.select_related('client').annotate(
+        pending_proofs=Count('proofs', filter=Q(proofs__status='pending')))
     if q:
         qs = qs.filter(Q(invoice_number__icontains=q) | Q(client_name__icontains=q)
                        | Q(client_company__icontains=q) | Q(client_email__icontains=q)
@@ -365,8 +371,12 @@ def invoice_edit(request, pk):
     wa_text = (f"Habari {inv.display_client},\n\nAnkara yako {inv.invoice_number} ya "
                f"{inv.currency} {inv.balance_due:,.0f} kutoka JamiiTek iko tayari:\n{link}\n\n"
                f"Unaweza kuiona, kuipakua (PDF) na kulipa hapo. Asante!")
+    proofs = list(inv.proofs.select_related('reviewed_by'))
     return render(request, 'docs/invoice_edit.html', {
         'invoice': inv,
+        'proofs': proofs,
+        'pending_count': sum(1 for p in proofs if p.status == 'pending'),
+        'renewals': list(inv.renewals.all()),
         'items_json': json.dumps(inv.items),
         'methods_json': json.dumps(inv.payment_methods),
         'history': inv.payment_history,
@@ -539,8 +549,18 @@ def invoice_mark_paid(request, pk):
     except ValueError as exc:
         return JsonResponse({'ok': False, 'error': str(exc)}, status=400)
     inv.save()
+    # Risiti (inahitaji mteja athibitishe kwanza) + link ya kuthibitisha kwa email/WhatsApp,
+    # na ankara ya renewal ikilipwa yote: tarehe za hosting/domain zinasogezwa mbele.
+    from apps.renewals import after_payment
+    done = after_payment(inv, inv.payments[-1]['amount'], method=request.POST.get('method', ''),
+                         reference=request.POST.get('reference', '').strip(),
+                         by=request.user.get_full_name() or request.user.get_username(), user=request.user)
+    r = done['receipt']
     return JsonResponse({'ok': True, 'status': inv.status,
-                         'balance_due': inv.balance_due, 'paid_total': inv.paid_total})
+                         'balance_due': inv.balance_due, 'paid_total': inv.paid_total,
+                         'receipt': r.receipt_number if r else '',
+                         'receipt_sent': {'email': done['email'], 'whatsapp': done['whatsapp']},
+                         'renewed': done['renewed']})
 
 
 @staff_member_required
@@ -650,3 +670,150 @@ def invoice_ai_assist(request):
     if not ok:
         return JsonResponse({'ok': False, 'error': result}, status=400)
     return JsonResponse({'ok': True, 'text': result})
+
+
+# ============================================================
+# UTHIBITISHO WA MALIPO (mteja amelipa M-Pesa / benki)
+# ============================================================
+PROOF_MAX_PENDING = 5
+
+
+PROOF_METHODS = ['M-Pesa', 'Mixx by Yas', 'Airtel Money', 'HaloPesa', 'Bank transfer', 'Other']
+
+
+def invoice_proof(request, token):
+    """
+    Ukurasa wa mteja wa kutuma uthibitisho wa malipo (Kiingereza):
+    namba ya muamala, kiasi, na picha / screenshot / PDF ya ujumbe wa malipo.
+    Wewe unahakiki kwenye /manage/invoices/<pk>/edit/#proofs.
+    """
+    from decimal import Decimal, InvalidOperation
+    from django.core.cache import cache
+    from .models import PaymentProof
+
+    inv = get_object_or_404(Invoice, token=token)
+    if inv.status in ('draft', 'cancelled') and not (request.user.is_authenticated and request.user.is_staff):
+        return render(request, 'docs/invoice_unavailable.html', {'invoice': inv}, status=404)
+
+    form = {'method': 'M-Pesa', 'reference': '', 'amount': f'{inv.balance_due:.0f}',
+            'payer_phone': inv.client_phone or (inv.client.phone if inv.client else ''), 'note': ''}
+    error = ''
+
+    if request.method == 'POST' and not inv.is_paid and inv.status not in ('draft', 'cancelled'):
+        for k in form:
+            form[k] = request.POST.get(k, form[k] if k == 'method' else '').strip()
+        upload = request.FILES.get('file')
+        ip = _client_ip(request) or ''
+        key = f'invproof:{ip}'
+        hits = cache.get(key, 0)
+
+        if hits >= 10 or inv.proofs.filter(status='pending').count() >= PROOF_MAX_PENDING:
+            error = ('We already have several proofs for this invoice. Please wait while we check them, '
+                     'or message us on WhatsApp.')
+        elif not form['reference'] and not upload:
+            error = 'Enter the transaction ID, or attach a screenshot or document of the payment.'
+        else:
+            amount = None
+            try:
+                amount = Decimal(form['amount'].replace(',', '')).quantize(Decimal('0.01')) if form['amount'] else None
+                if amount is not None and amount <= 0:
+                    amount = None
+            except (InvalidOperation, ValueError):
+                amount = None
+
+            file_url = ''
+            if upload:
+                from . import storage
+                res = storage.upload(upload, folder='payment-proofs')
+                if res.get('success'):
+                    file_url = res['url']
+                elif not form['reference']:
+                    error = ('We could not upload that file. Use a JPG, PNG or PDF under 10 MB, '
+                             'or type the transaction ID instead.')
+
+            if not error:
+                cache.set(key, hits + 1, 3600)
+                proof = PaymentProof.objects.create(
+                    invoice=inv, method=form['method'][:60], reference=form['reference'][:120], amount=amount,
+                    payer_name=inv.display_client[:120], payer_phone=form['payer_phone'][:40],
+                    note=form['note'][:1000], file_url=file_url, ip=ip or None)
+                try:
+                    from apps import activity
+                    activity.record(
+                        'payment_proof', f'Proof of payment — {inv.invoice_number} ({inv.display_client})',
+                        rows=[('Method', proof.method or '-'), ('Reference', proof.reference or '-'),
+                              ('Amount', f'{inv.currency} {proof.amount:,.0f}' if proof.amount else '-'),
+                              ('Balance due', f'{inv.currency} {inv.balance_due:,.0f}'),
+                              ('File', proof.file_url or 'none')],
+                        link=f'/manage/invoices/{inv.pk}/edit/#proofs', level='warning',
+                        actor='customer', amount=proof.amount)
+                    from apps.notify import notify
+                    notify(f'💰 {inv.display_client} says they paid invoice {inv.invoice_number} '
+                           f'({inv.currency} {inv.balance_due:,.0f}). Ref: {proof.reference or "-"}. '
+                           f'Check: {_site_url(f"/manage/invoices/{inv.pk}/edit/")}#proofs')
+                except Exception:
+                    pass
+                return redirect(f'{inv.public_url}paid/?sent=1')
+
+    proofs = list(inv.proofs.all()[:6])
+    return render(request, 'docs/invoice_proof.html', {
+        'invoice': inv, 'form': form, 'error': error, 'methods': PROOF_METHODS,
+        'proofs': proofs, 'sent': request.GET.get('sent') == '1' and bool(proofs),
+        'pending': any(p.status == 'pending' for p in proofs),
+        'pay_methods': [m for m in (inv.payment_methods or []) if m.get('details')],
+        'days_left': (inv.due_date - timezone.localdate()).days if inv.due_date else None,
+    }, status=400 if error else 200)
+
+
+@staff_member_required
+@require_POST
+def invoice_proof_review(request, pk, proof_pk, action):
+    """Idhinisha (rekodi malipo + risiti) au kataa uthibitisho wa mteja."""
+    from django.contrib import messages
+    from .models import PaymentProof
+
+    inv = get_object_or_404(Invoice, pk=pk)
+    proof = get_object_or_404(PaymentProof, pk=proof_pk, invoice=inv)
+    edit = redirect(f'/manage/invoices/{inv.pk}/edit/#proofs')
+    if proof.status != 'pending':
+        messages.info(request, 'This proof was already handled.')
+        return edit
+
+    if action == 'reject':
+        proof.status = 'rejected'
+        proof.review_note = request.POST.get('note', '').strip()[:300]
+        proof.reviewed_by, proof.reviewed_at = request.user, timezone.now()
+        proof.save(update_fields=['status', 'review_note', 'reviewed_by', 'reviewed_at'])
+        messages.success(request, 'Proof rejected. Nothing was recorded.')
+        return edit
+    if action != 'approve':
+        return edit
+
+    raw = request.POST.get('amount', '').replace(',', '').strip()
+    amount = raw or proof.amount or inv.balance_due
+    try:
+        if float(amount) > inv.balance_due + 0.005:
+            messages.error(request, f'That is more than the balance due ({inv.currency} {inv.balance_due:,.0f}).')
+            return edit
+        inv.record_payment(amount, method=proof.method or 'Manual', reference=proof.reference,
+                           by=request.user.get_username(), source='manual')
+    except ValueError as exc:
+        messages.error(request, str(exc))
+        return edit
+    inv.save()
+    proof.status = 'approved'
+    proof.amount = inv.payments[-1]['amount']
+    proof.reviewed_by, proof.reviewed_at = request.user, timezone.now()
+    proof.save(update_fields=['status', 'amount', 'reviewed_by', 'reviewed_at'])
+
+    from apps.renewals import after_payment
+    done = after_payment(inv, proof.amount, method=proof.method, reference=proof.reference,
+                         by=request.user.get_full_name() or request.user.get_username(), user=request.user)
+    r = done['receipt']
+    sent = ' and '.join(x for x, ok in (('email', done['email']), ('WhatsApp', done['whatsapp'])) if ok)
+    messages.success(request, (f'Payment recorded. Receipt {r.receipt_number} created'
+                               + (f' — confirmation link sent by {sent}.' if sent else
+                                  ' — the confirmation link could not be sent; share it yourself.')
+                               if r else 'Payment recorded, but the receipt could not be created.')
+                     + (' Renewed: ' + '; '.join(done['renewed']) if done['renewed'] else ''))
+    return edit

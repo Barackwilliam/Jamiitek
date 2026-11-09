@@ -29,6 +29,8 @@ DEFAULT_RULES = {
     'payment_completed':  ('instant', 'Payment completed'),
     'payment_submitted':  ('instant', 'JamiiBot payment submitted for checking'),
     'build_request_paid': ('instant', '"Build it for me" paid'),
+    'payment_proof':      ('instant', 'Customer sent proof of payment for an invoice'),
+    'invoice_paid':       ('instant', 'Invoice payment recorded (receipt sent)'),
     'website_published':  ('instant', 'Web Builder website published'),
     'bot_registered':     ('instant', 'New JamiiBot registered'),
     'support_request':    ('digest',  'Support request (you already get its email)'),
@@ -43,6 +45,7 @@ DEFAULT_RULES = {
     'payment_failed':     ('instant', 'Payment failed or reversed'),
     'bot_disconnected':   ('instant', 'JamiiBot disconnected from WhatsApp'),
     'domain_live':        ('instant', 'Custom domain went live'),
+    'renewal_invoice':    ('digest',  'Renewal invoice created and sent (hosting / domain / email)'),
 }
 
 ACTOR_LABELS = {'customer': '👤 Customer', 'staff': '🛠 You / staff', 'system': '🤖 System'}

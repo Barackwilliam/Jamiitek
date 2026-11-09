@@ -18,6 +18,7 @@ RATIBA (kila kazi ina alama yake ya cache, hazitegemeani):
   | shop_reminders             | dakika 15   |
   | wafanyakazi (timu ya AI)   | dakika 30   |
   | auto_suspend               | siku        |
+  | renewal_invoices           | siku        |
   | send_expiry_emails         | siku        |
   | send_digest                | siku        |
   | prune_site_imports         | siku        |
@@ -75,6 +76,7 @@ SCHEDULE = {
     'activity_digest':           ('jamiitek:task:activity_digest',     30 * MINUTE),
     'send_digest':               ('jamiitek:task:send_digest',         24 * 60 * MINUTE),
     'prune_site_imports':        ('jamiitek:task:prune_site_imports',  24 * 60 * MINUTE),
+    'renewal_invoices':          ('jamiitek:task:renewal_invoices',    24 * 60 * MINUTE),
     'builder_hosting':           ('jamiitek:task:builder_hosting',     24 * 60 * MINUTE),
     'builder_unpaid':            ('jamiitek:task:builder_unpaid',      24 * 60 * MINUTE),
     'prune_snapshots':           ('jamiitek:task:prune_snapshots',      7 * 24 * 60 * MINUTE),
@@ -117,7 +119,11 @@ def _run_tasks_in_background():
         except Exception:
             logger.exception('[daily] auto-suspend failed')
 
-        # 2. Onyo za muda kuisha + email hosting + domains
+        # 2. Ankara za renewal (hosting siku 7, domain siku 30) + vikumbusho vyake.
+        #    Inatangulia onyo za zamani: huduma yenye ankara wazi haipati onyo la pili.
+        _run_command('renewal_invoices', quiet=True)
+
+        # 3. Onyo za muda kuisha + email hosting + domains
         try:
             from .utils.email_notifications import send_bulk_expiry_warnings
             result = send_bulk_expiry_warnings()
@@ -126,7 +132,7 @@ def _run_tasks_in_background():
         except Exception:
             logger.exception('[daily] expiry emails failed')
 
-        # 3. Kazi za ratiba ndefu (kila moja ina alama yake — haitarudiwa)
+        # 4. Kazi za ratiba ndefu (kila moja ina alama yake — haitarudiwa)
         _run_command('send_digest')
         _run_command('prune_snapshots')
         _run_command('prune_baileys_keys', quiet=True)

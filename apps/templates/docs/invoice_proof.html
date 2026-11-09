@@ -1,0 +1,348 @@
+{% load custom_filters %}<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Send proof of payment — {{ invoice.invoice_number }}</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#f3f6fc">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+{% comment %}
+Ukurasa wa mteja wa kutuma uthibitisho wa malipo (docs_views.invoice_proof).
+Kiingereza pekee. Inapokea namba ya muamala + picha/screenshot au PDF (≤10MB).
+Hali tatu: fomu, "tumepokea" (?sent=1), na "imelipwa".
+{% endcomment %}
+<style>
+:root{
+  --bg:#f3f6fc;--card:#fff;--ln:#e1e7f2;--ink:#0f172a;--mut:#64748b;--dim:#94a3b8;
+  --gr:#16a34a;--gr2:#22c55e;--gr-d:#ecfdf3;--vi:#7c3aed;--cy:#06b6d4;--am:#f59e0b;--rd:#e11d48;
+  --ff:'Inter',system-ui,-apple-system,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;--ease:cubic-bezier(.22,.9,.3,1)
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--ff);background:var(--bg);color:var(--ink);line-height:1.5;min-height:100vh;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.sky{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.sky i{position:absolute;border-radius:50%;filter:blur(120px);opacity:.22}
+.sky i:nth-child(1){width:50vmax;height:50vmax;left:-14vmax;top:-22vmax;background:var(--gr2)}
+.sky i:nth-child(2){width:40vmax;height:40vmax;right:-16vmax;top:18vmax;background:var(--cy);opacity:.16}
+.sky::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(99,102,241,.05) 1px,transparent 1px) 0 0/44px 44px,linear-gradient(90deg,rgba(99,102,241,.05) 1px,transparent 1px) 0 0/44px 44px;
+  -webkit-mask:linear-gradient(#000,transparent 70%);mask:linear-gradient(#000,transparent 70%)}
+
+.top{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.78);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--ln)}
+.top-in{max-width:1040px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.06em;font-size:14px}
+.brand i{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-style:normal;color:#fff;background:linear-gradient(135deg,var(--cy),var(--vi));box-shadow:0 6px 18px rgba(124,58,237,.3)}
+.back{margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;border:1px solid var(--ln);background:#fff;font-size:13px;font-weight:700;text-decoration:none}
+.back:hover{border-color:#c7d2fe}
+.secure{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#15803d;background:var(--gr-d);border:1px solid #bbf7d0;padding:6px 10px;border-radius:999px}
+
+.wrap{position:relative;z-index:1;max-width:1040px;margin:0 auto;padding:26px 20px 60px}
+.head{text-align:center;margin-bottom:22px;animation:up .7s var(--ease) both}
+.head h1{font-size:clamp(26px,4vw,38px);font-weight:800;letter-spacing:-.03em;line-height:1.1}
+.head h1 span{background:linear-gradient(120deg,#15803d,#0891b2);-webkit-background-clip:text;background-clip:text;color:transparent}
+.head p{margin-top:8px;color:var(--mut);font-size:15px}
+
+/* Hatua 3 */
+.steps{display:flex;justify-content:center;gap:0;margin:18px auto 26px;max-width:560px}
+.step{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;position:relative;font-size:12.5px;font-weight:700;color:var(--dim)}
+.step::before{content:"";position:absolute;top:15px;left:-50%;right:50%;height:3px;background:var(--ln);z-index:0}
+.step:first-child::before{display:none}
+.step b{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#fff;border:2px solid var(--ln);position:relative;z-index:1;font-size:13px}
+.step.done{color:var(--ink)}.step.done::before{background:linear-gradient(90deg,var(--gr2),var(--gr))}
+.step.done b{background:var(--gr);border-color:var(--gr);color:#fff}
+.step.now{color:var(--gr)}.step.now::before{background:linear-gradient(90deg,var(--gr),var(--ln))}
+.step.now b{border-color:var(--gr);color:var(--gr);box-shadow:0 0 0 6px rgba(34,197,94,.15)}
+
+.grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:20px;align-items:start}
+.card{background:var(--card);border:1px solid var(--ln);border-radius:22px;box-shadow:0 24px 60px rgba(30,41,99,.08);animation:up .8s var(--ease) both}
+.card+.card{animation-delay:.1s}
+@keyframes up{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+
+/* Muhtasari */
+.sum{padding:22px;position:sticky;top:84px;overflow:hidden}
+.sum::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:linear-gradient(90deg,var(--gr2),var(--cy),var(--vi))}
+.sum small{display:block;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.sum .no{font:700 13px var(--mono);color:var(--mut)}
+.sum .amt{margin-top:12px;font-weight:800;letter-spacing:-.03em;line-height:1;font-size:36px}
+.sum .amt span{font-size:15px;color:var(--mut);margin-right:6px;letter-spacing:0}
+.due{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:6px 11px;border-radius:999px;font-size:12.5px;font-weight:700;background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+.due.late{background:#fff1f3;color:#be123c;border-color:#fecdd3}
+.svc{margin-top:16px;padding-top:14px;border-top:1px dashed var(--ln);font-size:13.5px;color:var(--mut)}
+.svc b{color:var(--ink)}
+.payto{margin-top:16px;display:grid;gap:8px}
+.pt{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:14px;background:#f8fafc;border:1px solid var(--ln)}
+.pt div{flex:1;min-width:0}.pt div small{letter-spacing:.1em}
+.pt div span{display:block;font:600 13px var(--mono);word-break:break-word;margin-top:2px}
+.copy{border:1px solid var(--ln);background:#fff;font:800 11px var(--ff);letter-spacing:.06em;padding:7px 10px;border-radius:9px;cursor:pointer;color:#1e3a8a}
+.copy.ok{background:var(--gr);border-color:var(--gr);color:#fff}
+.ref{margin-top:10px;font-size:12.5px;color:var(--mut)}.ref b{font-family:var(--mono);color:var(--ink)}
+
+/* Fomu */
+.form{padding:24px}
+.form h2{font-size:18px;font-weight:800;letter-spacing:-.01em}
+.form .lead{color:var(--mut);font-size:13.5px;margin-top:4px}
+.err{display:flex;gap:10px;align-items:flex-start;margin:16px 0 0;padding:12px 14px;border-radius:14px;background:#fff1f3;border:1px solid #fecdd3;color:#9f1239;font-size:14px;font-weight:600}
+.lbl{display:block;margin:18px 0 8px;font-size:12.5px;font-weight:800;letter-spacing:.04em;color:#334155}
+.lbl em{font-style:normal;font-weight:600;color:var(--dim)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips input{position:absolute;opacity:0;pointer-events:none}
+.chips label{display:inline-flex;align-items:center;gap:8px;padding:9px 13px;border-radius:12px;border:1.5px solid var(--ln);background:#fff;font-size:13.5px;font-weight:700;cursor:pointer;transition:.15s}
+.chips label i{width:10px;height:10px;border-radius:50%;background:var(--c,#94a3b8)}
+.chips label:hover{border-color:#cbd5e1}
+.chips input:checked+label{border-color:var(--gr);background:var(--gr-d);color:#14532d;box-shadow:0 0 0 3px rgba(34,197,94,.15)}
+.chips input:focus-visible+label{outline:2px solid var(--gr);outline-offset:2px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fld{position:relative}
+.fld input,.fld textarea{width:100%;font:500 15px var(--ff);color:var(--ink);padding:13px 14px;border-radius:13px;border:1.5px solid var(--ln);background:#fff;transition:.15s}
+.fld input:focus,.fld textarea:focus{outline:0;border-color:var(--gr);box-shadow:0 0 0 4px rgba(34,197,94,.14)}
+.fld.ico input{padding-left:42px}
+.fld.ico svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--dim)}
+.fld .pre{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--mut);font-size:13px}
+.fld.money input{padding-left:52px;font-weight:700}
+#ref{font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase}
+.or{display:flex;align-items:center;gap:12px;margin:16px 0 4px;font-size:12px;font-weight:800;letter-spacing:.14em;color:var(--dim)}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--ln)}
+
+/* Dropzone */
+.drop{position:relative;display:grid;justify-items:center;gap:8px;text-align:center;padding:26px 16px;border-radius:18px;border:2px dashed #b6c3d9;background:linear-gradient(180deg,#f8fafc,#f1f5f9);cursor:pointer;transition:.2s}
+.drop:hover,.drop.over{border-color:var(--gr);background:linear-gradient(180deg,#f0fdf4,#ecfdf3)}
+.drop.over{transform:scale(1.01)}
+.drop .cloud{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;background:#fff;color:var(--gr);box-shadow:0 8px 20px rgba(15,23,42,.08)}
+.drop .cloud svg{width:26px;height:26px}
+.drop b{font-size:15px}.drop span{font-size:13px;color:var(--mut)}
+.drop .types{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:2px}
+.drop .types em{font-style:normal;font-size:11px;font-weight:800;letter-spacing:.06em;padding:3px 8px;border-radius:6px;background:#fff;border:1px solid var(--ln);color:var(--mut)}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.file{display:none;align-items:center;gap:12px;padding:12px;border-radius:16px;border:1.5px solid #bbf7d0;background:var(--gr-d);animation:up .35s var(--ease) both}
+.file.on{display:flex}
+.file .th{width:64px;height:64px;border-radius:12px;flex-shrink:0;background:#fff center/cover no-repeat;border:1px solid var(--ln);display:grid;place-items:center;color:var(--rd);font:800 12px var(--ff)}
+.file .meta{flex:1;min-width:0}.file .meta b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file .meta span{font-size:12.5px;color:#15803d;font-weight:600}
+.file button{border:0;background:#fff;width:36px;height:36px;border-radius:10px;cursor:pointer;color:var(--mut);display:grid;place-items:center;border:1px solid var(--ln)}
+.file button:hover{color:var(--rd)}
+.send{margin-top:20px;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;border:0;border-radius:15px;font:800 16px var(--ff);color:#fff;cursor:pointer;
+  background:linear-gradient(135deg,var(--gr2),var(--gr) 55%,#15803d);box-shadow:0 14px 32px rgba(22,163,74,.32),inset 0 1px 0 rgba(255,255,255,.3);transition:transform .2s,box-shadow .2s;position:relative;overflow:hidden}
+.send:hover{transform:translateY(-2px);box-shadow:0 18px 40px rgba(22,163,74,.42)}
+.send::after{content:"";position:absolute;top:0;bottom:0;width:40%;left:-60%;transform:skewX(-20deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);animation:sw 3.4s 1s infinite}
+@keyframes sw{0%{left:-60%}45%,100%{left:130%}}
+.send.busy{pointer-events:none;opacity:.85}.send.busy svg{display:none}
+.send.busy::before{content:"";width:18px;height:18px;border-radius:50%;border:2.5px solid #fff;border-right-color:transparent;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.priv{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:12px;font-size:12.5px;color:var(--mut)}
+
+/* Imetumwa */
+.thanks{max-width:620px;margin:0 auto;padding:34px 26px;text-align:center}
+.ring{width:96px;height:96px;margin:0 auto 18px;border-radius:50%;display:grid;place-items:center;background:var(--gr-d);position:relative}
+.ring::before{content:"";position:absolute;inset:-8px;border-radius:50%;border:3px solid rgba(34,197,94,.25);animation:pulse 2s infinite}
+@keyframes pulse{0%{transform:scale(.9);opacity:1}100%{transform:scale(1.25);opacity:0}}
+.ring svg{width:46px;height:46px;stroke:var(--gr);stroke-width:2.6;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:40;stroke-dashoffset:40;animation:draw .7s .25s var(--ease) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.thanks h2{font-size:26px;font-weight:800;letter-spacing:-.02em}
+.thanks p{margin-top:8px;color:var(--mut);font-size:15px}
+.tl{margin:24px auto 0;max-width:380px;text-align:left;display:grid;gap:0}
+.tl div{display:flex;gap:12px;align-items:flex-start;padding-bottom:16px;position:relative;font-size:14px}
+.tl div::before{content:"";position:absolute;left:11px;top:24px;bottom:0;width:2px;background:var(--ln)}
+.tl div:last-child::before{display:none}
+.tl i{width:24px;height:24px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:800;border:2px solid var(--ln);background:#fff;color:var(--dim);position:relative;z-index:1}
+.tl .ok i{background:var(--gr);border-color:var(--gr);color:#fff}
+.tl .now i{border-color:var(--am);background:#fffbeb}
+.tl .now i::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--am);animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.25}}
+.tl b{display:block}.tl small{color:var(--mut);font-size:12.5px}
+.list{margin-top:22px;display:grid;gap:8px;text-align:left}
+.pf{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:13px;border:1px solid var(--ln);background:#f8fafc;font-size:13px}
+.pf span{flex:1;color:var(--mut)}.pf b{font-family:var(--mono);color:var(--ink)}
+.tag{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px}
+.tag.pending{background:#fffbeb;color:#b45309}.tag.approved{background:var(--gr-d);color:#15803d}.tag.rejected{background:#fff1f3;color:#be123c}
+.acts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:24px}
+.acts a{display:inline-flex;align-items:center;gap:8px;padding:12px 16px;border-radius:12px;font-weight:800;font-size:14px;text-decoration:none;border:1px solid var(--ln);background:#fff}
+.acts a.pri{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+@media(max-width:860px){.grid{grid-template-columns:1fr}.sum{position:relative;top:0;order:-1}}
+@media(max-width:560px){
+  .top-in{padding:10px 14px}.secure{display:none}.wrap{padding:18px 12px 40px}
+  .head{margin-bottom:12px}.head p{font-size:14px}.steps{margin:12px auto 18px}
+  .form,.sum{padding:18px}.row2{grid-template-columns:1fr}.sum .amt{font-size:32px}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="sky" aria-hidden="true"><i></i><i></i></div>
+<header class="top"><div class="top-in">
+  <div class="brand"><i>{{ invoice.provider_name|slice:":1"|upper }}</i>{{ invoice.provider_name|upper }}</div>
+  <span class="secure"><svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M12 2 4 5v6c0 5 3.4 9.6 8 11 4.6-1.4 8-6 8-11V5z"/></svg>Secure page</span>
+  <a class="back" href="{{ invoice.public_url }}"><svg class="i" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="m15 18-6-6 6-6"/></svg>Invoice</a>
+</div></header>
+
+<main class="wrap">
+{% if invoice.is_paid %}
+  <section class="card thanks">
+    <div class="ring"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></div>
+    <h2>This invoice is paid</h2>
+    <p>Thank you! Invoice {{ invoice.invoice_number }} is fully paid. Your receipt was sent to you by email and WhatsApp.</p>
+    <div class="acts"><a class="pri" href="{{ invoice.public_url }}">View invoice</a></div>
+  </section>
+
+{% elif sent %}
+  <section class="card thanks">
+    <div class="ring"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></div>
+    <h2>Proof received — thank you!</h2>
+    <p>We are checking your payment now. As soon as it is confirmed you will get your receipt by email and WhatsApp.</p>
+    <div class="tl">
+      <div class="ok"><i>✓</i><span><b>You paid</b><small>{{ invoice.currency }} {{ invoice.balance_due|thousands }} for {{ invoice.invoice_number }}</small></span></div>
+      <div class="ok"><i>✓</i><span><b>Proof received</b><small>{{ proofs.0.created_at|date:"j M Y, H:i" }}</small></span></div>
+      <div class="now"><i></i><span><b>Checking your payment</b><small>Usually within a few hours</small></span></div>
+      <div><i>4</i><span><b>Receipt sent to you</b><small>Confirm it with one tap, then download it</small></span></div>
+    </div>
+    <div class="acts">
+      <a class="pri" href="{{ invoice.public_url }}">Back to invoice</a>
+      <a href="{{ invoice.public_url }}paid/">Send another proof</a>
+    </div>
+  </section>
+
+{% else %}
+  <div class="head">
+    <h1>Send <span>proof of payment</span></h1>
+    <p>Paid by mobile money or bank? Tell us here — we check it and send your receipt.</p>
+  </div>
+  <div class="steps">
+    <div class="step done"><b><svg class="i" viewBox="0 0 24 24" style="width:16px;height:16px;stroke-width:3"><path d="M20 6 9 17l-5-5"/></svg></b><span>Pay</span></div>
+    <div class="step now"><b>2</b><span>Send proof</span></div>
+    <div class="step"><b>3</b><span>Get receipt</span></div>
+  </div>
+
+  <div class="grid">
+    <form class="card form" id="pf" method="post" enctype="multipart/form-data" novalidate>{% csrf_token %}
+      <h2>Your payment details</h2>
+      <p class="lead">Type the transaction ID from the payment message, attach a screenshot or document — or both.</p>
+      {% if error %}<div class="err"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v5m0 3h.01"/></svg>{{ error }}</div>{% endif %}
+
+      <span class="lbl">How did you pay?</span>
+      <div class="chips">
+        {% for m in methods %}
+        <input type="radio" name="method" id="m{{ forloop.counter }}" value="{{ m }}"{% if form.method == m %} checked{% endif %}>
+        <label for="m{{ forloop.counter }}" style="--c:{% cycle '#e60000' '#0057b8' '#ed1c24' '#f97316' '#1e3a8a' '#94a3b8' %}"><i></i>{{ m }}</label>
+        {% endfor %}
+      </div>
+
+      <label class="lbl" for="ref">Transaction ID <em>· from the SMS, e.g. TK47XYZ12A</em></label>
+      <div class="fld ico"><svg class="i" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></svg>
+        <input id="ref" name="reference" maxlength="120" value="{{ form.reference }}" placeholder="Transaction ID" autocomplete="off" autocapitalize="characters"></div>
+
+      <div class="or">AND / OR</div>
+
+      <span class="lbl">Screenshot or document <em>· JPG, PNG or PDF, up to 10 MB</em></span>
+      <div class="drop" id="drop">
+        <span class="cloud"><svg class="i" viewBox="0 0 24 24"><path d="M12 16V8m0 0-3 3m3-3 3 3"/><path d="M20 16.6A4.5 4.5 0 0 0 17.5 8h-1.3A7 7 0 1 0 4 14.9"/></svg></span>
+        <b>Tap to add a screenshot or PDF</b>
+        <span>or drag it here · you can also paste a screenshot</span>
+        <div class="types"><em>JPG</em><em>PNG</em><em>WEBP</em><em>PDF</em></div>
+        <input type="file" name="file" id="file" accept="image/*,application/pdf" aria-label="Screenshot or document">
+      </div>
+      <div class="file" id="filebox">
+        <div class="th" id="thumb"></div>
+        <div class="meta"><b id="fname"></b><span id="fsize"></span></div>
+        <button type="button" id="fx" aria-label="Remove file"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      </div>
+
+      <div class="row2">
+        <div><label class="lbl" for="amt">Amount paid</label>
+          <div class="fld money"><span class="pre">{{ invoice.currency }}</span><input id="amt" name="amount" inputmode="numeric" value="{{ form.amount }}"></div></div>
+        <div><label class="lbl" for="ph">Phone number that paid</label>
+          <div class="fld ico"><svg class="i" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>
+            <input id="ph" name="payer_phone" inputmode="tel" maxlength="40" value="{{ form.payer_phone }}" placeholder="07xx xxx xxx"></div></div>
+      </div>
+
+      <label class="lbl" for="note">Note <em>· optional</em></label>
+      <div class="fld"><textarea id="note" name="note" rows="2" maxlength="1000" placeholder="e.g. Paid in two parts, or paid from my colleague's number">{{ form.note }}</textarea></div>
+
+      <button class="send" type="submit" id="send"><svg class="i" viewBox="0 0 24 24"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>Send proof of payment</button>
+      <p class="priv"><svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Only JamiiTek sees what you send here.</p>
+    </form>
+
+    <aside class="card sum">
+      <small>Amount to pay</small>
+      <div class="amt"><span>{{ invoice.currency }}</span>{{ invoice.balance_due|thousands }}</div>
+      <div class="no" style="margin-top:8px">{{ invoice.invoice_number }}</div>
+      {% if days_left is not None %}
+      <div class="due{% if days_left < 0 %} late{% endif %}">⏳ {% if days_left < 0 %}Overdue by {{ days_left|cut:"-" }} day{{ days_left|cut:"-"|pluralize }}{% elif days_left == 0 %}Due today{% elif days_left == 1 %}Due tomorrow{% else %}Due in {{ days_left }} days · {{ invoice.due_date|date:"j M Y" }}{% endif %}</div>
+      {% endif %}
+      <div class="svc"><b>{{ invoice.title|bilingual:"en" }}</b>{% if invoice.project_name %}<br>{{ invoice.project_name|bilingual:"en" }}{% endif %}</div>
+      {% if pay_methods %}
+      <div class="payto">
+        <small>Pay to</small>
+        {% for m in pay_methods %}
+        <div class="pt"><div><small>{{ m.method|bilingual:"en" }}</small><span>{{ m.details }}</span></div>
+          <button type="button" class="copy" data-copy="{{ m.details }}">COPY</button></div>
+        {% endfor %}
+        <p class="ref">Use <b>{{ invoice.invoice_number }}</b> as the payment reference.</p>
+      </div>
+      {% endif %}
+      {% if proofs %}
+      <div class="list">
+        <small>Proofs you sent</small>
+        {% for p in proofs %}<div class="pf"><span>{{ p.created_at|date:"j M, H:i" }}{% if p.reference %} · <b>{{ p.reference }}</b>{% endif %}</span><em class="tag {{ p.status }}">{% if p.status == 'pending' %}Checking{% elif p.status == 'approved' %}Confirmed{% else %}Not confirmed{% endif %}</em></div>{% endfor %}
+      </div>
+      {% endif %}
+    </aside>
+  </div>
+{% endif %}
+</main>
+
+<script>
+(function(){
+  // Nakili namba za kulipia
+  document.querySelectorAll('[data-copy]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var t=b.dataset.copy, done=function(){ b.textContent='COPIED'; b.classList.add('ok'); setTimeout(function(){ b.textContent='COPY'; b.classList.remove('ok'); },1600); };
+      if(navigator.clipboard) navigator.clipboard.writeText(t).then(done, done); else done();
+    });
+  });
+
+  var form=document.getElementById('pf'); if(!form) return;
+  var input=document.getElementById('file'), drop=document.getElementById('drop'), box=document.getElementById('filebox'),
+      thumb=document.getElementById('thumb'), fname=document.getElementById('fname'), fsize=document.getElementById('fsize'),
+      ref=document.getElementById('ref'), send=document.getElementById('send'), MAX=10*1024*1024;
+  var OK=/^(image\/(jpeg|png|webp|gif)|application\/pdf)$/;
+
+  function size(n){ return n>1048576 ? (n/1048576).toFixed(1)+' MB' : Math.max(1,Math.round(n/1024))+' KB'; }
+  function clear(){ input.value=''; box.classList.remove('on'); drop.style.display=''; thumb.style.backgroundImage=''; thumb.textContent=''; }
+  function show(f){
+    if(!f) return clear();
+    if(!OK.test(f.type)){ alert('Please choose a JPG, PNG, WEBP image or a PDF.'); return clear(); }
+    if(f.size>MAX){ alert('That file is larger than 10 MB. Please choose a smaller one.'); return clear(); }
+    fname.textContent=f.name||'screenshot.png'; fsize.textContent='✓ Ready · '+size(f.size);
+    if(f.type.indexOf('image/')===0){ var u=URL.createObjectURL(f); thumb.style.backgroundImage='url('+u+')'; thumb.textContent=''; }
+    else { thumb.style.backgroundImage=''; thumb.textContent='PDF'; }
+    box.classList.add('on'); drop.style.display='none';
+  }
+  function setFile(f){
+    try{ var dt=new DataTransfer(); dt.items.add(f); input.files=dt.files; }catch(e){}
+    show(f);
+  }
+  input.addEventListener('change', function(){ show(input.files[0]); });
+  document.getElementById('fx').addEventListener('click', clear);
+  ['dragenter','dragover'].forEach(function(ev){ drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.add('over'); }); });
+  ['dragleave','drop'].forEach(function(ev){ drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.remove('over'); }); });
+  drop.addEventListener('drop', function(e){ var f=e.dataTransfer.files[0]; if(f) setFile(f); });
+  // Bandika screenshot moja kwa moja (Ctrl+V)
+  document.addEventListener('paste', function(e){
+    var items=(e.clipboardData||{}).items||[];
+    for(var i=0;i<items.length;i++){ if(items[i].kind==='file'){ var f=items[i].getAsFile(); if(f){ setFile(f); e.preventDefault(); } break; } }
+  });
+  form.addEventListener('submit', function(e){
+    if(!ref.value.trim() && !(input.files && input.files.length)){
+      e.preventDefault(); ref.focus();
+      ref.parentNode.animate && ref.parentNode.animate([{transform:'translateX(0)'},{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}],{duration:260});
+      ref.placeholder='Type the transaction ID — or add a screenshot';
+      return;
+    }
+    send.classList.add('busy'); send.lastChild.textContent=' Sending…';
+  });
+})();
+</script>
+</body>
+</html>

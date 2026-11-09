@@ -67,7 +67,7 @@
         {% for i in invoices %}
         {% with st=i.display_status %}
         <tr class="row-link" onclick="if(!event.target.closest('a'))location.href='{% url 'invoice_edit' i.pk %}'">
-          <td><div class="num">{{ i.invoice_number|default:'—' }}</div><div class="ttl">{{ i.title|truncatechars:40 }}</div></td>
+          <td><div class="num">{{ i.invoice_number|default:'—' }}{% if i.pending_proofs %} <span title="Client sent proof of payment — check it" style="display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;background:rgba(255,184,0,.15);color:#ffb800">💰 proof to check</span>{% endif %}</div><div class="ttl">{{ i.title|truncatechars:40 }}</div></td>
           <td><div style="font-size:13px;color:var(--text-2)">{{ i.display_client }}</div>{% if i.display_company %}<div style="font-family:var(--mono);font-size:10px;color:var(--purple)">{{ i.display_company }}</div>{% endif %}</td>
           <td style="font-family:var(--mono);font-size:12px;color:var(--text-2);white-space:nowrap">{{ i.currency }} {{ i.grand_total|thousands }}</td>
           <td style="font-family:var(--mono);font-size:12px;white-space:nowrap;color:{% if i.is_paid %}var(--green){% else %}var(--yellow){% endif %}">

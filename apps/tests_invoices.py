@@ -159,19 +159,19 @@ class InvoicePublicViewTest(TestCase):
         inv = make(payment_methods=Invoice.DEFAULT_PAYMENT_METHODS)
         r = self.client.get(inv.public_url + '?lang=sw', secure=True)
         self.assertContains(r, '0750910158 - WILLIAM CHIPINDI')
-        self.assertNotContains(r, 'Lipa sasa')          # manual: hakuna Pesapal
+        self.assertNotContains(r, 'Pay now')          # manual: hakuna Pesapal (ankara ni Kiingereza pekee)
         inv.refresh_from_db()
         self.assertEqual(inv.status, 'viewed')
 
     def test_payment_mode_controls_what_client_sees(self):
         inv = make(payment_mode='pesapal', payment_methods=Invoice.DEFAULT_PAYMENT_METHODS)
         r = self.client.get(inv.public_url + '?lang=sw', secure=True)
-        self.assertContains(r, 'Lipa sasa')
+        self.assertContains(r, 'Pay now')
         self.assertNotContains(r, '0750910158 - WILLIAM CHIPINDI')
         inv.payment_mode = 'both'
         inv.save()
         r = self.client.get(inv.public_url + '?lang=sw', secure=True)
-        self.assertContains(r, 'Lipa sasa')
+        self.assertContains(r, 'Pay now')
         self.assertContains(r, '0750910158 - WILLIAM CHIPINDI')
 
     def test_draft_and_cancelled_hidden_from_client(self):
