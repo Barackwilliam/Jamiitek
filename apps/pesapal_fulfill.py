@@ -192,3 +192,7 @@ def _fulfill_invoice(tx):
                        by=tx.email or tx.phone or '', source='pesapal')
     inv.save(update_fields=['amount_paid', 'payments', 'status', 'paid_at', 'paid_reference', 'sent_at'])
     logger.info('Pesapal: invoice %s imelipwa', inv.invoice_number or inv.pk)
+    # Ankara ya renewal iliyolipwa yote: sogeza tarehe za hosting/domain/email mbele
+    # (risiti ya Pesapal inatumwa na issue_receipt kama kawaida).
+    from apps.renewals import apply_renewals
+    apply_renewals(inv)

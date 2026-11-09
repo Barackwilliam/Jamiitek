@@ -2224,3 +2224,7 @@ class OwnerNoticeDay(models.Model):
 
     def __str__(self):
         return f'{self.date}: {self.sent_total} sent, {len(self.held or [])} in summary'
+
+
+# ── Ankara za renewal + uthibitisho wa malipo (apps/renewals.py) ──
+from .renewal_models import RenewalNotice, PaymentProof  # noqa: E402,F401

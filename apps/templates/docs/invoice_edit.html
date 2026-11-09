@@ -21,6 +21,15 @@
   .trow.bal{color:var(--yellow);font-weight:700}
   .cb-section{margin-bottom:20px}
   .cb-section .sh{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .proofs{padding:14px 18px;margin-bottom:16px}
+  .pr-h{display:flex;align-items:center;gap:9px;font-weight:700;margin-bottom:10px}
+  .pr-badge{margin-left:auto;padding:3px 10px;border-radius:999px;background:var(--yellow-d);color:var(--yellow);font-size:12px}
+  .pr{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--border,rgba(255,255,255,.08))}
+  .pr-main{display:grid;gap:3px;min-width:0}.pr-main span,.pr-main small{color:var(--text-3);font-size:12.5px}
+  .pr-main a{font-size:12.5px;color:var(--cyan)}
+  .pr-pending{background:linear-gradient(90deg,rgba(255,184,0,.06),transparent)}
+  .pr-act{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.pr-act form{display:flex;gap:8px;align-items:center}
+  .pr-act .f-input{width:130px;padding:8px 10px}
   .cb-section .sh .n{width:26px;height:26px;border-radius:8px;background:var(--cyan-d);color:var(--cyan);
     display:inline-flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:800;
     font-family:var(--mono);border:1px solid rgba(0,212,255,.25)}
@@ -129,6 +138,42 @@
 </div>
 
 <div class="errs" id="errs"></div>
+{% if proofs %}
+<div class="jt-card proofs" id="proofs">
+  <div class="pr-h"><i class="fas fa-receipt"></i> Proof of payment from the client
+    {% if pending_count %}<span class="pr-badge">{{ pending_count }} to check</span>{% endif %}</div>
+  {% for p in proofs %}
+  <div class="pr pr-{{ p.status }}">
+    <div class="pr-main">
+      <b>{{ p.method|default:"—" }}{% if p.reference %} · <code>{{ p.reference }}</code>{% endif %}</b>
+      <span>{% if p.amount %}{{ invoice.currency }} {{ p.amount|floatformat:"0g" }} · {% endif %}{{ p.created_at|date:"d M Y H:i" }}{% if p.payer_phone %} · {{ p.payer_phone }}{% endif %}</span>
+      {% if p.note %}<small>“{{ p.note }}”</small>{% endif %}
+      {% if p.file_url %}<a href="{{ p.file_url }}" target="_blank" rel="noopener"><i class="fas fa-image"></i> Open screenshot</a>{% endif %}
+      {% if p.status != 'pending' %}<small>{{ p.get_status_display }}{% if p.reviewed_by %} by {{ p.reviewed_by.get_username }}{% endif %}{% if p.review_note %} — {{ p.review_note }}{% endif %}</small>{% endif %}
+    </div>
+    {% if p.status == 'pending' %}
+    <div class="pr-act">
+      <form method="post" action="{% url 'invoice_proof_review' invoice.pk p.pk 'approve' %}" onsubmit="return confirm('Record this payment, create the receipt and send the client the confirm-receipt link?')">{% csrf_token %}
+        <input class="f-input" name="amount" value="{{ p.amount|default_if_none:invoice.balance_due|floatformat:0 }}" title="Amount you received">
+        <button class="jt-btn btn-cyan" type="submit"><i class="fas fa-check"></i> Approve &amp; send receipt</button>
+      </form>
+      <form method="post" action="{% url 'invoice_proof_review' invoice.pk p.pk 'reject' %}" onsubmit="this.note.value=prompt('Why? (the client sees this)','We could not find this payment.')||'';return true">{% csrf_token %}
+        <input type="hidden" name="note"><button class="jt-btn btn-ghost" type="submit">Reject</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% if renewals %}
+<div class="jt-card proofs">
+  <div class="pr-h"><i class="fas fa-rotate"></i> Renewal invoice — paid in full extends these automatically</div>
+  {% for r in renewals %}<div class="pr"><div class="pr-main"><b>{{ r.label }}</b>
+    <span>Ends {{ r.period_end|date:"d M Y" }} · {{ r.months }} month{{ r.months|pluralize }} · TZS {{ r.amount|floatformat:"0g" }}
+    {% if r.applied_at %} · <b style="color:var(--green)">extended {{ r.applied_at|date:"d M Y" }}</b>{% endif %}</span></div></div>{% endfor %}
+</div>
+{% endif %}
 {% if invoice.grand_total <= 0 %}
 <div class="errs show" style="color:var(--yellow);background:var(--yellow-d);border-color:rgba(255,184,0,.3)">
   <b>This invoice has no priced items — the total is {{ invoice.currency }} 0.</b><br>
@@ -371,7 +416,9 @@ async function recordPayment(btn){
   const fd=new FormData();fd.append('amount',document.getElementById('pAmount').value.trim());
   fd.append('method',document.getElementById('pMethod').value);fd.append('reference',document.getElementById('pRef').value.trim());
   btn.disabled=true;const {ok,d}=await post(`/manage/invoices/${PK}/mark-paid/`,fd);btn.disabled=false;
-  if(ok){toast(`✓ Payment saved — ${d.status}`,'ok');dirty=false;setTimeout(()=>location.reload(),900);}else toast(d.error||'Failed','err');}
+  if(ok){const via=[d.receipt_sent&&d.receipt_sent.email?'email':'',d.receipt_sent&&d.receipt_sent.whatsapp?'WhatsApp':''].filter(Boolean).join(' + ');
+    toast(d.receipt?`✓ Payment saved — receipt ${d.receipt}${via?' sent by '+via:' (link not sent — share it yourself)'}`:`✓ Payment saved — ${d.status}`,'ok');
+    dirty=false;setTimeout(()=>location.reload(),1800);}else toast(d.error||'Failed','err');}
 async function removePayment(i){
   if(!confirm('Remove this payment? Use this only for a payment recorded by mistake.'))return;
   const {ok,d}=await post(`/manage/invoices/${PK}/payments/${i}/remove/`,new FormData());
