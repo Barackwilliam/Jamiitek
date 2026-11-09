@@ -148,7 +148,7 @@
       <b>{{ p.method|default:"—" }}{% if p.reference %} · <code>{{ p.reference }}</code>{% endif %}</b>
       <span>{% if p.amount %}{{ invoice.currency }} {{ p.amount|floatformat:"0g" }} · {% endif %}{{ p.created_at|date:"d M Y H:i" }}{% if p.payer_phone %} · {{ p.payer_phone }}{% endif %}</span>
       {% if p.note %}<small>“{{ p.note }}”</small>{% endif %}
-      {% if p.file_url %}<a href="{{ p.file_url }}" target="_blank" rel="noopener"><i class="fas fa-image"></i> Open screenshot</a>{% endif %}
+      {% if p.file_url %}<a href="{{ p.file_url }}" target="_blank" rel="noopener"><i class="fas fa-paperclip"></i> Open attachment (screenshot / PDF)</a>{% endif %}
       {% if p.status != 'pending' %}<small>{{ p.get_status_display }}{% if p.reviewed_by %} by {{ p.reviewed_by.get_username }}{% endif %}{% if p.review_note %} — {{ p.review_note }}{% endif %}</small>{% endif %}
     </div>
     {% if p.status == 'pending' %}

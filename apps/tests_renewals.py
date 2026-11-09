@@ -87,17 +87,35 @@ class RenewalFlowTest(TestCase):
     # ── mteja anatuma uthibitisho ──
     def test_client_sends_proof(self, wa):
         inv = self._make()
+        page = self.client.get(f'/invoice/{inv.token}/paid/')
+        self.assertContains(page, 'Send proof of payment')
+        self.assertContains(page, 'accept="image/*,application/pdf"')
         r = self.client.post(f'/invoice/{inv.token}/paid/', {'method': 'M-Pesa', 'reference': 'TK47XYZ',
-                                                            'amount': '227000', 'lang': 'sw'})
-        self.assertEqual(r.status_code, 302)
+                                                            'amount': '227000'})
+        self.assertRedirects(r, f'/invoice/{inv.token}/paid/?sent=1')
         p = PaymentProof.objects.get()
         self.assertEqual((p.status, p.reference, p.amount), ('pending', 'TK47XYZ', Decimal('227000')))
-        page = self.client.get(f'/invoice/{inv.token}/?lang=sw').content.decode()
-        self.assertIn('Tunahakiki malipo yako', page)
+        self.assertContains(self.client.get(r['Location']), 'Proof received')
+        # Ankara ni Kiingereza pekee, hata ?lang=sw
+        inv_page = self.client.get(f'/invoice/{inv.token}/?lang=sw').content.decode()
+        self.assertIn('We are checking your payment', inv_page)
+        self.assertNotIn('Tunahakiki', inv_page)
+
+    def test_proof_with_pdf_document(self, wa):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        inv = self._make()
+        pdf = SimpleUploadedFile('bank-slip.pdf', b'%PDF-1.4 test', content_type='application/pdf')
+        with mock.patch('apps.storage.upload', return_value={'success': True, 'url': 'https://x/slip.pdf'}) as up:
+            r = self.client.post(f'/invoice/{inv.token}/paid/', {'method': 'Bank transfer', 'file': pdf})
+        self.assertEqual(r.status_code, 302)
+        self.assertTrue(up.called)
+        self.assertEqual(PaymentProof.objects.get().file_url, 'https://x/slip.pdf')
 
     def test_proof_needs_reference_or_file(self, wa):
         inv = self._make()
-        self.client.post(f'/invoice/{inv.token}/paid/', {'method': 'M-Pesa', 'reference': ''})
+        r = self.client.post(f'/invoice/{inv.token}/paid/', {'method': 'M-Pesa', 'reference': ''})
+        self.assertEqual(r.status_code, 400)
+        self.assertContains(r, 'Enter the transaction ID', status_code=400)
         self.assertFalse(PaymentProof.objects.exists())
 
     # ── wewe unaidhinisha → risiti yenye sahihi + muda unaongezwa ──

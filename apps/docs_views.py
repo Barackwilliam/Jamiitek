@@ -237,7 +237,8 @@ def _public_ctx(request, invoice):
     from apps.contact import contact
     from django.contrib.messages import get_messages
     c = contact()
-    return {'invoice': invoice, 'lang': _lang(request), 'contact': c,
+    # Ankara na risiti zote ni kwa Kiingereza (uamuzi wa mmiliki) — ?lang=sw haibadilishi kitu
+    return {'invoice': invoice, 'lang': 'en', 'contact': c,
             'items': invoice.items, 'history': invoice.payment_history,
             'flash': list(get_messages(request))}
 
@@ -677,84 +678,91 @@ def invoice_ai_assist(request):
 PROOF_MAX_PENDING = 5
 
 
-@require_POST
+PROOF_METHODS = ['M-Pesa', 'Mixx by Yas', 'Airtel Money', 'HaloPesa', 'Bank transfer', 'Other']
+
+
 def invoice_proof(request, token):
-    """Mteja anatuma uthibitisho wa malipo kutoka ukurasa wa ankara. Wewe unahakiki."""
+    """
+    Ukurasa wa mteja wa kutuma uthibitisho wa malipo (Kiingereza):
+    namba ya muamala, kiasi, na picha / screenshot / PDF ya ujumbe wa malipo.
+    Wewe unahakiki kwenye /manage/invoices/<pk>/edit/#proofs.
+    """
     from decimal import Decimal, InvalidOperation
-    from django.contrib import messages
     from django.core.cache import cache
     from .models import PaymentProof
 
     inv = get_object_or_404(Invoice, token=token)
-    lang = request.POST.get('lang') if request.POST.get('lang') in ('en', 'sw') else 'en'
-    back = redirect(f'{inv.public_url}?lang={lang}#paid')
-    sw = lang == 'sw'
-    if inv.status in ('draft', 'cancelled') or inv.is_paid:
-        return back
+    if inv.status in ('draft', 'cancelled') and not (request.user.is_authenticated and request.user.is_staff):
+        return render(request, 'docs/invoice_unavailable.html', {'invoice': inv}, status=404)
 
-    ip = _client_ip(request) or ''
-    key = f'invproof:{ip}'
-    hits = cache.get(key, 0)
-    if hits >= 10 or inv.proofs.filter(status='pending').count() >= PROOF_MAX_PENDING:
-        messages.error(request, 'Tumepokea taarifa nyingi kwa sasa. Subiri tuhakiki, au wasiliana nasi kwa WhatsApp.'
-                       if sw else 'We already have several messages from you. Please wait while we check them, '
-                       'or contact us on WhatsApp.')
-        return back
-    cache.set(key, hits + 1, 3600)
+    form = {'method': 'M-Pesa', 'reference': '', 'amount': f'{inv.balance_due:.0f}',
+            'payer_phone': inv.client_phone or (inv.client.phone if inv.client else ''), 'note': ''}
+    error = ''
 
-    reference = request.POST.get('reference', '').strip()[:120]
-    upload = request.FILES.get('file')
-    if not reference and not upload:
-        messages.error(request, 'Weka namba ya muamala au ambatisha picha ya ujumbe wa malipo.'
-                       if sw else 'Enter the transaction ID or attach a screenshot of the payment message.')
-        return back
+    if request.method == 'POST' and not inv.is_paid and inv.status not in ('draft', 'cancelled'):
+        for k in form:
+            form[k] = request.POST.get(k, form[k] if k == 'method' else '').strip()
+        upload = request.FILES.get('file')
+        ip = _client_ip(request) or ''
+        key = f'invproof:{ip}'
+        hits = cache.get(key, 0)
 
-    amount = None
-    raw = request.POST.get('amount', '').replace(',', '').strip()
-    if raw:
-        try:
-            amount = Decimal(raw).quantize(Decimal('0.01'))
-            if amount <= 0:
-                amount = None
-        except (InvalidOperation, ValueError):
+        if hits >= 10 or inv.proofs.filter(status='pending').count() >= PROOF_MAX_PENDING:
+            error = ('We already have several proofs for this invoice. Please wait while we check them, '
+                     'or message us on WhatsApp.')
+        elif not form['reference'] and not upload:
+            error = 'Enter the transaction ID, or attach a screenshot or document of the payment.'
+        else:
             amount = None
+            try:
+                amount = Decimal(form['amount'].replace(',', '')).quantize(Decimal('0.01')) if form['amount'] else None
+                if amount is not None and amount <= 0:
+                    amount = None
+            except (InvalidOperation, ValueError):
+                amount = None
 
-    file_url = ''
-    if upload:
-        from . import storage
-        res = storage.upload(upload, folder='payment-proofs')
-        if res.get('success'):
-            file_url = res['url']
-        elif not reference:
-            messages.error(request, ('Picha haikupakiwa: ' if sw else 'The file could not be uploaded: ')
-                           + str(res.get('error', ''))[:120])
-            return back
+            file_url = ''
+            if upload:
+                from . import storage
+                res = storage.upload(upload, folder='payment-proofs')
+                if res.get('success'):
+                    file_url = res['url']
+                elif not form['reference']:
+                    error = ('We could not upload that file. Use a JPG, PNG or PDF under 10 MB, '
+                             'or type the transaction ID instead.')
 
-    proof = PaymentProof.objects.create(
-        invoice=inv, method=request.POST.get('method', '').strip()[:60], reference=reference,
-        amount=amount, payer_name=request.POST.get('payer_name', '').strip()[:120],
-        payer_phone=request.POST.get('payer_phone', '').strip()[:40],
-        note=request.POST.get('note', '').strip()[:1000], file_url=file_url, ip=ip or None)
-
-    try:
-        from apps import activity
-        activity.record('payment_proof', f'Proof of payment — {inv.invoice_number} ({inv.display_client})',
+            if not error:
+                cache.set(key, hits + 1, 3600)
+                proof = PaymentProof.objects.create(
+                    invoice=inv, method=form['method'][:60], reference=form['reference'][:120], amount=amount,
+                    payer_name=inv.display_client[:120], payer_phone=form['payer_phone'][:40],
+                    note=form['note'][:1000], file_url=file_url, ip=ip or None)
+                try:
+                    from apps import activity
+                    activity.record(
+                        'payment_proof', f'Proof of payment — {inv.invoice_number} ({inv.display_client})',
                         rows=[('Method', proof.method or '-'), ('Reference', proof.reference or '-'),
                               ('Amount', f'{inv.currency} {proof.amount:,.0f}' if proof.amount else '-'),
                               ('Balance due', f'{inv.currency} {inv.balance_due:,.0f}'),
-                              ('Screenshot', proof.file_url or 'none')],
+                              ('File', proof.file_url or 'none')],
                         link=f'/manage/invoices/{inv.pk}/edit/#proofs', level='warning',
                         actor='customer', amount=proof.amount)
-        from apps.notify import notify
-        notify(f'💰 {inv.display_client} amesema amelipa ankara {inv.invoice_number}'
-               f' ({inv.currency} {inv.balance_due:,.0f}). Ref: {proof.reference or "-"}. '
-               f'Hakiki: {_site_url(f"/manage/invoices/{inv.pk}/edit/")}#proofs')
-    except Exception:
-        pass
+                    from apps.notify import notify
+                    notify(f'💰 {inv.display_client} says they paid invoice {inv.invoice_number} '
+                           f'({inv.currency} {inv.balance_due:,.0f}). Ref: {proof.reference or "-"}. '
+                           f'Check: {_site_url(f"/manage/invoices/{inv.pk}/edit/")}#proofs')
+                except Exception:
+                    pass
+                return redirect(f'{inv.public_url}paid/?sent=1')
 
-    messages.success(request, 'Asante! Tumepokea taarifa yako ya malipo. Tutaihakiki na kukutumia risiti.'
-                     if sw else 'Thank you! We have your payment details. We will check them and send your receipt.')
-    return back
+    proofs = list(inv.proofs.all()[:6])
+    return render(request, 'docs/invoice_proof.html', {
+        'invoice': inv, 'form': form, 'error': error, 'methods': PROOF_METHODS,
+        'proofs': proofs, 'sent': request.GET.get('sent') == '1' and bool(proofs),
+        'pending': any(p.status == 'pending' for p in proofs),
+        'pay_methods': [m for m in (inv.payment_methods or []) if m.get('details')],
+        'days_left': (inv.due_date - timezone.localdate()).days if inv.due_date else None,
+    }, status=400 if error else 200)
 
 
 @staff_member_required

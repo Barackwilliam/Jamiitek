@@ -14,7 +14,7 @@ Ankara ya mteja (docs_views.invoice_view). Sehemu mbili:
      pete ya asilimia iliyolipwa, hatua za ankara, kulipa (Pesapal / M-Pesa / Benki),
      PDF na kuchapisha, na kitambulisho cha uthibitisho.
   2. Karatasi ya ankara (nyeupe) — ndiyo inayochapishwa.
-Lugha mbili (?lang=en|sw). PDF ni docs/invoice_pdf.html — inaandaliwa nyuma ukurasa ukifunguka
+Kiingereza pekee (ankara na risiti zote ni kwa Kiingereza). PDF ni docs/invoice_pdf.html — inaandaliwa nyuma ukurasa ukifunguka
 (docs_views._warm_invoice_pdf), kwa hiyo kitufe cha PDF kinapakua papo hapo.
 {% endcomment %}
 <style>
@@ -188,6 +188,10 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
 .pf{display:grid;gap:2px;padding:10px 12px;margin-bottom:10px;border-radius:12px;background:#fff;border:1px solid var(--p-ln);font-size:13px}
 .pf b{font-size:13.5px}.pf span{color:var(--p-mut)}.pf small{color:#b91c1c}
 .pf-approved b{color:#15803d}.pf-rejected b{color:#b91c1c}.pf-pending b{color:#b45309}
+.pf-cta{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:14px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;text-decoration:none;box-shadow:0 12px 28px rgba(22,163,74,.25);transition:transform .2s,box-shadow .2s}
+.pf-cta:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(22,163,74,.35)}
+.pf-cta>span:nth-child(2){flex:1;display:grid;gap:2px}.pf-cta b{font-size:15.5px}.pf-cta small{opacity:.85;font-size:12.5px}
+.pf-ico{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:rgba(255,255,255,.18);flex-shrink:0}
 .pf-form summary{display:flex;align-items:center;gap:9px;cursor:pointer;list-style:none;font-weight:800;font-size:15px;color:#15803d}
 .pf-form summary::-webkit-details-marker{display:none}
 .pf-hint{margin:8px 0 12px;font-size:13px;color:var(--p-mut)}
@@ -302,10 +306,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
         <small>{% if lang == 'sw' %}Tunajenga Mustakabali wa Kidijitali wa Tanzania{% else %}Building Tanzania's Digital Future{% endif %}</small></div>
     </div>
     <span class="secure-pill"><i></i><span>{% if lang == 'sw' %}Ankara halisi · Imethibitishwa{% else %}Verified invoice · Secure{% endif %}</span></span>
-    <nav class="lang" aria-label="Language">
-      <a href="?lang=en" class="{% if lang == 'en' %}on{% endif %}">EN</a>
-      <a href="?lang=sw" class="{% if lang == 'sw' %}on{% endif %}">SW</a>
-    </nav>
+
   </div>
 </header>
 
@@ -381,9 +382,9 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
         {% endif %}
         {% if invoice.shows_manual or not PESAPAL_ENABLED %}
           {% if pending_proof %}
-          <a class="btn checking" href="#paid"><i class="dot"></i>{% if lang == 'sw' %}Tunahakiki malipo yako…{% else %}We are checking your payment…{% endif %}</a>
+          <a class="btn checking" href="{% url 'invoice_proof' invoice.token %}"><i class="dot"></i>{% if lang == 'sw' %}Tunahakiki malipo yako…{% else %}We are checking your payment…{% endif %}</a>
           {% else %}
-          <a class="btn pay" href="#paid">
+          <a class="btn pay" href="{% url 'invoice_proof' invoice.token %}">
             <svg class="i" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>{% if lang == 'sw' %}Nimelipa — tuma uthibitisho{% else %}I have paid — send proof{% endif %}</a>
           {% endif %}
         {% endif %}
@@ -470,36 +471,17 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
     <section class="paid-box" id="paid">
       {% for p in proofs %}
       <div class="pf pf-{{ p.status }}">
-        <b>{% if p.status == 'pending' %}{% if lang == 'sw' %}⏳ Tunahakiki{% else %}⏳ Checking{% endif %}{% elif p.status == 'approved' %}{% if lang == 'sw' %}✅ Imethibitishwa{% else %}✅ Confirmed{% endif %}{% else %}{% if lang == 'sw' %}✖ Haikuthibitishwa{% else %}✖ Not confirmed{% endif %}{% endif %}</b>
+        <b>{% if p.status == 'pending' %}⏳ We are checking this payment{% elif p.status == 'approved' %}✅ Confirmed{% else %}✖ Not confirmed{% endif %}</b>
         <span>{{ p.created_at|date:"j M Y, H:i" }}{% if p.reference %} · {{ p.reference }}{% endif %}{% if p.amount %} · {{ invoice.currency }} {{ p.amount|thousands }}{% endif %}</span>
         {% if p.status == 'rejected' and p.review_note %}<small>{{ p.review_note }}</small>{% endif %}
       </div>
       {% endfor %}
-      <details class="pf-form"{% if not pending_proof %} open{% endif %}>
-        <summary><svg class="i" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>{% if pending_proof %}{% if lang == 'sw' %}Tuma uthibitisho mwingine{% else %}Send another proof{% endif %}{% else %}{% if lang == 'sw' %}Nimelipa — tuma uthibitisho wa malipo{% else %}I have paid — send proof of payment{% endif %}{% endif %}</summary>
-        <p class="pf-hint">{% if lang == 'sw' %}Weka namba ya muamala (Transaction ID) kutoka ujumbe wa M-Pesa / benki, au ambatisha picha ya ujumbe huo. Tutahakiki na kukutumia risiti yako.{% else %}Enter the transaction ID from your M-Pesa / bank message, or attach a screenshot of it. We will check it and send your receipt.{% endif %}</p>
-        <form method="post" action="{% url 'invoice_proof' invoice.token %}" enctype="multipart/form-data">{% csrf_token %}
-          <input type="hidden" name="lang" value="{{ lang }}">
-          <div class="pf-grid">
-            <label>{% if lang == 'sw' %}Njia ya malipo{% else %}Paid with{% endif %}
-              <select name="method">
-                <option>M-Pesa</option><option>Mixx by Yas (Tigo Pesa)</option><option>Airtel Money</option><option>HaloPesa</option>
-                <option value="Bank Transfer">{% if lang == 'sw' %}Benki{% else %}Bank transfer{% endif %}</option><option value="Other">{% if lang == 'sw' %}Nyingine{% else %}Other{% endif %}</option>
-              </select></label>
-            <label>{% if lang == 'sw' %}Namba ya muamala{% else %}Transaction ID{% endif %}
-              <input name="reference" maxlength="120" placeholder="e.g. TK47XYZ12A" autocomplete="off"></label>
-            <label>{% if lang == 'sw' %}Kiasi ulicholipa{% else %}Amount paid{% endif %} ({{ invoice.currency }})
-              <input name="amount" inputmode="numeric" value="{{ invoice.balance_due|floatformat:0 }}"></label>
-            <label>{% if lang == 'sw' %}Namba iliyolipa{% else %}Phone that paid{% endif %}
-              <input name="payer_phone" maxlength="40" inputmode="tel" value="{{ invoice.client_phone }}"></label>
-            <label class="full">{% if lang == 'sw' %}Picha ya ujumbe (si lazima){% else %}Screenshot (optional){% endif %}
-              <input type="file" name="file" accept="image/*,application/pdf"></label>
-            <label class="full">{% if lang == 'sw' %}Maelezo (si lazima){% else %}Note (optional){% endif %}
-              <textarea name="note" rows="2" maxlength="1000"></textarea></label>
-          </div>
-          <button type="submit" class="pf-send">{% if lang == 'sw' %}Tuma uthibitisho{% else %}Send proof{% endif %}</button>
-        </form>
-      </details>
+      <a class="pf-cta" href="{% url 'invoice_proof' invoice.token %}">
+        <span class="pf-ico"><svg class="i" viewBox="0 0 24 24"><path d="M12 16V4m0 0-4 4m4-4 4 4M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></span>
+        <span><b>{% if pending_proof %}Send another proof{% else %}I have paid — send proof of payment{% endif %}</b>
+          <small>Transaction ID, screenshot or PDF · takes 1 minute</small></span>
+        <svg class="i" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>
+      </a>
     </section>
     {% endif %}{% endif %}
 

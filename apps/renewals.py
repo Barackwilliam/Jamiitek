@@ -222,12 +222,9 @@ def create_invoices(today=None, send=True, dry_run=False):
                                  'amount': float(i['amount'])} for i in items],
                     currency='TZS', payment_mode='manual',
                     payment_methods=[dict(m) for m in Invoice.DEFAULT_PAYMENT_METHODS],
-                    payment_terms=('Pay before the due date to keep your services running without a break. | '
-                                   'Lipa kabla ya tarehe ya mwisho ili huduma zako ziendelee bila kukatika.'),
-                    notes_en=('After paying, press "I have paid" on this page and send the transaction ID '
-                              'or a screenshot. We check it and send your receipt.'),
-                    notes_sw=('Ukishalipa, bonyeza "Nimelipa" kwenye ukurasa huu na utume namba ya muamala '
-                              'au picha ya ujumbe. Tutahakiki na kukutumia risiti yako.'),
+                    payment_terms='Pay before the due date to keep your services running without a break.',
+                    notes_en=('After paying, press "I have paid" on this page and send the transaction ID, '
+                              'a screenshot or a PDF. We check it and send your receipt.'),
                     status='sent', sent_at=timezone.now(),
                 )
                 for i in items:
@@ -337,31 +334,20 @@ def send_invoice(inv, first=False, stage=None):
             button=('View & pay invoice', link, 'orange'),
             category='renewal_invoice', chip=chip, reply_to=['info@jamiitek.com'])
 
-    wa_text = (f'Habari {inv.display_client},\n\n'
-               + (f'Ankara yako ya renewal *{inv.invoice_number}* iko tayari: *{amount}*.\n'
+    wa_text = (f'Hello {inv.display_client},\n\n'
+               + (f'Your renewal invoice *{inv.invoice_number}* is ready: *{amount}*.\n'
                   if first else
-                  f'Kumbusho: ankara *{inv.invoice_number}* ({amount}) bado haijalipwa.\n')
-               + f'Huduma: {services}\n'
-               + f'Mwisho wa kulipa: *{_fmt(inv.due_date)}*'
-               + (f' ({_when_sw(days)})' if days is not None else '') + '\n\n'
-               + f'Ione na ulipe hapa:\n{_site_url(inv.public_url)}\n\n'
-               + 'Ukishalipa, bonyeza "Nimelipa" kwenye ukurasa huo na utume namba ya muamala. Asante!')
+                  f'Reminder: invoice *{inv.invoice_number}* ({amount}) is not paid yet.\n')
+               + f'Services: {services}\n'
+               + f'Pay by: *{_fmt(inv.due_date)}*' + (f' ({_when(days)})' if days is not None else '') + '\n\n'
+               + f'View and pay here:\n{_site_url(inv.public_url)}\n\n'
+               + f'After paying, send your proof here:\n{_site_url(inv.public_url)}paid/\n\nThank you!')
     wa_ok = send_whatsapp(_invoice_phone(inv), wa_text)
 
     if not inv.sent_at:
         inv.sent_at = timezone.now()
         inv.save(update_fields=['sent_at'])
     return email_ok, wa_ok
-
-
-def _when_sw(days):
-    if days < 0:
-        return f'imepita siku {-days}'
-    if days == 0:
-        return 'leo'
-    if days == 1:
-        return 'kesho'
-    return f'siku {days} zimebaki'
 
 
 def send_reminders(today=None):
@@ -532,9 +518,9 @@ def send_receipt_confirm(inv, receipt):
             button=('Confirm & get your receipt', link, 'green'),
             category='receipt', chip=('✅ Paid', 'success'), reply_to=['info@jamiitek.com'])
     wa_ok = send_whatsapp(_invoice_phone(inv), (
-        f'Habari {inv.display_client},\n\nAsante! Tumepokea malipo yako ya *{amount}* '
-        f'kwa ankara {inv.invoice_number}.\n\nRisiti yako *{receipt.receipt_number}* iko tayari. '
-        f'Thibitisha kuipokea hapa (sekunde chache tu), kisha utaiona na kuipakua:\n{link}'))
+        f'Hello {inv.display_client},\n\nThank you! We received your payment of *{amount}* '
+        f'for invoice {inv.invoice_number}.\n\nYour receipt *{receipt.receipt_number}* is ready. '
+        f'Confirm you received it here (a few seconds), then you can view and download it:\n{link}'))
     return email_ok, wa_ok
 
 
