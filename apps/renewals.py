@@ -46,7 +46,6 @@ REMIND_STAGES = {
     'email': (3, 1, 0),
     'domain': (14, 7, 3, 1, 0),
 }
-STANDARD_PERIODS = (1, 3, 6, 12)
 
 
 # ══════════════════════════════════════════════════════════════
@@ -87,10 +86,38 @@ def _new_start(period_end, today):
     return period_end if period_end and period_end > today else today
 
 
-def _last_months(payments, default=12):
-    last = payments.order_by('-payment_date', '-pk').first() if payments is not None else None
-    m = int(getattr(last, 'months_covered', 0) or 0)
-    return m if m in STANDARD_PERIODS else default
+def _plural(n, word):
+    return f'{n} {word}{"s" if n != 1 else ""}'
+
+
+# Hosting na email hosting zinalipiwa KILA MWEZI: ankara ni ya mwezi mmoja tu.
+# (Awali ilifuata malipo ya mwisho — na mteja asiye na rekodi ya malipo alipewa
+# miezi 12 kwa chaguo-msingi. Ndiyo maana baadhi ya ankara zilitoka na kiasi
+# kikubwa mno.) Domain ni mwaka mmoja, kama ilivyo kwa msajili.
+HOSTING_MONTHS = 1
+DOMAIN_MONTHS = 12
+
+
+def _hosting_line(site, start, months=HOSTING_MONTHS):
+    price = site.price_for(months)
+    end = _add_months(start, months)
+    desc = f'Website hosting – {site.name} · {_plural(months, "month")} ({_fmt(start)} – {_fmt(end)})'
+    if price['discount_pct']:
+        desc += f' · {price["discount_pct"]:g}% discount'
+    return desc, Decimal(str(round(price['total'], 2)))
+
+
+def _email_line(plan, start, months=HOSTING_MONTHS):
+    end = _add_months(start, months)
+    desc = (f'Email hosting – {plan.email_domain} ({_plural(plan.accounts_count, "account")}) · '
+            f'{_plural(months, "month")} ({_fmt(start)} – {_fmt(end)})')
+    return desc, Decimal(str(plan.monthly_cost or 0)) * months
+
+
+def _domain_line(dom, start, months=DOMAIN_MONTHS):
+    end = _add_months(start, months)
+    return (f'Domain renewal – {dom.domain_name} · 1 year ({_fmt(start)} – {_fmt(end)})',
+            Decimal(str(dom.renewal_cost or 0)))
 
 
 # ══════════════════════════════════════════════════════════════
@@ -105,20 +132,12 @@ def _hosting_items(today):
           .exclude(status='terminated')
           .select_related('client'))
     for site in qs:
-        months = _last_months(site.payments.all())
-        price = site.price_for(months)
-        if price['total'] <= 0:
+        desc, amount = _hosting_line(site, _new_start(site.hosting_end_date, today))
+        if amount <= 0:
             continue
-        start = _new_start(site.hosting_end_date, today)
-        end = _add_months(start, months)
-        desc = (f'Website hosting – {site.name} · {months} month{"s" if months > 1 else ""} '
-                f'({_fmt(start)} – {_fmt(end)})')
-        if price['discount_pct']:
-            desc += f' · {price["discount_pct"]:g}% discount'
         yield {
             'kind': 'hosting', 'obj': site, 'client': site.client, 'period_end': site.hosting_end_date,
-            'months': months, 'amount': Decimal(str(round(price['total'], 2))), 'desc': desc,
-            'label': f'Hosting – {site.name}',
+            'months': HOSTING_MONTHS, 'amount': amount, 'desc': desc, 'label': f'Hosting – {site.name}',
         }
 
 
@@ -131,19 +150,12 @@ def _email_items(today):
           .exclude(status='cancelled')
           .select_related('client'))
     for plan in qs:
-        months = _last_months(plan.email_payments.all())
-        total = Decimal(str(plan.monthly_cost or 0)) * months
-        if total <= 0:
+        desc, amount = _email_line(plan, _new_start(plan.end_date, today))
+        if amount <= 0:
             continue
-        start = _new_start(plan.end_date, today)
-        end = _add_months(start, months)
         yield {
             'kind': 'email', 'obj': plan, 'client': plan.client, 'period_end': plan.end_date,
-            'months': months, 'amount': total,
-            'desc': (f'Email hosting – {plan.email_domain} ({plan.accounts_count} account'
-                     f'{"s" if plan.accounts_count != 1 else ""}) · {months} month{"s" if months > 1 else ""} '
-                     f'({_fmt(start)} – {_fmt(end)})'),
-            'label': f'Email – {plan.email_domain}',
+            'months': HOSTING_MONTHS, 'amount': amount, 'desc': desc, 'label': f'Email – {plan.email_domain}',
         }
 
 
@@ -296,7 +308,7 @@ def _when(days):
     return f'in {days} days'
 
 
-def send_invoice(inv, first=False, stage=None):
+def send_invoice(inv, first=False, stage=None, corrected=False):
     """Tuma ankara (au ukumbusho wake) kwa email na WhatsApp. Rudisha (email_ok, wa_ok)."""
     from apps.utils.customer_email import send_customer_email
 
@@ -305,7 +317,14 @@ def send_invoice(inv, first=False, stage=None):
     services = ', '.join(r.label for r in inv.renewals.all()) or inv.project_name or inv.title
     amount = _money(inv.balance_due, inv.currency)
 
-    if first:
+    if corrected:
+        subject = f'Corrected invoice {inv.invoice_number} — the right amount is {amount}'
+        lead = (f'Dear {inv.display_client},\n\nSorry — our earlier email for invoice {inv.invoice_number} '
+                f'showed the wrong amount. Hosting is billed for one month at a time.\n\n'
+                f'The correct amount to pay is {amount}. Please ignore the earlier amount. '
+                f'If you already paid more, reply to this email and we will sort it out.')
+        chip = ('✓ Corrected', 'info')
+    elif first:
         subject = f'Invoice {inv.invoice_number} — renew {services} ({amount})'
         lead = (f'Dear {inv.display_client},\n\nYour services below end {_when(days)} '
                 f'({_fmt(inv.due_date)}). We have prepared your renewal invoice so they keep running '
@@ -334,10 +353,14 @@ def send_invoice(inv, first=False, stage=None):
             button=('View & pay invoice', link, 'orange'),
             category='renewal_invoice', chip=chip, reply_to=['info@jamiitek.com'])
 
-    wa_text = (f'Hello {inv.display_client},\n\n'
-               + (f'Your renewal invoice *{inv.invoice_number}* is ready: *{amount}*.\n'
-                  if first else
-                  f'Reminder: invoice *{inv.invoice_number}* ({amount}) is not paid yet.\n')
+    if corrected:
+        intro = (f'Sorry — the amount in our earlier message for invoice *{inv.invoice_number}* was wrong. '
+                 f'Hosting is billed for one month. The correct amount is *{amount}*.\n')
+    elif first:
+        intro = f'Your renewal invoice *{inv.invoice_number}* is ready: *{amount}*.\n'
+    else:
+        intro = f'Reminder: invoice *{inv.invoice_number}* ({amount}) is not paid yet.\n'
+    wa_text = (f'Hello {inv.display_client},\n\n' + intro
                + f'Services: {services}\n'
                + f'Pay by: *{_fmt(inv.due_date)}*' + (f' ({_when(days)})' if days is not None else '') + '\n\n'
                + f'View and pay here:\n{_site_url(inv.public_url)}\n\n'
@@ -348,6 +371,65 @@ def send_invoice(inv, first=False, stage=None):
         inv.sent_at = timezone.now()
         inv.save(update_fields=['sent_at'])
     return email_ok, wa_ok
+
+
+def fix_overbilled(send=True):
+    """
+    Rekebisha ankara za renewal zilizotengenezwa kwa miezi mingi (kosa la zamani:
+    mteja asiye na rekodi ya malipo alipewa miezi 12). Hosting/email zinarudi kuwa
+    mwezi MMOJA, mistari ya ankara inaandikwa upya, na mteja anatumiwa ankara
+    iliyosahihishwa. Ankara zilizolipwa (au zenye malipo ya sehemu) haziguswi —
+    hizo unaarifiwa uzishughulikie mwenyewe. Rudisha orodha ya ankara zilizorekebishwa.
+    """
+    from apps.models import EmailHostingPlan, Invoice, ManagedWebsite, DomainRecord
+
+    fixed, skipped = [], []
+    invoices = (Invoice.objects
+                .filter(renewals__kind__in=('hosting', 'email'), renewals__months__gt=HOSTING_MONTHS,
+                        renewals__applied_at__isnull=True)
+                .exclude(status__in=('paid', 'cancelled')).distinct())
+    for inv in invoices:
+        if inv.paid_total > 0:
+            skipped.append(inv)
+            continue
+        old_total = inv.grand_total
+        start_from = inv.issue_date or timezone.localdate()
+        lines = []
+        with transaction.atomic():
+            for r in inv.renewals.all().order_by('pk'):
+                start = _new_start(r.period_end, start_from)
+                if r.kind == 'hosting':
+                    obj = ManagedWebsite.objects.filter(pk=r.object_id).first()
+                    desc, amount = _hosting_line(obj, start) if obj else (r.label, r.amount)
+                    months = HOSTING_MONTHS if obj else r.months
+                elif r.kind == 'email':
+                    obj = EmailHostingPlan.objects.filter(pk=r.object_id).first()
+                    desc, amount = _email_line(obj, start) if obj else (r.label, r.amount)
+                    months = HOSTING_MONTHS if obj else r.months
+                else:
+                    obj = DomainRecord.objects.filter(pk=r.object_id).first()
+                    desc, amount = _domain_line(obj, start, r.months) if obj else (r.label, r.amount)
+                    months = r.months
+                if (r.months, r.amount) != (months, amount):
+                    r.months, r.amount = months, amount
+                    r.save(update_fields=['months', 'amount'])
+                lines.append({'desc': desc, 'qty': 1, 'unit_price': float(amount), 'amount': float(amount)})
+            inv.line_items = lines
+            inv.save(update_fields=['line_items'])
+        fixed.append(inv)
+        _activity('renewal_invoice', f'Corrected renewal invoice {inv.invoice_number} — {inv.display_client}',
+                  rows=[('Was', _money(old_total, inv.currency)), ('Now', _money(inv.grand_total, inv.currency)),
+                        ('Why', 'Hosting is billed one month at a time (old invoice used 12 months)')],
+                  link=f'/manage/invoices/{inv.pk}/edit/', amount=inv.grand_total)
+        if send:
+            send_invoice(inv, corrected=True)
+    for inv in skipped:
+        _activity('renewal_invoice', f'Check renewal invoice {inv.invoice_number} — billed for many months',
+                  rows=[('Client', inv.display_client), ('Total', _money(inv.grand_total, inv.currency)),
+                        ('Paid', _money(inv.paid_total, inv.currency)),
+                        ('Why', 'It already has a payment, so it was not changed automatically')],
+                  link=f'/manage/invoices/{inv.pk}/edit/', amount=inv.grand_total)
+    return fixed
 
 
 def send_reminders(today=None):
