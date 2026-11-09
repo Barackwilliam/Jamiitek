@@ -344,6 +344,13 @@ def send_invoice(inv, first=False, stage=None, corrected=False):
         chip = ('🔴 Ends today' if days == 0 else f'⏳ {days} day{"s" if days != 1 else ""} left',
                 'danger' if days is not None and days <= 1 else 'warning')
 
+    # Ushauri wa kulipa mapema — si deni: ankara yenyewe inabaki ya mwezi mmoja
+    tips = pay_ahead_text(inv)
+    if tips:
+        lead += ('\n\nTip (optional): pay for more months at once and save. Your invoice is for '
+                 'one month — these are only options:\n' + '\n'.join(tips)
+                 + '\nTo pay ahead, send that amount and choose the months when you send your proof.')
+
     rows = [(it['desc'], _money(it['amount'], inv.currency)) for it in inv.items]
     rows += [('Amount to pay', amount), ('Due date', _fmt(inv.due_date))]
     email_ok = False
@@ -364,13 +371,99 @@ def send_invoice(inv, first=False, stage=None, corrected=False):
                + f'Services: {services}\n'
                + f'Pay by: *{_fmt(inv.due_date)}*' + (f' ({_when(days)})' if days is not None else '') + '\n\n'
                + f'View and pay here:\n{_site_url(inv.public_url)}\n\n'
-               + f'After paying, send your proof here:\n{_site_url(inv.public_url)}paid/\n\nThank you!')
+               + f'After paying, send your proof here:\n{_site_url(inv.public_url)}paid/'
+               + (('\n\n_Optional — pay ahead and save:_\n' + '\n'.join(tips)) if tips else '')
+               + '\n\nThank you!')
     wa_ok = send_whatsapp(_invoice_phone(inv), wa_text)
 
     if not inv.sent_at:
         inv.sent_at = timezone.now()
         inv.save(update_fields=['sent_at'])
     return email_ok, wa_ok
+
+
+# ══════════════════════════════════════════════════════════════
+# Kulipa mapema (miezi 2, 3, 4, 6, 12) — ushauri tu, si deni
+# ══════════════════════════════════════════════════════════════
+PAY_AHEAD_MONTHS = (2, 3, 4, 6, 12)
+
+
+def _renewal_objects(inv):
+    """[(notice, obj)] kwa ankara hii, obj ikiwa website / email plan / domain (au None)."""
+    from apps.models import EmailHostingPlan, ManagedWebsite, DomainRecord
+    model = {'hosting': ManagedWebsite, 'email': EmailHostingPlan, 'domain': DomainRecord}
+    return [(r, model[r.kind].objects.filter(pk=r.object_id).first())
+            for r in inv.renewals.all().order_by('pk')]
+
+
+def rebuild_lines(inv, hosting_months):
+    """Andika upya mistari ya ankara: hosting/email kwa `hosting_months`, domain kama ilivyo."""
+    start_from = inv.issue_date or timezone.localdate()
+    lines = []
+    with transaction.atomic():
+        for r, obj in _renewal_objects(inv):
+            start = _new_start(r.period_end, start_from)
+            if obj is None:
+                desc, amount, months = r.label, r.amount, r.months
+            elif r.kind == 'hosting':
+                (desc, amount), months = _hosting_line(obj, start, hosting_months), hosting_months
+            elif r.kind == 'email':
+                (desc, amount), months = _email_line(obj, start, hosting_months), hosting_months
+            else:
+                (desc, amount), months = _domain_line(obj, start, r.months), r.months
+            if (r.months, r.amount) != (months, amount):
+                r.months, r.amount = months, amount
+                r.save(update_fields=['months', 'amount'])
+            lines.append({'desc': desc, 'qty': 1, 'unit_price': float(amount), 'amount': float(amount)})
+        inv.line_items = lines
+        inv.save(update_fields=['line_items'])
+    return inv
+
+
+def pay_ahead_options(inv):
+    """
+    Chaguo za kulipa hosting kwa miezi zaidi — kwa KUONYESHA tu (ankara yenyewe
+    inabaki ya mwezi mmoja). Kila chaguo: miezi, jumla ya kulipa (pamoja na domain
+    iliyo kwenye ankara), punguzo %, unachookoa, na hosting itafika lini.
+    """
+    if inv.is_paid or inv.paid_total > 0:
+        return []
+    pairs = [(r, o) for r, o in _renewal_objects(inv) if r.applied_at is None]
+    hosting = [(r, o) for r, o in pairs if r.kind in ('hosting', 'email') and o is not None]
+    if not hosting:
+        return []
+    fixed_extra = sum((Decimal(str(r.amount)) for r, _o in pairs if r.kind == 'domain'), Decimal('0'))
+    start_from = inv.issue_date or timezone.localdate()
+    first_end = min(_new_start(r.period_end, start_from) for r, _o in hosting)
+    monthly = sum((Decimal(str(o.monthly_cost or 0)) for _r, o in hosting), Decimal('0'))
+    out = []
+    for m in PAY_AHEAD_MONTHS:
+        total, pct = Decimal('0'), 0
+        for r, o in hosting:
+            if r.kind == 'hosting':
+                p = o.price_for(m)
+                total += Decimal(str(round(p['total'], 2)))
+                pct = max(pct, float(p['discount_pct'] or 0))
+            else:
+                total += Decimal(str(o.monthly_cost or 0)) * m
+        out.append({
+            'months': m, 'label': '1 year' if m == 12 else f'{m} months',
+            'hosting': total, 'total': total + fixed_extra, 'discount_pct': pct,
+            'saving': monthly * m - total, 'per_month': total / m,
+            'until': _add_months(first_end, m),
+        })
+    return out
+
+
+def pay_ahead_text(inv, bullet='•'):
+    """Mistari mifupi ya ushauri wa kulipa mapema (email / WhatsApp)."""
+    rows = []
+    for o in pay_ahead_options(inv):
+        if o['months'] not in (3, 6, 12):
+            continue
+        save = f' — save {_money(o["saving"], inv.currency)} ({o["discount_pct"]:g}% off)' if o['saving'] > 0 else ''
+        rows.append(f'{bullet} {o["label"]}: {_money(o["total"], inv.currency)}{save}')
+    return rows
 
 
 def fix_overbilled(send=True):
@@ -389,33 +482,13 @@ def fix_overbilled(send=True):
                         renewals__applied_at__isnull=True)
                 .exclude(status__in=('paid', 'cancelled')).distinct())
     for inv in invoices:
+        if inv.proofs.filter(months__gt=1).exists():
+            continue                     # mteja mwenyewe alichagua kulipa miezi zaidi — si kosa
         if inv.paid_total > 0:
             skipped.append(inv)
             continue
         old_total = inv.grand_total
-        start_from = inv.issue_date or timezone.localdate()
-        lines = []
-        with transaction.atomic():
-            for r in inv.renewals.all().order_by('pk'):
-                start = _new_start(r.period_end, start_from)
-                if r.kind == 'hosting':
-                    obj = ManagedWebsite.objects.filter(pk=r.object_id).first()
-                    desc, amount = _hosting_line(obj, start) if obj else (r.label, r.amount)
-                    months = HOSTING_MONTHS if obj else r.months
-                elif r.kind == 'email':
-                    obj = EmailHostingPlan.objects.filter(pk=r.object_id).first()
-                    desc, amount = _email_line(obj, start) if obj else (r.label, r.amount)
-                    months = HOSTING_MONTHS if obj else r.months
-                else:
-                    obj = DomainRecord.objects.filter(pk=r.object_id).first()
-                    desc, amount = _domain_line(obj, start, r.months) if obj else (r.label, r.amount)
-                    months = r.months
-                if (r.months, r.amount) != (months, amount):
-                    r.months, r.amount = months, amount
-                    r.save(update_fields=['months', 'amount'])
-                lines.append({'desc': desc, 'qty': 1, 'unit_price': float(amount), 'amount': float(amount)})
-            inv.line_items = lines
-            inv.save(update_fields=['line_items'])
+        rebuild_lines(inv, HOSTING_MONTHS)
         fixed.append(inv)
         _activity('renewal_invoice', f'Corrected renewal invoice {inv.invoice_number} — {inv.display_client}',
                   rows=[('Was', _money(old_total, inv.currency)), ('Now', _money(inv.grand_total, inv.currency)),

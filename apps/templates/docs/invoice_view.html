@@ -188,6 +188,21 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
 .pf{display:grid;gap:2px;padding:10px 12px;margin-bottom:10px;border-radius:12px;background:#fff;border:1px solid var(--p-ln);font-size:13px}
 .pf b{font-size:13.5px}.pf span{color:var(--p-mut)}.pf small{color:#b91c1c}
 .pf-approved b{color:#15803d}.pf-rejected b{color:#b91c1c}.pf-pending b{color:#b45309}
+.ahead{margin:22px 44px 0;padding:18px;border-radius:18px;border:1px solid #e0e7ff;background:linear-gradient(135deg,#f5f7ff,#f0fdfa)}
+.ah-h{display:flex;gap:12px;align-items:flex-start}
+.ah-h b{font-size:15px}.ah-h small{display:block;color:var(--p-mut);font-size:12.5px;margin-top:2px}
+.ah-ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex-shrink:0;color:#fff;background:linear-gradient(135deg,#06b6d4,#7c3aed)}
+.ah-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:14px}
+.ah{position:relative;display:grid;gap:3px;padding:14px 10px 12px;border-radius:14px;background:#fff;border:1.5px solid #e2e8f0;text-decoration:none;color:var(--p-ink);text-align:center;transition:transform .2s,border-color .2s,box-shadow .2s}
+.ah:hover{transform:translateY(-2px);border-color:#a5b4fc;box-shadow:0 10px 22px rgba(79,70,229,.12)}
+.ah em{position:absolute;top:-9px;left:50%;transform:translateX(-50%);white-space:nowrap;font-style:normal;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:linear-gradient(135deg,#7c3aed,#06b6d4);color:#fff}
+.ah em.soft{background:#ecfdf3;color:#15803d;border:1px solid #bbf7d0}
+.ah.best{border-color:#a78bfa;background:linear-gradient(180deg,#faf5ff,#fff)}
+.ah-m{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--p-mut)}
+.ah-t{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
+.ah-s{font-size:11.5px;font-weight:700;color:#15803d}
+.ah-u{font-size:11px;color:var(--p-mut)}
+.ah-n{margin-top:12px;font-size:12.5px;color:var(--p-mut)}
 .pf-cta{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:14px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;text-decoration:none;box-shadow:0 12px 28px rgba(22,163,74,.25);transition:transform .2s,box-shadow .2s}
 .pf-cta:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(22,163,74,.35)}
 .pf-cta>span:nth-child(2){flex:1;display:grid;gap:2px}.pf-cta b{font-size:15.5px}.pf-cta small{opacity:.85;font-size:12.5px}
@@ -259,7 +274,8 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
   .ph-r{display:none}
   .parties{grid-template-columns:1fr 1fr;margin:0 12px;border-radius:12px}
   .parties div{padding:9px 11px;font-size:12px;line-height:1.4}.parties small{font-size:9.5px;margin-bottom:2px}
-  .sec,.items,.paylist,.payref,.hist,.terms,.note,.stamp,.paid-box{margin-left:12px;margin-right:12px}
+  .sec,.items,.paylist,.payref,.hist,.terms,.note,.stamp,.paid-box,.ahead{margin-left:12px;margin-right:12px}
+  .ahead{padding:14px}.ah-grid{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:14px}.ah.best{grid-column:1/-1}
   .paid-box{padding:14px}.pf-grid{grid-template-columns:1fr}
   .sec{margin-top:18px;margin-bottom:8px;font-size:10.5px}
   .items{border-radius:12px}
@@ -288,7 +304,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 @media print{
   body{background:#fff;color:#000}
-  .sky,.top,.cmd,.flash,.help,.copy,.preview,.paid-box{display:none!important}
+  .sky,.top,.cmd,.flash,.help,.copy,.preview,.paid-box,.ahead{display:none!important}
   .wrap{padding:0;max-width:none}.paper{box-shadow:none;border-radius:0;animation:none}
 }
 </style>
@@ -455,6 +471,28 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
       {% if not invoice.is_paid %}<div class="bal"><span>{% if lang == 'sw' %}Salio{% else %}Balance due{% endif %}</span><b>{{ invoice.currency }} {{ invoice.balance_due|thousands }}</b></div>{% endif %}
       {% endif %}
     </div>
+
+    {% if pay_ahead and not preview %}
+    <section class="ahead">
+      <div class="ah-h">
+        <span class="ah-ic"><svg class="i" viewBox="0 0 24 24"><path d="M12 2v4m0 12v4M4.9 4.9l2.8 2.8m8.6 8.6 2.8 2.8M2 12h4m12 0h4M4.9 19.1l2.8-2.8m8.6-8.6 2.8-2.8"/></svg></span>
+        <div><b>Tip: pay ahead and save</b>
+          <small>Optional — this invoice is for <b>one month</b>. These are only options, not money you owe.</small></div>
+      </div>
+      <div class="ah-grid">
+        {% for o in pay_ahead %}
+        <a class="ah{% if o.months == 12 %} best{% endif %}" href="{% url 'invoice_proof' invoice.token %}?months={{ o.months }}">
+          {% if o.months == 12 %}<em>Best value</em>{% elif o.discount_pct %}<em class="soft">{{ o.discount_pct|floatformat:"0" }}% off</em>{% endif %}
+          <span class="ah-m">{{ o.label }}</span>
+          <span class="ah-t">{{ invoice.currency }} {{ o.total|thousands }}</span>
+          <span class="ah-s">{% if o.saving > 0 %}Save {{ invoice.currency }} {{ o.saving|thousands }}{% else %}{{ invoice.currency }} {{ o.per_month|thousands }}/month{% endif %}</span>
+          <span class="ah-u">Hosting until {{ o.until|date:"j M Y" }}</span>
+        </a>
+        {% endfor %}
+      </div>
+      <p class="ah-n">To pay ahead, send the amount you choose, then pick the same months when you send your proof.</p>
+    </section>
+    {% endif %}
 
     {% if not invoice.is_paid and invoice.payment_methods %}{% if invoice.shows_manual or not PESAPAL_ENABLED %}
     <div class="sec" id="how-to-pay"><em>02</em>{% if lang == 'sw' %}Namna ya kulipa{% else %}How to pay{% endif %}</div>

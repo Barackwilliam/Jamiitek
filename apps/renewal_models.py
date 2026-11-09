@@ -63,6 +63,8 @@ class PaymentProof(models.Model):
     reference = models.CharField(max_length=120, blank=True,
                                  help_text='Transaction ID from the M-Pesa / bank message')
     amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    # Miezi ya hosting ambayo mteja anasema amelipia (1 = ankara kama ilivyo; 2,3,4,6,12 = amelipa mapema)
+    months = models.PositiveSmallIntegerField(default=1)
     payer_name = models.CharField(max_length=120, blank=True)
     payer_phone = models.CharField(max_length=40, blank=True)
     note = models.TextField(blank=True)

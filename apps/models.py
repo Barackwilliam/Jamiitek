@@ -308,18 +308,18 @@ class ManagedWebsite(ResolverMixin, models.Model):
     )
 
     # ── PUNGUZO KWA MALIPO YA MUDA MREFU ──
-    # Mteja akilipa miezi mingi kwa mkupuo, anapata punguzo.
-    # Hii inapunguza usumbufu wa malipo ya kila mwezi.
+    # Mteja akilipa miezi mingi kwa mkupuo, anapata punguzo: 5% kwa miezi 3, 6
+    # au 12 (uamuzi wa mmiliki, Nov 2026 — awali 5/10/20).
     discount_3m = models.DecimalField(
         max_digits=5, decimal_places=2, default=5,
         verbose_name='3-month discount (%)',
         help_text='Percent off when paying for 3 months at once')
     discount_6m = models.DecimalField(
-        max_digits=5, decimal_places=2, default=10,
+        max_digits=5, decimal_places=2, default=5,
         verbose_name='6-month discount (%)',
         help_text='Percent off when paying for 6 months at once')
     discount_12m = models.DecimalField(
-        max_digits=5, decimal_places=2, default=20,
+        max_digits=5, decimal_places=2, default=5,
         verbose_name='12-month discount (%)',
         help_text='Percent off when paying for 12 months at once')
 

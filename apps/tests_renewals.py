@@ -203,6 +203,49 @@ class RenewalFlowTest(TestCase):
         inv.refresh_from_db()
         self.assertEqual(inv.grand_total, total)
 
+    def test_pay_ahead_options_are_advice_not_debt(self, wa):
+        inv = self._make()
+        self.assertEqual(inv.grand_total, 20000 + 35000)          # ankara bado ni mwezi 1
+        opts = {o['months']: o for o in renewals.pay_ahead_options(inv)}
+        self.assertEqual(sorted(opts), [2, 3, 4, 6, 12])
+        self.assertEqual(opts[2]['hosting'], 40000)                # miezi 2: hakuna punguzo
+        self.assertEqual(opts[3]['hosting'], 57000)                # 60,000 - 5%
+        self.assertEqual(opts[4]['hosting'], 80000)
+        self.assertEqual(opts[6]['hosting'], 114000)               # 120,000 - 5%
+        self.assertEqual(opts[12]['hosting'], 228000)              # 240,000 - 5%
+        self.assertEqual(opts[12]['total'], 228000 + 35000)        # pamoja na domain ya ankara
+        self.assertEqual(opts[12]['saving'], 12000)
+        # Email inataja chaguo lakini kiasi cha kulipa ni cha mwezi mmoja
+        body = mail.outbox[0].body
+        self.assertIn('Tip (optional)', body)
+        self.assertIn('Amount to pay: TZS 55,000', body)
+        page = self.client.get(inv.public_url).content.decode()
+        self.assertIn('pay ahead and save', page)
+        self.assertIn('not money you owe', page)
+
+    def test_client_pays_ahead_and_approval_extends_by_those_months(self, wa):
+        inv = self._make()
+        old_end = self.site.hosting_end_date
+        self.client.post(f'/invoice/{inv.token}/paid/', {'method': 'M-Pesa', 'reference': 'AHEAD6',
+                                                        'months': '6', 'amount': '149000'})
+        proof = PaymentProof.objects.get()
+        self.assertEqual(proof.months, 6)
+        self.client.force_login(self.staff)
+        self.client.post(f'/manage/invoices/{inv.pk}/proofs/{proof.pk}/approve/', {})
+        inv.refresh_from_db()
+        self.assertEqual(inv.grand_total, 114000 + 35000)
+        self.assertEqual(inv.status, 'paid')
+        self.site.refresh_from_db()
+        self.assertEqual(self.site.hosting_end_date, renewals._add_months(old_end, 6))
+        # Ankara iliyochaguliwa na mteja haiguswi na "fix_overbilled"
+        self.assertEqual(renewals.fix_overbilled(), [])
+
+    def test_discounts_are_five_percent(self, wa):
+        site = ManagedWebsite.objects.create(
+            client=self.cl, name='New', url='https://n.co.tz', monthly_cost=10000,
+            hosting_start_date=self.today, hosting_end_date=self.today + timedelta(days=60))
+        self.assertEqual([float(site.discount_for(m)) for m in (1, 2, 3, 4, 6, 12)], [0, 0, 5, 0, 5, 5])
+
     def test_mark_paid_creates_receipt_for_any_invoice(self, wa):
         inv = Invoice.objects.create(client_name='Juma', client_email='juma@example.com', status='sent',
                                      line_items=[{'desc': 'Logo', 'qty': 1, 'unit_price': 50000}])
