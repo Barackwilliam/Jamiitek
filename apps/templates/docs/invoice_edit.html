@@ -30,6 +30,7 @@
   .pr-pending{background:linear-gradient(90deg,rgba(255,184,0,.06),transparent)}
   .pr-act{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.pr-act form{display:flex;gap:8px;align-items:center}
   .pr-act .f-input{width:130px;padding:8px 10px}
+  .pr-ahead{margin-left:8px;padding:2px 9px;border-radius:999px;font-size:11.5px;background:rgba(124,58,237,.18);color:#c4b5fd}
   .cb-section .sh .n{width:26px;height:26px;border-radius:8px;background:var(--cyan-d);color:var(--cyan);
     display:inline-flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:800;
     font-family:var(--mono);border:1px solid rgba(0,212,255,.25)}
@@ -145,7 +146,8 @@
   {% for p in proofs %}
   <div class="pr pr-{{ p.status }}">
     <div class="pr-main">
-      <b>{{ p.method|default:"—" }}{% if p.reference %} · <code>{{ p.reference }}</code>{% endif %}</b>
+      <b>{{ p.method|default:"—" }}{% if p.reference %} · <code>{{ p.reference }}</code>{% endif %}
+        {% if p.months > 1 %}<span class="pr-ahead">Paid ahead: {% if p.months == 12 %}1 year{% else %}{{ p.months }} months{% endif %}</span>{% endif %}</b>
       <span>{% if p.amount %}{{ invoice.currency }} {{ p.amount|floatformat:"0g" }} · {% endif %}{{ p.created_at|date:"d M Y H:i" }}{% if p.payer_phone %} · {{ p.payer_phone }}{% endif %}</span>
       {% if p.note %}<small>“{{ p.note }}”</small>{% endif %}
       {% if p.file_url %}<a href="{{ p.file_url }}" target="_blank" rel="noopener"><i class="fas fa-paperclip"></i> Open attachment (screenshot / PDF)</a>{% endif %}
@@ -154,6 +156,9 @@
     {% if p.status == 'pending' %}
     <div class="pr-act">
       <form method="post" action="{% url 'invoice_proof_review' invoice.pk p.pk 'approve' %}" onsubmit="return confirm('Record this payment, create the receipt and send the client the confirm-receipt link?')">{% csrf_token %}
+        {% if renewals %}<select class="f-input" name="months" title="Months of hosting this payment covers" style="width:auto">
+          {% for m in month_choices %}<option value="{{ m }}"{% if m == p.months %} selected{% endif %}>{% if m == 12 %}1 year{% else %}{{ m }} month{{ m|pluralize }}{% endif %}</option>{% endfor %}
+        </select>{% endif %}
         <input class="f-input" name="amount" value="{{ p.amount|default_if_none:invoice.balance_due|floatformat:0 }}" title="Amount you received">
         <button class="jt-btn btn-cyan" type="submit"><i class="fas fa-check"></i> Approve &amp; send receipt</button>
       </form>

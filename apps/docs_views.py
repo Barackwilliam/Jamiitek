@@ -261,6 +261,8 @@ def invoice_view(request, token):
     proofs = list(invoice.proofs.all()[:5])
     ctx['proofs'] = proofs
     ctx['pending_proof'] = any(p.status == 'pending' for p in proofs)
+    from apps.renewals import pay_ahead_options
+    ctx['pay_ahead'] = pay_ahead_options(invoice)
     _warm_invoice_pdf(request, invoice, ctx)
     return render(request, 'docs/invoice_view.html', ctx)
 
@@ -377,6 +379,7 @@ def invoice_edit(request, pk):
         'proofs': proofs,
         'pending_count': sum(1 for p in proofs if p.status == 'pending'),
         'renewals': list(inv.renewals.all()),
+        'month_choices': (1, 2, 3, 4, 6, 12),
         'items_json': json.dumps(inv.items),
         'methods_json': json.dumps(inv.payment_methods),
         'history': inv.payment_history,
@@ -695,13 +698,21 @@ def invoice_proof(request, token):
     if inv.status in ('draft', 'cancelled') and not (request.user.is_authenticated and request.user.is_staff):
         return render(request, 'docs/invoice_unavailable.html', {'invoice': inv}, status=404)
 
+    from apps.renewals import pay_ahead_options
+    options = pay_ahead_options(inv)
     form = {'method': 'M-Pesa', 'reference': '', 'amount': f'{inv.balance_due:.0f}',
-            'payer_phone': inv.client_phone or (inv.client.phone if inv.client else ''), 'note': ''}
+            'payer_phone': inv.client_phone or (inv.client.phone if inv.client else ''), 'note': '',
+            'months': '1'}
+    if request.GET.get('months', '').isdigit() and int(request.GET['months']) in {o['months'] for o in options}:
+        form['months'] = request.GET['months']
     error = ''
 
     if request.method == 'POST' and not inv.is_paid and inv.status not in ('draft', 'cancelled'):
         for k in form:
-            form[k] = request.POST.get(k, form[k] if k == 'method' else '').strip()
+            form[k] = request.POST.get(k, form[k] if k in ('method', 'months') else '').strip()
+        allowed = {1} | {o['months'] for o in options}
+        months = int(form['months']) if form['months'].isdigit() and int(form['months']) in allowed else 1
+        form['months'] = str(months)
         upload = request.FILES.get('file')
         ip = _client_ip(request) or ''
         key = f'invproof:{ip}'
@@ -735,6 +746,7 @@ def invoice_proof(request, token):
                 cache.set(key, hits + 1, 3600)
                 proof = PaymentProof.objects.create(
                     invoice=inv, method=form['method'][:60], reference=form['reference'][:120], amount=amount,
+                    months=months,
                     payer_name=inv.display_client[:120], payer_phone=form['payer_phone'][:40],
                     note=form['note'][:1000], file_url=file_url, ip=ip or None)
                 try:
@@ -743,6 +755,7 @@ def invoice_proof(request, token):
                         'payment_proof', f'Proof of payment — {inv.invoice_number} ({inv.display_client})',
                         rows=[('Method', proof.method or '-'), ('Reference', proof.reference or '-'),
                               ('Amount', f'{inv.currency} {proof.amount:,.0f}' if proof.amount else '-'),
+                              ('Paid for', '1 month (as invoiced)' if months == 1 else f'{months} months (paid ahead)'),
                               ('Balance due', f'{inv.currency} {inv.balance_due:,.0f}'),
                               ('File', proof.file_url or 'none')],
                         link=f'/manage/invoices/{inv.pk}/edit/#proofs', level='warning',
@@ -761,6 +774,7 @@ def invoice_proof(request, token):
         'proofs': proofs, 'sent': request.GET.get('sent') == '1' and bool(proofs),
         'pending': any(p.status == 'pending' for p in proofs),
         'pay_methods': [m for m in (inv.payment_methods or []) if m.get('details')],
+        'options': options,
         'days_left': (inv.due_date - timezone.localdate()).days if inv.due_date else None,
     }, status=400 if error else 200)
 
@@ -789,6 +803,17 @@ def invoice_proof_review(request, pk, proof_pk, action):
     if action != 'approve':
         return edit
 
+    # Mteja amelipa mapema (miezi 2,3,4,6,12): ankara inaandikwa upya kwa miezi hiyo kabla ya kurekodi
+    months = request.POST.get('months', '') or str(proof.months or 1)
+    months = int(months) if months.isdigit() else 1
+    from apps import renewals
+    if (months != 1 or proof.months != 1) and inv.paid_total == 0 and \
+            inv.renewals.filter(kind__in=('hosting', 'email'), applied_at__isnull=True).exists():
+        if months in (1,) + renewals.PAY_AHEAD_MONTHS:
+            renewals.rebuild_lines(inv, months)
+            inv.refresh_from_db()
+            proof.months = months
+            proof.save(update_fields=['months'])
     raw = request.POST.get('amount', '').replace(',', '').strip()
     amount = raw or proof.amount or inv.balance_due
     try:

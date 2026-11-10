@@ -19,6 +19,7 @@ RATIBA (kila kazi ina alama yake ya cache, hazitegemeani):
   | wafanyakazi (timu ya AI)   | dakika 30   |
   | auto_suspend               | siku        |
   | renewal_invoices           | siku        |
+  | renewal_invoices --fix-only| dakika 30   |
   | send_expiry_emails         | siku        |
   | send_digest                | siku        |
   | prune_site_imports         | siku        |
@@ -74,6 +75,7 @@ SCHEDULE = {
     'wafanyakazi':               ('jamiitek:task:wafanyakazi',         30 * MINUTE),
     'owner_notice_summary':      ('jamiitek:task:owner_notice_summary', 30 * MINUTE),
     'activity_digest':           ('jamiitek:task:activity_digest',     30 * MINUTE),
+    'renewal_fix':               ('jamiitek:task:renewal_fix',         30 * MINUTE),
     'send_digest':               ('jamiitek:task:send_digest',         24 * 60 * MINUTE),
     'prune_site_imports':        ('jamiitek:task:prune_site_imports',  24 * 60 * MINUTE),
     'renewal_invoices':          ('jamiitek:task:renewal_invoices',    24 * 60 * MINUTE),
@@ -88,7 +90,7 @@ SCHEDULE = {
 
 PERIODIC = ('sync_integrations', 'process_scheduled_actions', 'check_alerts',
             'check_bot_sessions', 'check_handoffs', 'shop_reminders', 'check_custom_domains',
-            'wafanyakazi', 'owner_notice_summary', 'activity_digest')
+            'wafanyakazi', 'owner_notice_summary', 'activity_digest', 'renewal_fix')
 
 _thread_lock = threading.Lock()
 _running = False           # kazi za kila siku
@@ -190,6 +192,8 @@ def _run_periodic_in_background():
         _run_command('owner_notice_summary', quiet=True)
         # Muhtasari wa matukio ya siku (saa ACTIVITY_DIGEST_HOUR) — apps/activity.py
         _run_command('activity_digest', quiet=True)
+        # Ankara za renewal zilizotengenezwa kwa miezi mingi: zirekebishwe haraka (si kusubiri siku)
+        _run_command('renewal_fix', command='renewal_invoices', fix_only=True, quiet=True)
     finally:
         _close_connection()
         with _thread_lock:
@@ -221,13 +225,14 @@ def _due(name):
         return False
 
 
-def _run_command(name, **opts):
-    """Endesha management command. Kamwe isivunje kazi nyingine."""
+def _run_command(name, command=None, **opts):
+    """Endesha management command. Kamwe isivunje kazi nyingine.
+    `name` ni ufunguo wa ratiba; `command` (hiari) ni command tofauti ya kuendesha."""
     if not _due(name):
         return False
     try:
         from django.core.management import call_command
-        call_command(name, **opts)
+        call_command(command or name, **opts)
         logger.info('[tasks] %s imekamilika', name)
         return True
     except Exception:

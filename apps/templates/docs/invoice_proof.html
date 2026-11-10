@@ -93,6 +93,16 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
 .chips label:hover{border-color:#cbd5e1}
 .chips input:checked+label{border-color:var(--gr);background:var(--gr-d);color:#14532d;box-shadow:0 0 0 3px rgba(34,197,94,.15)}
 .chips input:focus-visible+label{outline:2px solid var(--gr);outline-offset:2px}
+.months{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.months input{position:absolute;opacity:0;pointer-events:none}
+.months label{position:relative;display:grid;gap:2px;padding:12px 10px;border-radius:14px;border:1.5px solid var(--ln);background:#fff;cursor:pointer;text-align:center;transition:.15s}
+.months label b{font-size:13.5px}.months label span{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+.months label small{font-size:11px;color:var(--mut)}
+.months label i{position:absolute;top:-8px;right:8px;font-style:normal;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:999px;background:var(--gr);color:#fff}
+.months label:hover{border-color:#cbd5e1}
+.months input:checked+label{border-color:var(--gr);background:var(--gr-d);box-shadow:0 0 0 3px rgba(34,197,94,.15)}
+.months input:focus-visible+label{outline:2px solid var(--gr);outline-offset:2px}
+.ahead-note{margin-top:10px;padding:9px 11px;border-radius:12px;background:#f5f3ff;border:1px solid #ddd6fe;color:#5b21b6;font-size:12.5px;font-weight:600}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .fld{position:relative}
 .fld input,.fld textarea{width:100%;font:500 15px var(--ff);color:var(--ink);padding:13px 14px;border-radius:13px;border:1.5px solid var(--ln);background:#fff;transition:.15s}
@@ -162,6 +172,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
 
 @media(max-width:860px){.grid{grid-template-columns:1fr}.sum{position:relative;top:0;order:-1}}
 @media(max-width:560px){
+  .months{grid-template-columns:repeat(2,minmax(0,1fr))}
   .top-in{padding:10px 14px}.secure{display:none}.wrap{padding:18px 12px 40px}
   .head{margin-bottom:12px}.head p{font-size:14px}.steps{margin:12px auto 18px}
   .form,.sum{padding:18px}.row2{grid-template-columns:1fr}.sum .amt{font-size:32px}
@@ -228,6 +239,18 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
         {% endfor %}
       </div>
 
+      {% if options %}
+      <span class="lbl">How many months did you pay for? <em>· 1 month is the invoice; more is optional</em></span>
+      <div class="months">
+        <input type="radio" name="months" id="mo1" value="1" data-total="{{ invoice.balance_due|floatformat:0 }}"{% if form.months == '1' %} checked{% endif %}>
+        <label for="mo1"><b>1 month</b><span>{{ invoice.currency }} {{ invoice.balance_due|thousands }}</span><small>As invoiced</small></label>
+        {% for o in options %}
+        <input type="radio" name="months" id="mo{{ o.months }}" value="{{ o.months }}" data-total="{{ o.total|floatformat:0 }}"{% if form.months == o.months|stringformat:"s" %} checked{% endif %}>
+        <label for="mo{{ o.months }}">{% if o.discount_pct %}<i>-{{ o.discount_pct|floatformat:"0" }}%</i>{% endif %}<b>{{ o.label }}</b><span>{{ invoice.currency }} {{ o.total|thousands }}</span><small>Until {{ o.until|date:"j M Y" }}</small></label>
+        {% endfor %}
+      </div>
+      {% endif %}
+
       <label class="lbl" for="ref">Transaction ID <em>· from the SMS, e.g. TK47XYZ12A</em></label>
       <div class="fld ico"><svg class="i" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></svg>
         <input id="ref" name="reference" maxlength="120" value="{{ form.reference }}" placeholder="Transaction ID" autocomplete="off" autocapitalize="characters"></div>
@@ -265,7 +288,8 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
 
     <aside class="card sum">
       <small>Amount to pay</small>
-      <div class="amt"><span>{{ invoice.currency }}</span>{{ invoice.balance_due|thousands }}</div>
+      <div class="amt"><span>{{ invoice.currency }}</span><b id="sumAmt" style="font-weight:800">{{ invoice.balance_due|thousands }}</b></div>
+      <div class="ahead-note" id="sumNote" hidden></div>
       <div class="no" style="margin-top:8px">{{ invoice.invoice_number }}</div>
       {% if days_left is not None %}
       <div class="due{% if days_left < 0 %} late{% endif %}">⏳ {% if days_left < 0 %}Overdue by {{ days_left|cut:"-" }} day{{ days_left|cut:"-"|pluralize }}{% elif days_left == 0 %}Due today{% elif days_left == 1 %}Due tomorrow{% else %}Due in {{ days_left }} days · {{ invoice.due_date|date:"j M Y" }}{% endif %}</div>
@@ -307,6 +331,14 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
       thumb=document.getElementById('thumb'), fname=document.getElementById('fname'), fsize=document.getElementById('fsize'),
       ref=document.getElementById('ref'), send=document.getElementById('send'), MAX=10*1024*1024;
   var OK=/^(image\/(jpeg|png|webp|gif)|application\/pdf)$/;
+  // Miezi: kiasi cha kulipa kinabadilika (ushauri — ankara yenyewe ni mwezi 1)
+  var amtIn=document.getElementById('amt'), sumAmt=document.getElementById('sumAmt'), sumNote=document.getElementById('sumNote');
+  function fmt(n){ return Number(n).toLocaleString('en-US'); }
+  document.querySelectorAll('input[name=months]').forEach(function(r){
+    function apply(){ if(!r.checked) return; amtIn.value=r.dataset.total; sumAmt.textContent=fmt(r.dataset.total);
+      var m=+r.value; sumNote.hidden=(m===1); sumNote.textContent=m===1?'':'Paying ahead for '+(m===12?'1 year':m+' months')+' — we extend your hosting when we confirm it.'; }
+    r.addEventListener('change', apply); apply();
+  });
 
   function size(n){ return n>1048576 ? (n/1048576).toFixed(1)+' MB' : Math.max(1,Math.round(n/1024))+' KB'; }
   function clear(){ input.value=''; box.classList.remove('on'); drop.style.display=''; thumb.style.backgroundImage=''; thumb.textContent=''; }
