@@ -246,6 +246,49 @@ class RenewalFlowTest(TestCase):
             hosting_start_date=self.today, hosting_end_date=self.today + timedelta(days=60))
         self.assertEqual([float(site.discount_for(m)) for m in (1, 2, 3, 4, 6, 12)], [0, 0, 5, 0, 5, 5])
 
+    def test_renewed_another_way_closes_the_open_invoice(self, wa):
+        inv = self._make()
+        # Hosting imelipiwa kwa mkono / Pesapal: tarehe imesogea, ankara bado wazi
+        self.site.hosting_end_date = renewals._add_months(self.site.hosting_end_date, 1)
+        self.site.save()
+        self.assertEqual(renewals.cancel_stale(), 1)
+        inv.refresh_from_db()
+        self.assertEqual(inv.status, 'sent')                       # domain bado inadaiwa
+        self.assertEqual(inv.grand_total, 35000)
+        self.assertEqual([i['desc'][:6] for i in inv.items], ['Domain'])
+        self.assertTrue(inv.renewals.get(kind='hosting').applied_at)
+        self.assertFalse(renewals.has_open_invoice('hosting', self.site.pk))   # onyo la kipindi kipya linaruhusiwa
+        # Domain nayo ikilipiwa kwingine → ankara inafutwa kabisa
+        self.dom.expiry_date = renewals._add_months(self.dom.expiry_date, 12)
+        self.dom.save()
+        self.assertEqual(renewals.cancel_stale(), 1)
+        inv.refresh_from_db()
+        self.assertEqual(inv.status, 'cancelled')
+        self.assertEqual(renewals.send_reminders(today=self.today + timedelta(days=4)), 0)
+
+    def test_late_invoice_still_gets_reminders(self, wa):
+        self.dom.delete()
+        self.site.hosting_end_date = self.today - timedelta(days=3)      # imeshaisha, bila ankara
+        self.site.save()
+        inv = self._make()
+        self.assertEqual(inv.due_date, self.today)
+        mail.outbox.clear()
+        self.assertEqual(renewals.send_reminders(today=self.today + timedelta(days=1)), 1)   # overdue
+        self.assertIn('Overdue', mail.outbox[-1].subject)
+
+    def test_staff_changes_months_on_approve_and_amount_follows(self, wa):
+        inv = self._make()
+        proof = PaymentProof.objects.create(invoice=inv, method='M-Pesa', reference='X', amount=149000, months=6)
+        self.client.force_login(self.staff)
+        # Staff anabadilisha kuwa mwaka 1 lakini kisanduku cha kiasi bado kina 149000 ya mteja
+        self.client.post(f'/manage/invoices/{inv.pk}/proofs/{proof.pk}/approve/',
+                         {'months': '12', 'proof_months': '6', 'amount': '149000'})
+        inv.refresh_from_db()
+        self.assertEqual(inv.grand_total, 228000 + 35000)
+        self.assertEqual(inv.status, 'paid')
+        self.site.refresh_from_db()
+        self.assertEqual(self.site.hosting_end_date, renewals._add_months(self.today + timedelta(days=5), 12))
+
     def test_mark_paid_creates_receipt_for_any_invoice(self, wa):
         inv = Invoice.objects.create(client_name='Juma', client_email='juma@example.com', status='sent',
                                      line_items=[{'desc': 'Logo', 'qty': 1, 'unit_price': 50000}])

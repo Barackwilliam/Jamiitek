@@ -243,7 +243,7 @@ def create_invoices(today=None, send=True, dry_run=False):
                     RenewalNotice.objects.create(
                         kind=i['kind'], object_id=i['obj'].pk, period_end=i['period_end'],
                         months=i['months'], label=i['label'][:200], amount=i['amount'], invoice=inv,
-                        last_stage=(i['period_end'] - today).days, last_stage_at=timezone.now())
+                        last_stage=(due - today).days, last_stage_at=timezone.now())
                     # Onyo la "siku 7" la zamani lisitumwe juu ya ankara hii
                     if i['kind'] == 'hosting':
                         site = i['obj']
@@ -290,10 +290,10 @@ def send_whatsapp(phone, text):
         return False
 
 
-def _days_left(inv):
+def _days_left(inv, today=None):
     if not inv.due_date:
         return None
-    return (inv.due_date - timezone.localdate()).days
+    return (inv.due_date - (today or timezone.localdate())).days
 
 
 def _when(days):
@@ -308,12 +308,12 @@ def _when(days):
     return f'in {days} days'
 
 
-def send_invoice(inv, first=False, stage=None, corrected=False):
+def send_invoice(inv, first=False, stage=None, corrected=False, today=None):
     """Tuma ankara (au ukumbusho wake) kwa email na WhatsApp. Rudisha (email_ok, wa_ok)."""
     from apps.utils.customer_email import send_customer_email
 
     link = _site_url(inv.public_url) + '?lang=en'
-    days = _days_left(inv)
+    days = _days_left(inv, today)
     services = ', '.join(r.label for r in inv.renewals.all()) or inv.project_name or inv.title
     amount = _money(inv.balance_due, inv.currency)
 
@@ -396,21 +396,27 @@ def _renewal_objects(inv):
             for r in inv.renewals.all().order_by('pk')]
 
 
-def rebuild_lines(inv, hosting_months):
-    """Andika upya mistari ya ankara: hosting/email kwa `hosting_months`, domain kama ilivyo."""
+def _line_for(r, obj, start, hosting_months=None):
+    """(desc, amount, months) ya notice moja. hosting_months=None = baki na miezi ya notice."""
+    if obj is None:
+        return r.label, Decimal(str(r.amount)), r.months
+    if r.kind == 'hosting':
+        m = hosting_months or r.months
+        return (*_hosting_line(obj, start, m), m)
+    if r.kind == 'email':
+        m = hosting_months or r.months
+        return (*_email_line(obj, start, m), m)
+    return (*_domain_line(obj, start, r.months), r.months)
+
+
+def rebuild_lines(inv, hosting_months=None, pairs=None):
+    """Andika upya mistari ya ankara kutoka kwenye notices zake (zote, au `pairs` zilizotolewa):
+    hosting/email kwa `hosting_months` (None = kama zilivyo), domain kama ilivyo."""
     start_from = inv.issue_date or timezone.localdate()
     lines = []
     with transaction.atomic():
-        for r, obj in _renewal_objects(inv):
-            start = _new_start(r.period_end, start_from)
-            if obj is None:
-                desc, amount, months = r.label, r.amount, r.months
-            elif r.kind == 'hosting':
-                (desc, amount), months = _hosting_line(obj, start, hosting_months), hosting_months
-            elif r.kind == 'email':
-                (desc, amount), months = _email_line(obj, start, hosting_months), hosting_months
-            else:
-                (desc, amount), months = _domain_line(obj, start, r.months), r.months
+        for r, obj in (pairs if pairs is not None else _renewal_objects(inv)):
+            desc, amount, months = _line_for(r, obj, _new_start(r.period_end, start_from), hosting_months)
             if (r.months, r.amount) != (months, amount):
                 r.months, r.amount = months, amount
                 r.save(update_fields=['months', 'amount'])
@@ -505,6 +511,52 @@ def fix_overbilled(send=True):
     return fixed
 
 
+def _current_end(kind, obj):
+    return {'hosting': getattr(obj, 'hosting_end_date', None), 'email': getattr(obj, 'end_date', None),
+            'domain': getattr(obj, 'expiry_date', None)}.get(kind)
+
+
+def cancel_stale(today=None):
+    """
+    Huduma iliyolipiwa kwa njia nyingine (malipo ya mkono kwenye /manage, Pesapal ya portal,
+    au tarehe kuhaririwa) wakati ankara yake ya renewal bado iko wazi: mstari huo unaondolewa
+    kwenye ankara; ankara ikibaki tupu inafutwa (cancelled). Bila hii, vikumbusho vingeendelea
+    na onyo la kipindi kipya lingezuiwa. Ankara yenye malipo haiguswi. Rudisha idadi ya ankara
+    zilizobadilishwa.
+    """
+    from apps.models import Invoice
+
+    today = today or timezone.localdate()
+    changed = 0
+    invoices = (Invoice.objects.filter(renewals__applied_at__isnull=True)
+                .exclude(status__in=('paid', 'cancelled')).distinct())
+    for inv in invoices:
+        if inv.paid_total > 0:
+            continue
+        pairs = _renewal_objects(inv)
+        stale = [r for r, o in pairs
+                 if r.applied_at is None and (o is None or (_current_end(r.kind, o) or r.period_end) > r.period_end)]
+        if not stale:
+            continue
+        with transaction.atomic():
+            for r in stale:
+                r.applied_at = timezone.now()           # imeshughulikiwa nje ya ankara hii
+                r.save(update_fields=['applied_at'])
+            left = [(r, o) for r, o in pairs if r not in stale and r.applied_at is None]
+            if left:
+                rebuild_lines(inv, pairs=left)
+            else:
+                inv.status = 'cancelled'
+                inv.save(update_fields=['status'])
+        changed += 1
+        _activity('renewal_invoice',
+                  f'Renewal invoice {inv.invoice_number} {"cancelled" if not left else "trimmed"} — '
+                  f'{inv.display_client} renewed another way',
+                  rows=[(r.label, 'already renewed') for r in stale],
+                  link=f'/manage/invoices/{inv.pk}/edit/')
+    return changed
+
+
 def send_reminders(today=None):
     """Ukumbusho kwa ankara za renewal ambazo bado hazijalipwa. Rudisha idadi iliyotumwa."""
     from apps.models import RenewalNotice
@@ -536,7 +588,7 @@ def send_reminders(today=None):
         last = min((r.last_stage for r in rows if r.last_stage is not None), default=None)
         if last is not None and stage >= last:
             continue
-        email_ok, wa_ok = send_invoice(inv, stage=stage)
+        email_ok, wa_ok = send_invoice(inv, stage=stage, today=today)
         if email_ok or wa_ok:
             RenewalNotice.objects.filter(pk__in=[r.pk for r in rows]).update(
                 last_stage=stage, last_stage_at=timezone.now())

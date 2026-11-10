@@ -352,6 +352,14 @@ def invoice_new(request):
 
 
 @staff_member_required
+def _pay_ahead(inv):
+    from apps.renewals import pay_ahead_options
+    try:
+        return pay_ahead_options(inv)
+    except Exception:
+        return []
+
+
 def invoice_edit(request, pk):
     inv = get_object_or_404(Invoice, pk=pk)
     if request.method == 'POST':
@@ -380,6 +388,7 @@ def invoice_edit(request, pk):
         'pending_count': sum(1 for p in proofs if p.status == 'pending'),
         'renewals': list(inv.renewals.all()),
         'month_choices': (1, 2, 3, 4, 6, 12),
+        'month_totals': {1: inv.balance_due, **{o['months']: float(o['total']) for o in _pay_ahead(inv)}},
         'items_json': json.dumps(inv.items),
         'methods_json': json.dumps(inv.payment_methods),
         'history': inv.payment_history,
@@ -815,7 +824,11 @@ def invoice_proof_review(request, pk, proof_pk, action):
             proof.months = months
             proof.save(update_fields=['months'])
     raw = request.POST.get('amount', '').replace(',', '').strip()
-    amount = raw or proof.amount or inv.balance_due
+    # Miezi imebadilishwa lakini kiasi ni kile cha zamani cha mteja → tumia salio jipya la ankara
+    if months != (proof_months_before := int(request.POST.get('proof_months', proof.months) or proof.months)) \
+            and raw and proof.amount is not None and abs(float(raw) - float(proof.amount)) < 1:
+        raw = ''
+    amount = raw or (proof.amount if months == proof_months_before else None) or inv.balance_due
     try:
         if float(amount) > inv.balance_due + 0.005:
             messages.error(request, f'That is more than the balance due ({inv.currency} {inv.balance_due:,.0f}).')

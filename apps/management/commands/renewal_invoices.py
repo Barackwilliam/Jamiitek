@@ -35,6 +35,9 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING(
                 f'Corrected {len(fixed)} renewal invoice(s) to one month: '
                 + ', '.join(i.invoice_number for i in fixed)))
+        stale = renewals.cancel_stale()
+        if stale and not opts['quiet']:
+            self.stdout.write(f'{stale} renewal invoice(s) closed — service was renewed another way.')
         if opts['fix_only']:
             return
         made = renewals.create_invoices(send=not opts['no_send'])
