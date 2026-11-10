@@ -275,6 +275,18 @@ _KIND_NAMES = {
 }
 
 
+_SENSITIVE_WORDS = ('password', 'reset', 'verification code', 'verify your', 'login code', 'sign-in code',
+                    'one-time', 'otp', '2fa', 'two-factor', 'neno la siri', 'nenosiri')
+
+
+def _is_sensitive(message, kind):
+    """Barua za usalama: mmiliki anapata taarifa fupi tu, si nakala yenye link/code ya siri."""
+    if kind in ('security',):
+        return True
+    low = (message.subject or '').lower()
+    return any(w in low for w in _SENSITIVE_WORDS)
+
+
 def _who(addr):
     """Jina la mteja kutoka kwenye kumbukumbu, kama lipo."""
     try:
@@ -361,11 +373,44 @@ class OwnerNoticeBackend(BaseEmailBackend):
                                  label='Daily limit reached', chip=('⏸ Paused', 'warning'))
                 _count(1)
             return
+        # Nakala KAMILI (email ileile aliyoipata mteja + viambatisho), isipokuwa barua za usalama
+        # (password reset, codes) — hizo zinabaki taarifa fupi ili link za siri zisisafiri.
+        if getattr(settings, 'OWNER_COPY_FULL', True) and not _is_sensitive(message, kind):
+            self._send_copy(owner, message, people, kind_name, when)
+            _count(1, notice=True)
+            return
         self._send_owner(owner, subject, 'Hello,\n\nA customer email has just been sent from the system.',
                          rows=[('To', ', '.join(people)), ('About', kind_name),
                                ('Subject', message.subject or '—'), ('Sent', f'{when} (EAT)')],
                          label='Sent to a customer', chip=('📤 Sent', 'info'))
         _count(1, notice=True)
+
+    def _send_copy(self, owner, message, people, kind_name, when):
+        """Tuma kwa mmiliki nakala ya barua halisi, ikiwa na kibandiko juu: kwa nani, nini, lini."""
+        from django.core.mail import EmailMultiAlternatives
+        from django.utils.html import escape
+        to_line = ', '.join(people)
+        subject = f'📋 Copy · {(message.subject or "")[:150]}'
+        text_head = f'[Copy of the email sent to {to_line} — {kind_name} — {when} EAT]\n\n'
+        html = next((c for c, mt in getattr(message, 'alternatives', []) or [] if mt == 'text/html'), '')
+        if not html and getattr(message, 'content_subtype', '') == 'html':
+            html = message.body or ''
+        copy = EmailMultiAlternatives(
+            subject=subject[:200], body=text_head + (message.body if not html or message.body != html else ''),
+            to=[owner], from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
+            headers={'X-JT-Owner-Notice': '1', 'X-JT-Category': 'owner_copy'})
+        if html:
+            banner = ('<div style="font:600 13px/1.5 Inter,Arial,sans-serif;background:#ecfeff;color:#155e75;'
+                      'border:1px solid #a5f3fc;border-radius:12px;padding:10px 14px;margin:12px auto;max-width:600px">'
+                      f'📋 <b>Copy for you</b> — sent to {escape(to_line)} · {escape(kind_name)} · {escape(when)} EAT'
+                      '</div>')
+            low = html.lower()
+            i = low.find('<body')
+            j = low.find('>', i) + 1 if i >= 0 else 0
+            copy.attach_alternative(html[:j] + banner + html[j:], 'text/html')
+        for att in getattr(message, 'attachments', []) or []:
+            copy.attach(*att) if isinstance(att, tuple) else copy.attach(att)
+        return self.inner.send_messages([copy])
 
     def _send_owner(self, owner, subject, body, **kw):
         from django.core.mail import EmailMultiAlternatives

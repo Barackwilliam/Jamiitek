@@ -321,6 +321,9 @@ else:
 EMAIL_REAL_BACKEND = EMAIL_BACKEND
 EMAIL_BACKEND = 'apps.email_backend.OwnerNoticeBackend'
 OWNER_NOTICE_EMAIL = os.getenv('OWNER_NOTICE_EMAIL', 'info@jamiitek.com').strip()
+# Mmiliki anapata NAKALA KAMILI ya kila email ya mteja (pamoja na viambatisho), si taarifa fupi tu.
+# Barua za usalama (password reset, codes) zinabaki taarifa fupi. OWNER_COPY_FULL=0 = taarifa fupi kwa zote.
+OWNER_COPY_FULL = os.getenv('OWNER_COPY_FULL', '1').strip().lower() not in ('0', 'false', 'no', 'off')
 # Email za siku zikifika hapa, taarifa za moja moja zinasimama; mmiliki anapata muhtasari mmoja baada ya
 # siku (apps/management/commands/owner_notice_summary.py). 0 = hakuna kikomo.
 OWNER_NOTICE_DAILY_LIMIT = int(os.getenv('OWNER_NOTICE_DAILY_LIMIT', '150') or 0)

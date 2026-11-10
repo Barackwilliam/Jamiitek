@@ -1392,7 +1392,7 @@ class CustomerNotificationsGoToCustomersTest(TestCase):
                    EMAIL_REAL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
                    OWNER_NOTICE_EMAIL='info@jamiitek.com', EMAIL_HOST_USER='info@jamiitek.com')
 class OwnerNoticeTest(TestCase):
-    """Kila email ya mteja: mmiliki anapata taarifa fupi 'X ametumiwa: ...' — bila maudhui ya barua."""
+    """Kila email ya mteja: mmiliki anapata NAKALA kamili; za usalama (password) ni taarifa fupi tu."""
 
     def test_customer_email_is_followed_by_a_short_notice_to_the_owner(self):
         from .models import Client
@@ -1412,6 +1412,32 @@ class OwnerNoticeTest(TestCase):
         send_mail('[JamiiTek] Bot down', 'x', None, ['info@jamiitek.com'])
         EmailMessage('Receipt', 'x', None, ['juma@example.com'], bcc=['info@jamiitek.com']).send()
         self.assertEqual(len(mail.outbox), 2)                 # hakuna taarifa za ziada
+
+    def test_owner_gets_a_full_copy_of_customer_emails_with_attachments(self):
+        from .models import Client
+        from django.core.mail import EmailMultiAlternatives
+        from apps.utils.customer_email import send_customer_email
+        Client.objects.create(name='Asha Mussa', email='asha@biashara.co.tz')
+        send_customer_email('asha@biashara.co.tz', 'Invoice INV-2026-0001 — TZS 55,000',
+                            'Dear Asha,\n\nYour invoice is ready.', rows=[('Amount to pay', 'TZS 55,000')],
+                            category='renewal_invoice')
+        copy = mail.outbox[1]
+        self.assertEqual(copy.to, ['info@jamiitek.com'])
+        self.assertEqual(copy.subject, '📋 Copy · Invoice INV-2026-0001 — TZS 55,000')
+        html = copy.alternatives[0][0]
+        self.assertIn('Copy for you', html)
+        self.assertIn('Asha Mussa &lt;asha@biashara.co.tz&gt;', html)
+        self.assertIn('TZS 55,000', html)                                   # maudhui kamili
+        msg = EmailMultiAlternatives('Payment Receipt — RCP-1', 'x', None, ['asha@biashara.co.tz'])
+        msg.attach('RCP-1.pdf', b'%PDF-1.4', 'application/pdf')
+        msg.send()
+        self.assertEqual(mail.outbox[-1].attachments[0][0], 'RCP-1.pdf')   # kiambatisho kimo
+
+    @override_settings(OWNER_COPY_FULL=False)
+    def test_full_copy_can_be_turned_off(self):
+        from apps.utils.customer_email import send_customer_email
+        send_customer_email('juma@example.com', 'Hosting reminder', 'Hello,\n\nHi.', category='renewal')
+        self.assertIn('was sent: Hosting reminder', mail.outbox[1].subject)
 
     @override_settings(OWNER_NOTICE_EMAIL='')
     def test_notices_can_be_turned_off(self):
@@ -1437,7 +1463,7 @@ class OwnerNoticeDailyLimitTest(TestCase):
             send_customer_email(f'mteja{i}@example.com', f'Reminder {i}', 'Hello,\n\nHi.', category='renewal')
         to_owner = [m for m in mail.outbox if m.to == ['info@jamiitek.com']]
         self.assertEqual(len([m for m in mail.outbox if m.to != ['info@jamiitek.com']]), 4)   # wateja wote
-        self.assertEqual(sum('was sent' in m.subject for m in to_owner), 2)        # kabla ya kikomo
+        self.assertEqual(sum('Copy ·' in m.subject for m in to_owner), 2)          # nakala kabla ya kikomo
         self.assertEqual(sum('paused for today' in m.subject for m in to_owner), 1)  # mara moja tu
         day = OwnerNoticeDay.objects.get()
         self.assertEqual([h['subject'] for h in day.held], ['Reminder 2', 'Reminder 3'])
