@@ -156,8 +156,10 @@
     {% if p.status == 'pending' %}
     <div class="pr-act">
       <form method="post" action="{% url 'invoice_proof_review' invoice.pk p.pk 'approve' %}" onsubmit="return confirm('Record this payment, create the receipt and send the client the confirm-receipt link?')">{% csrf_token %}
-        {% if renewals %}<select class="f-input" name="months" title="Months of hosting this payment covers" style="width:auto">
-          {% for m in month_choices %}<option value="{{ m }}"{% if m == p.months %} selected{% endif %}>{% if m == 12 %}1 year{% else %}{{ m }} month{{ m|pluralize }}{% endif %}</option>{% endfor %}
+        {% if renewals %}<input type="hidden" name="proof_months" value="{{ p.months }}">
+        <select class="f-input" name="months" title="Months of hosting this payment covers" style="width:auto"
+                onchange="var t=this.options[this.selectedIndex].dataset.total;if(t)this.form.amount.value=t">
+          {% for m in month_choices %}<option value="{{ m }}"{% if m == p.months %} selected{% endif %}{% for mm, tot in month_totals.items %}{% if mm == m %} data-total="{{ tot|floatformat:0 }}"{% endif %}{% endfor %}>{% if m == 12 %}1 year{% else %}{{ m }} month{{ m|pluralize }}{% endif %}</option>{% endfor %}
         </select>{% endif %}
         <input class="f-input" name="amount" value="{{ p.amount|default_if_none:invoice.balance_due|floatformat:0 }}" title="Amount you received">
         <button class="jt-btn btn-cyan" type="submit"><i class="fas fa-check"></i> Approve &amp; send receipt</button>
