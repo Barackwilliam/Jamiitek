@@ -465,6 +465,34 @@ p{font-size:12.5px;line-height:1.65;color:var(--txt)}
 .book .pg{zoom:var(--z,1);box-shadow:0 10px 30px rgba(11,21,48,.15)}
 @page{size:210mm 297mm;margin:0}
 @media print{body{background:none}.tb{display:none}.book{padding:0}.book .pg{zoom:1;margin:0;box-shadow:none;break-after:page}}
+
+/* Jalada (mtindo B: bluu kamili) */
+#d1{background:var(--b);color:#fff}
+#d1 .cv-o{position:absolute;right:-150px;top:-170px;width:560px;height:560px;border-radius:50%;background:var(--or)}
+#d1 .cv-g{position:absolute;right:110px;top:250px;width:380px;height:380px;border-radius:50%;background:#2F4A55;opacity:.95}
+#d1 .cv-n{position:absolute;left:-90px;bottom:120px;width:300px;height:330px;border-radius:40px;background:var(--ink);transform:rotate(20deg)}
+#d1 .cv-top{position:absolute;left:64px;right:64px;top:56px;display:flex;align-items:center;justify-content:space-between;z-index:5}
+#d1 .cv-lg{display:flex;align-items:center;gap:12px;font:700 22px/1.1 'Space Grotesk'}
+#d1 .cv-lg i{width:46px;height:46px;border-radius:12px;background:#fff;display:grid;place-items:center}
+#d1 .cv-lg img{width:34px;height:auto}
+#d1 .cv-lg small{display:block;font:600 8.5px 'Space Grotesk';letter-spacing:.24em;text-transform:uppercase;opacity:.8;margin-top:3px}
+#d1 .cv-pill{background:#fff;color:var(--ink);border-radius:30px;padding:9px 18px;font:700 12px 'Space Grotesk';letter-spacing:.06em;display:flex;align-items:center;gap:8px}
+#d1 .cv-pill:before{content:"";width:9px;height:9px;border-radius:50%;background:var(--or)}
+#d1 .cv-t{position:absolute;left:64px;top:250px;z-index:3}
+#d1 .cv-k{font:700 12px 'Space Grotesk';letter-spacing:.3em;text-transform:uppercase;opacity:.85;margin-bottom:18px}
+#d1 .cv-t h1{font:700 104px/.92 'Space Grotesk';letter-spacing:-.04em;color:#fff;margin:0}
+#d1 .cv-t h1 span{color:var(--or)}
+#d1 .cv-box{display:inline-block;background:#fff;border-radius:22px;padding:6px 26px 14px;margin-top:10px}
+#d1 .cv-box h1{color:var(--b)}
+#d1 .cv-t p{font-size:17px;line-height:1.6;opacity:.92;max-width:430px;margin-top:26px;color:#fff}
+#d1 .cv-lap{position:absolute;right:130px;bottom:150px;width:470px;transform:rotate(-3deg);z-index:2}
+#d1 .cv-lap .s{background:#0b0f1d;border-radius:14px 14px 4px 4px;padding:9px;box-shadow:0 30px 60px rgba(5,10,30,.45)}
+#d1 .cv-lap .s>div{height:270px;overflow:hidden;border-radius:3px}
+#d1 .cv-lap img,#d1 .cv-mob img{width:100%;display:block}
+#d1 .cv-lap .b{height:13px;margin:0 -30px;border-radius:0 0 16px 16px;background:linear-gradient(#e2e6ee,#9aa3b5)}
+#d1 .cv-mob{position:absolute;right:52px;bottom:110px;width:150px;height:300px;border-radius:26px;background:#0b0f1d;padding:7px;box-shadow:0 30px 60px rgba(5,10,30,.5);transform:rotate(-3deg);z-index:3}
+#d1 .cv-mob>div{height:100%;overflow:hidden;border-radius:20px}
+#d1 .cv-ft{position:absolute;left:64px;right:64px;bottom:44px;display:flex;gap:28px;font-size:13.5px;z-index:5}
 </style></head><body>
 <div class="tb"><a class="tb-b" href="/"><img src="{% static 'profile/logo.png' %}" alt="">{{ profile.short_name }}</a>
   <span class="tb-r"><a class="tb-l" href="?lang=sw">Kiswahili</a><a class="tb-d" href="{% url 'company_profile_pdf' %}">Download PDF</a></span></div>
@@ -472,19 +500,17 @@ p{font-size:12.5px;line-height:1.65;color:var(--txt)}
 
 <!-- JALADA -->
 <section class="pg" id="d1">
-  <div class="photo"><div class="mosaic">
-   <div class="t"><img src="{% static 'profile/c-kili-uhuru.jpg' %}"></div><div class="t"><img src="{% static 'profile/charles.jpg' %}"></div>
-   <div class="t"><img src="{% static 'profile/c-wemasa.jpg' %}"></div><div class="t"><img src="{% static 'profile/rina.jpg' %}"></div>
-   <div class="t"><img src="{% static 'profile/kili-bigfive.jpg' %}"></div><div class="t"><img src="{% static 'profile/tryvis.jpg' %}"></div>
-   <div class="t"><img src="{% static 'profile/c-amish.jpg' %}"></div><div class="t"><img src="{% static 'profile/jt-d.jpg' %}"></div>
-   <div class="t"><img src="{% static 'profile/wemasa-story.jpg' %}"></div><div class="t"><img src="{% static 'profile/amish-div2.jpg' %}"></div></div></div>
-  <div class="logo"><span class="mk"><img src="{% static 'profile/logo.png' %}"></span><b>Jamii<span>Tek</span></b><small>Digital Agency</small></div>
-  <div class="what"><p>Websites, management systems, mobile apps and WhatsApp automation — designed and built in Dar es Salaam, Tanzania.</p>
-    <div class="chips"><span>Websites</span><span>Systems</span><span>Mobile Apps</span><span>WhatsApp Bots</span><span>USSD</span><span>E-Commerce</span><span>SEO</span></div></div>
-  <div class="band2"></div><div class="band"></div>
-  <div class="title"><small>{{ period_long }}</small><h1>Company<br>Profile<span>.</span></h1></div>
-  <div style="position:absolute;left:24px;bottom:20px;font:700 8.5px 'Space Grotesk';letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.85)">Websites built by JamiiTek</div>
-  <div class="contact"><b>{{ profile.website }}</b><br>{{ phone_display }} · {{ profile.email }}<br>{{ profile.address }}</div>
+  <div class="cv-o"></div><div class="cv-g"></div><div class="cv-n"></div>
+  <div class="cv-top"><div class="cv-lg"><i><img src="{% static 'profile/logo.png' %}" alt="JamiiTek"></i><div>Jamii<span>Tek</span><small>Digital Agency</small></div></div><div class="cv-pill">{{ period_long }}</div></div>
+  <div class="cv-t">
+    <div class="cv-k">{{ profile.short_name }} · Dar es Salaam</div>
+    <h1>Company</h1>
+    <div class="cv-box"><h1>Profile<span>.</span></h1></div>
+    <p>Websites, management systems, mobile apps and WhatsApp automation — made in Tanzania for organisations that want to grow.</p>
+  </div>
+  <div class="cv-lap"><div class="s"><div><img src="{% static 'profile/kw-desk2x.jpg' %}" alt="Kili Wild Adventure website"></div></div><div class="b"></div></div>
+  <div class="cv-mob"><div><img src="{% static 'profile/amish-phone2.jpg' %}" alt="AMISH Company website"></div></div>
+  <div class="cv-ft"><span>{{ profile.website }}</span><span>{{ phone_display }}</span><span>{{ profile.email }}</span></div>
 </section>
 
 <!-- WELCOME -->
