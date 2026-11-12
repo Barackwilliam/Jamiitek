@@ -1,14 +1,14 @@
 {% load static %}<!DOCTYPE html>
-<html lang="en"><head>
+<html lang="{{ lang }}"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{ profile.company_name }} — Company Profile {{ period }}</title>
-<meta name="description" content="{{ profile.company_name }}: websites, management systems, mobile apps and WhatsApp automation, built in Dar es Salaam, Tanzania.">
+<title>{{ profile.company_name }} — {{ ui.doc }} {{ period }}</title>
+<meta name="description" content="{{ profile.company_name }}: {{ ui.desc }}">
 <meta name="theme-color" content="#2E5BFF">
 <link rel="canonical" href="https://www.jamiitek.com/company-profile/">
 <meta property="og:type" content="website">
-<meta property="og:title" content="{{ profile.company_name }} — Company Profile {{ period }}">
-<meta property="og:description" content="Websites, management systems, mobile apps and WhatsApp automation — designed and built in Dar es Salaam, Tanzania.">
+<meta property="og:title" content="{{ profile.company_name }} — {{ ui.doc }} {{ period }}">
+<meta property="og:description" content="{{ ui.desc }}">
 <meta property="og:image" content="https://www.jamiitek.com{% static 'profile/jt-d.jpg' %}">
 <meta name="twitter:card" content="summary_large_image">
 <style>
@@ -471,7 +471,7 @@ p{font-size:12.5px;line-height:1.65;color:var(--txt)}
 .tb-l{border:1px solid rgba(201,212,255,.35);border-radius:100px;padding:7px 14px}
 .cv-dv,.dv2{display:contents}
 /* ═ kitufe cha kupakua kinachoelea ═ */
-.book{padding-bottom:120px}
+@media screen{.book{padding-bottom:120px}}
 .fab{position:fixed;left:50%;bottom:22px;z-index:60;display:flex;align-items:center;gap:12px;padding:9px 22px 9px 9px;border-radius:100px;text-decoration:none;color:#fff;
  background:linear-gradient(135deg,#FF8A4C,#FF5A1F 55%,#F04A10);box-shadow:0 16px 36px rgba(240,74,16,.42),0 4px 10px rgba(11,21,48,.18),inset 0 1px 0 rgba(255,255,255,.35);
  transform:translateX(-50%);animation:fabIn .7s cubic-bezier(.2,.9,.25,1.2) .4s both;transition:transform .25s cubic-bezier(.2,.9,.3,1.3),box-shadow .25s;-webkit-tap-highlight-color:transparent;overflow:hidden}
@@ -716,259 +716,21 @@ p{font-size:12.5px;line-height:1.65;color:var(--txt)}
 }
 </style></head><body>
 <div class="tb"><a class="tb-b" href="/"><img src="{% static 'profile/logo.png' %}" alt="">{{ profile.short_name }}</a>
-  <a class="tb-l" href="?lang=sw">Kiswahili</a></div>
+  <a class="tb-l" href="{{ ui.switch_url }}">{{ ui.switch }}</a></div>
 <main class="book">
-
-<!-- JALADA -->
-<section class="pg" id="d1">
-  <div class="cv-o"></div><div class="cv-g"></div><div class="cv-n"></div>
-  <div class="cv-top"><div class="cv-lg"><i><img src="{% static 'profile/logo.png' %}" alt="JamiiTek"></i><div>Jamii<span>Tek</span><small>Digital Agency</small></div></div><div class="cv-pill">{{ period_long }}</div></div>
-  <div class="cv-t">
-    <div class="cv-k">{{ profile.short_name }} · Dar es Salaam</div>
-    <h1>Company</h1>
-    <div class="cv-box"><h1>Profile<span>.</span></h1></div>
-    <p>Websites, management systems, mobile apps and WhatsApp automation — made in Tanzania for organisations that want to grow.</p>
-  </div>
-  <div class="cv-dv"><div class="cv-lap"><div class="s"><div><img src="{% static 'profile/kw-desk2x.jpg' %}" alt="Kili Wild Adventure website"></div></div><div class="b"></div></div>
-  <div class="cv-mob"><div><img src="{% static 'profile/amish-phone2.jpg' %}" alt="AMISH Company website"></div></div></div>
-  <div class="cv-ft"><span>{{ profile.website }}</span><span>{{ phone_display }}</span><span>{{ profile.email }}</span></div>
-</section>
-
-<!-- WELCOME -->
-<section class="pg" id="d2">
-  <div class="in">
-    <div class="h">Welcome to<br><em>JamiiTek</em><span>.</span></div>
-    <div class="cols">
-      <p class="drop">JamiiTek is a Tanzanian digital agency. We design and build websites, management systems, mobile apps and WhatsApp automation for schools, NGOs, tour operators, lenders and growing businesses — in English and Kiswahili, built for mobile phones and mobile money.</p>
-      <div><p>We take on a small number of clients at a time, so each one gets a finished, working product and a team that stays on after launch for hosting, updates and support.</p>
-        <p style="margin-top:10px"><b style="color:var(--b)">Mission —</b> to give every Tanzanian organisation digital tools that win customers, save time and earn trust.</p>
-        <p style="margin-top:6px"><b style="color:var(--or)">Vision —</b> to be East Africa's most trusted digital partner.</p>
-        <div class="sign">The JamiiTek Team<small>Dar es Salaam</small></div></div>
-    </div>
-    <div class="stats"><div><b>60+</b><small>Projects delivered</small></div><div><b>7</b><small>Digital services</small></div><div><b>2–6</b><small>Weeks per project</small></div><div><b>EN/SW</b><small>Working languages</small></div></div>
-  </div>
-  <div class="arc2"></div><div class="arc"></div>
-  <div class="dv2"><div class="lap"><div class="scr"><div class="bar"><i></i><i></i><i></i><em>www.jamiitek.com</em></div><div class="shot"><img src="{% static 'profile/jt-d.jpg' %}"></div></div><div class="base"></div></div>
-  <div class="mob"><div class="shot"><img src="{% static 'profile/jt-m.jpg' %}"></div></div></div>
-  <div class="fn" style="color:#DCE3FF;z-index:2"><span>{{ profile.short_name }} · Company Profile {{ period }}</span><b style="color:#fff">02</b></div>
-</section>
-
-<!-- CONTENTS -->
-<section class="pg" id="d3">
-  <div class="blk"></div><div class="glow"></div>
-  <div class="am">
-    <div class="lp"><div class="scr"><div class="bar"><i></i><i></i><i></i><em>www.amish.co.tz</em></div><div class="shot"><img src="{% static 'profile/amish-desk2x.jpg' %}"></div></div><div class="base"></div></div>
-    <div class="fon"><div class="shot"><img src="{% static 'profile/sun-phone.jpg' %}"></div></div>
-    <div class="fc"><div class="shot"><img src="{% static 'profile/s-amish.jpg' %}"></div><div><b>5 divisions</b><small>Hardware · Clothing · Cosmetics · Transport · Real estate</small></div></div>
-    <div class="chip"><i></i>Live projects · built by JamiiTek</div>
-  </div>
-  <div class="in"><div class="h">Table of<br><span style="color:var(--b)">Contents</span></div><p class="sub">Everything you need to know about JamiiTek — who we are, what we build and how we work with you.</p></div>
-  <div class="list">
-    <div class="row"><span class="n">01</span><b>About JamiiTek<small>Who we are, mission and vision</small></b><span class="pn">02</span></div>
-    <div class="row"><span class="n">02</span><b>Why JamiiTek<small>What makes working with us different</small></b><span class="pn">04</span></div>
-    <div class="row"><span class="n">03</span><b>Our Services<small>Websites, systems, apps, WhatsApp, USSD, SEO</small></b><span class="pn">05</span></div>
-    <div class="row"><span class="n">04</span><b>How We Work<small>Four steps, no surprises</small></b><span class="pn">06</span></div>
-    <div class="row"><span class="n">05</span><b>Our Projects<small>Real work, live today</small></b><span class="pn">07</span></div>
-    <div class="row"><span class="n">06</span><b>Our Team<small>The people behind the work</small></b><span class="pn">09</span></div>
-    <div class="row"><span class="n">07</span><b>Investment, Support &amp; Contact<small>Prices, terms, after-launch care and how to reach us</small></b><span class="pn">10</span></div>
-  </div>
-  <div class="fn"><span>{{ profile.short_name }} · Company Profile {{ period }}</span><b>03</b></div>
-</section>
-
-<!-- KWA NINI -->
-<section class="pg" id="d8">
- <div class="ph"><img src="{% static 'profile/team2.jpg' %}"></div><div class="bl"></div><div class="or"></div>
- <div class="hd"><small>Why JamiiTek</small><h2>Why choose<br><span>JamiiTek?</span></h2></div>
- <div class="bd"><b>60+</b><span>projects<br>delivered</span></div>
- <div class="gr"><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h8M8 3v2M5.5 5c1 3.5 3.5 6 7 7.5M10.5 5c-1 3.5-3.5 6-7 7.5"/><path d="M13 21l4-9 4 9M14.5 18h5"/></svg></i><b>Bilingual</b><p>Every website and system is built in English and Kiswahili, so customers read about your services in the language they are most comfortable with.</p></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1.5-4A8 8 0 1 1 9 19.5z"/><path d="M9 11h6M9 14h4"/></svg></i><b>Built for Tanzania</b><p>WhatsApp buttons, click-to-call and mobile-money payments are built in from day one — the way your customers already ask and buy.</p></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12l-8 8-9-9V3h8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></i><b>One fixed price</b><p>You receive one clear price and one delivery date before any work starts. No hidden extras appearing along the way.</p></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M8 14l2.5 2.5L16 12"/></svg></i><b>Weekly progress</b><p>Every week you see the real product taking shape and give feedback, so the final result is exactly what you asked for.</p></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></i><b>You own it</b><p>Your domain is registered in your name, the content is yours, and a simple dashboard lets your team update pages anytime.</p></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg></i><b>We stay</b><p>After launch we look after hosting, send renewal reminders and invoices, issue receipts and stay on WhatsApp for support.</p></div></div>
- <div class="fn"><span>{{ profile.short_name }} · Company Profile {{ period }}</span><b>04</b></div>
-</section>
-
-<!-- HUDUMA -->
-<section class="pg" id="d4">
- <div class="bn"></div><div class="or"></div>
- <div class="hd"><small>What we do</small><h2>Service Offering<span>.</span></h2><p>Everything your organisation needs to be found, trusted and chosen online.</p></div>
- <div class="gr"><div class="c"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="14" rx="2"/><path d="M2.5 8h19M8 21h8"/></svg></i><b>Websites &amp; Web Apps</b><p>Company websites to complete web platforms — fast, secure and built to be found on Google.</p><ul><li>Mobile-first design</li><li>English &amp; Kiswahili</li><li>Dashboard to update pages</li></ul></div><div class="c"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="7" rx="1.5"/><rect x="3" y="14" width="18" height="7" rx="1.5"/><path d="M7 6.5h.01M7 17.5h.01"/></svg></i><b>Management Systems</b><p>School, loan, stock and booking systems built around how your organisation already works.</p><ul><li>Secure logins &amp; roles</li><li>Reports &amp; dashboards</li><li>Invoices &amp; mobile money</li></ul></div><div class="c"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1.5-4A8 8 0 1 1 9 19.5z"/><path d="M9 11h6M9 14h4"/></svg></i><b>WhatsApp Bots &amp; AI</b><p>JamiiBot answers your customers 24 hours a day, in Swahili and English.</p><ul><li>Prices &amp; FAQs</li><li>Orders &amp; bookings</li><li>Hands over to you</li></ul></div><div class="c"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg></i><b>Mobile Apps</b><p>Android and iOS apps connected to your website or system.</p><ul><li>One app, two stores</li><li>Push notifications</li><li>Linked to your system</li></ul></div><div class="c"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="1.5"/><path d="M10 6h4M10 10h1M13 10h1M10 13h1M13 13h1M10 16h1M13 16h1"/></svg></i><b>USSD Services</b><p>Menus that work on any phone, with no smartphone or internet needed.</p><ul><li>Every network</li><li>Registration &amp; payments</li><li>Linked to reports</li></ul></div><div class="c"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14l-1.2 12H6.2z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg></i><b>E-Commerce</b><p>Online shops that sell while you sleep, with payments customers already use.</p><ul><li>Catalogue &amp; prices</li><li>Orders to WhatsApp</li><li>Mobile money</li></ul></div></div>
- <div class="wd"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8 11h6M11 8v6"/></svg></i><div><b>Digital Marketing &amp; SEO</b><p>Being online is the start — being found is what brings customers.</p></div><ul><li>Google Business Profile</li><li>Google Ads</li><li>Search optimisation</li></ul></div>
- <div class="fn"><span>{{ profile.short_name }} · Company Profile {{ period }}</span><b>05</b></div>
-</section>
-
-<!-- JINSI -->
-<section class="pg" id="d9">
-  <div class="shp9"></div>
-  <div class="in9"><div class="h">How we<br><em>work</em><span>.</span></div><p class="sub">Four clear steps from the first conversation to a live product — and beyond.</p></div>
-  <div class="tl9">
-    <div class="st"><span class="n">01</span><div><div class="hd"><b>We listen</b><em>Day 1</em></div><p>We sit with you to understand your customers, your daily work and your goals. This first conversation costs nothing.</p></div></div>
-    <div class="st"><span class="n" style="color:var(--or);-webkit-text-stroke-color:var(--or)">02</span><div><div class="hd"><b>One price, one date</b><em>Day 2</em></div><p>Within one business day you receive a clear plan, a fixed price and a delivery date — agreed before any work begins.</p></div></div>
-    <div class="st"><span class="n">03</span><div><div class="hd"><b>We build — you watch it grow</b><em>Weeks 1–6</em></div><p>You see real progress every week and give feedback as we go, so the final product is exactly what you need.</p></div></div>
-    <div class="st"><span class="n" style="color:var(--or);-webkit-text-stroke-color:var(--or)">04</span><div><div class="hd"><b>Launch &amp; stay</b><em>Ongoing</em></div><p>We go live, hand over the keys and stay on for hosting, updates and support.</p></div></div>
-  </div>
-  <div class="sec9"><b>Sectors we serve</b>
-    <div class="row">
-      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg>NGOs</div>
-      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 20l6-11 4 6 3-4 5 9z"/></svg>Tourism</div>
-      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/></svg>Education</div>
-      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/></svg>Finance</div>
-      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 7h14l-1.2 12H6.2z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>Retail</div>
-      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21V10M12 10c0-4 3-6 7-6 0 4-3 6-7 6zM12 13c0-3-2.5-5-6-5 0 3 2.5 5 6 5z"/></svg>Agriculture</div>
-      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21V7l8-4 8 4v14"/><path d="M9 21v-5h6v5"/></svg>Industry</div>
-    </div></div>
-  <div class="fn"><span>{{ profile.short_name }} · Company Profile {{ period }}</span><b>06</b></div>
-</section>
-
-<!-- KAZI -->
-<section class="pg" id="d5">
-  <div class="in"><div class="h">Our <em>Projects</em><span>.</span></div><p class="sub">Real websites and systems, built by JamiiTek and running today.</p></div>
-  <div class="feat2"><div class="bgp"></div>
-    <div class="lp"><div class="scr"><div class="bar"><i></i><i></i><i></i><em>kiliwild.onrender.com</em></div><div class="shot"><img src="{% static 'profile/kw-desk2x.jpg' %}"></div></div><div class="base"></div></div>
-    <div class="fon"><div class="shot"><img src="{% static 'profile/kw-phone.jpg' %}"></div></div>
-    <div class="chip"><i></i>Featured project · live today</div>
-    <div class="fc"><b>Kili Wild Adventure</b><span>Tourism · Moshi &amp; Arusha</span><p>A local tour operator selling Kilimanjaro climbs and Big Five safaris.</p><ul class="pt"><li>Route and safari pages with prices</li><li>Destinations, gallery and FAQs</li><li>WhatsApp booking on every page</li></ul></div>
-  </div>
-  <div class="grid">
-    <div class="c"><div class="bw"><div class="bar"><i></i><i></i><i></i></div><div class="shot"><img src="{% static 'profile/charles-full.jpg' %}"></div></div><span>Education</span><b>Charles Academy</b><p>A school website and learning portal in one place.</p><ul class="pt"><li>Student and parent logins</li><li>Timetable, grades and resources</li><li>Courses, events and FAQs</li></ul></div>
-    <div class="c"><div class="bw"><div class="bar"><i></i><i></i><i></i></div><div class="shot"><img src="{% static 'profile/c-wemasa.jpg' %}"></div></div><span>NGO</span><b>WEMASA Tanzania</b><p>Weka Mazingira Safi — a registered environmental NGO.</p><ul class="pt"><li>Projects, team, partners and SDG pages</li><li>Donate, volunteer and partner actions</li><li>Dashboard to update every page</li></ul></div>
-    <div class="c"><div class="bw"><div class="bar"><i></i><i></i><i></i></div><div class="shot"><img src="{% static 'profile/rina.jpg' %}"></div></div><span>Tourism</span><b>Rina Tours Tanzania</b><p>Safaris, trekking, beach and cultural tours.</p><ul class="pt"><li>60+ tours in seven categories</li><li>Prices and duration on every tour</li><li>Route map and trip-planning form</li></ul></div>
-  </div>
-  <div class="cont">Continued on the next page — AMISH Company, Tryvis Investments and more →</div>
-  <div class="fn"><span>{{ profile.short_name }} · Company Profile {{ period }}</span><b>07</b></div>
-</section>
-
-<!-- MIRADI II -->
-<section class="pg" id="d7">
-  <div class="in7"><div class="h">More of our <em>work</em><span>.</span></div><p class="sub">From trading groups to industrial suppliers — websites that bring in real enquiries.</p></div>
-
-  <div class="row7 r1"><div class="bg"></div>
-    <div class="dv"><div class="lp"><div class="scr"><div class="bar"><i></i><i></i><i></i><em>www.amish.co.tz</em></div><div class="shot"><img src="{% static 'profile/amish-desk2x.jpg' %}"></div></div><div class="base"></div></div>
-      <div class="fon"><div class="shot"><img src="{% static 'profile/amish-phone2.jpg' %}"></div></div></div>
-    <div class="tx"><span>Trading group · Kigamboni</span><b>AMISH Company</b><p>One website for a growing family business — two divisions trading today and three in preparation.</p>
-      <ul class="pt"><li>Hardware, clothing, cosmetics, transport and real estate</li><li>Product catalogues with photos and prices</li><li>“Ask for a price” straight to WhatsApp</li><li>Gallery, location and opening hours</li></ul></div>
-  </div>
-
-  <div class="row7 r2"><div class="bg"></div>
-    <div class="tx"><span>Industrial supply · Dar es Salaam</span><b>Tryvis Investments</b><p>Industrial supplies and engineering, presented clearly for factories and plants.</p>
-      <ul class="pt"><li>Bearings, pneumatics, seals, tools and hardware</li><li>Engineering workshop and factory audits</li><li>Workshop gallery and partner logos</li><li>Online quote requests and WhatsApp</li></ul></div>
-    <div class="dv"><div class="lp"><div class="scr"><div class="bar"><i></i><i></i><i></i><em>www.tryvis.co.tz</em></div><div class="shot"><img src="{% static 'profile/tv-desk2x.jpg' %}"></div></div><div class="base"></div></div>
-      <div class="fon"><div class="shot"><img src="{% static 'profile/tv-phone2.jpg' %}"></div></div></div>
-  </div>
-
-  <div class="also7"><div class="hh"><b>Also delivered</b><small>A selection of other projects</small></div>
-    <div class="rows">
-      <div><b>MMexy Tanzania Adventures</b><span>Multilingual safari website</span></div>
-      <div><b>SokoSmart</b><span>Marketplace platform</span></div>
-      <div><b>Summit Scape Adventures</b><span>Safari website + Google Ads</span></div>
-      <div><b>Sokoni App</b><span>Business directory app</span></div>
-      <div><b>Kiliprecious Tours</b><span>Safari &amp; tour website</span></div>
-      <div><b>Mudandaza</b><span>Multi-business SaaS</span></div>
-      <div><b>Sunrise and Sunset Safaris</b><span>Safari company website</span></div>
-      <div><b>Shamba Mfukoni</b><span>Agricultural USSD service</span></div>
-      <div><b>EM Adventure Tanzania</b><span>Adventure tourism website</span></div>
-      <div><b>SoftLoan</b><span>Student loan system</span></div>
-      <div><b>Kili2Pori Expedition</b><span>Kilimanjaro expedition site</span></div>
-      <div><b>Pendo Essence</b><span>E-commerce store</span></div>
-    </div>
-    <div class="more50"><b>+50</b><span>…and more than 50 other websites and systems delivered for businesses and organisations across Tanzania.</span></div>
-  </div>
-  <div class="fn"><span>{{ profile.short_name }} · Company Profile {{ period }}</span><b>08</b></div>
-</section>
-
-<!-- TIMU -->
-<section class="pg" id="d6">
-  <div class="in6"><div class="h">Meet the <em>Team</em><span>.</span></div>
-    <p class="sub">Tanzanian developers, designers and marketers — the people who answer your calls and build your project.</p></div>
-  <div class="tg6">
-    {% for m in team %}<div class="tm{% if m.photo %} hp{% endif %}" style="--g:{{ m.bg }};--a:{{ m.accent }}"><div class="ph">{% if m.photo %}<img src="{{ m.photo_url }}" style="object-position:{{ m.position|default:'50% 20%' }}" alt="{{ m.name }}">{% endif %}</div>
-      <div class="ov"><span class="sk">{{ m.skill }}</span><b>{{ m.name }}</b><small>{{ m.role }}</small></div><i class="corner"></i></div>
-    {% endfor %}
-  </div>
-  <div class="band6">
-    <div><b>{{ team|length }}</b><small>Core team members</small></div>
-    <div><b>EN/SW</b><small>We speak your language</small></div>
-    <div><b>1 day</b><small>Reply with a plan &amp; price</small></div>
-    <div class="q">“The same team that builds your project is the team that supports it.”</div>
-  </div>
-  <div class="fn"><span>{{ profile.short_name }} · Company Profile {{ period }}</span><b>09</b></div>
-</section>
-
-<!-- BEI -->
-<section class="pg" id="d10">
-  <div class="in10"><div class="h">Investment<br>&amp; <em>terms</em><span>.</span></div><p class="sub">Clear starting prices for every service. Each project gets a free, fixed quotation before work begins.</p></div>
-  <div class="pc10">
-    {% for p in packages %}<div class="{{ p.style }}">{% if p.badge %}<div class="pop">{{ p.badge }}</div>{% endif %}<small>{{ p.name }}</small><h4>{{ p.headline }}</h4><span class="f">from</span><strong><sup>TZS</sup>{{ p.price_display }}</strong><span class="f">{{ p.note }}</span>
-      <ul>{% for f in p.features %}<li>{{ f }}</li>{% endfor %}</ul></div>
-    {% endfor %}
-  </div>
-  <div class="dm10">
-    <div class="dom"><b>Domain names <small>per year</small></b>
-      <div class="g">{% for d in domains %}<span>{{ d.label }}</span><em>TZS {{ d.price_display }}</em>{% endfor %}</div></div>
-    <div class="host"><b>Hosting</b><p>Fast, secure hosting with SSL and backups. Template websites: <b style="display:inline;font:inherit;color:#fff">TZS {{ template_hosting }}/month</b>. Other projects are quoted with the build, with renewal reminders sent well before expiry.</p></div>
-  </div>
-  <div class="tm10">
-    <div><b>Payment</b><p>A deposit to begin, the balance on delivery. Flexible plans available.</p></div>
-    <div><b>Quotations</b><p>Free, fixed and with a delivery date — before any work starts.</p></div>
-  </div>
-  <div class="fn"><span>{{ profile.short_name }} · Company Profile {{ period }}</span><b>10</b></div>
-</section>
-
-<!-- BAADA YA KUKABIDHI -->
-<section class="pg" id="d11">
- <div class="ph"><div class="art a11">
-   <div class="inv"><div class="ih"><img src="{% static 'profile/logo.png' %}"><b>INVOICE</b><span>#JT-2026-014</span></div>
-     <div class="il"><span>Hosting renewal · 12 months</span><em>TZS 180,000</em></div>
-     <div class="il"><span>Domain renewal · .co.tz</span><em>TZS 25,000</em></div>
-     <div class="it"><span>Total due</span><em>TZS 205,000</em></div>
-     <div class="idue">Due before expiry · reminder sent by email &amp; SMS</div></div>
-   <div class="rcp"><div class="rh"><i>✓</i><b>Payment received</b></div><span>Official receipt sent</span><div class="stamp">PAID</div></div>
-   <div class="ntf"><i>🔔</i><span><b>Renewal reminder</b>Your hosting expires in 14 days</span></div>
- </div></div><div class="bl"></div><div class="or"></div>
- <div class="hd"><small>After launch</small><h2>Support after your<br><span>website goes live.</span></h2></div>
- <div class="bd"><b>We don't hand over<br>and disappear.</b><span>Here is what we keep doing for you.</span></div>
- <div class="rn"><div class="rh">How your yearly renewal works</div>
-  <div class="st"><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21h4"/></svg></i><em>1</em><b>We remind you</b><p>Before your hosting or domain expires, you get a reminder by email and SMS.</p></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></i><em>2</em><b>You get an invoice</b><p>A clear invoice shows exactly what to pay and by which date.</p></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></i><em>3</em><b>You pay and upload proof</b><p>Pay, then upload a screenshot or receipt of your payment online.</p></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></i><em>4</em><b>You receive your receipt</b><p>We confirm the payment and send you an official, signed receipt.</p></div></div></div>
- <div class="sp"><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/><path d="M7 7.5h.01M7 16.5h.01"/></svg></i><span><b>Your website stays online</b><p>Secure hosting with SSL and regular backups.</p></span></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1.5-4A8 8 0 1 1 9 19.5z"/><path d="M9 11h6M9 14h4"/></svg></i><span><b>Help on WhatsApp</b><p>Questions and fixes handled by the team that built your project.</p></span></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></i><span><b>Changes when you need them</b><p>New pages, prices, photos or features as you grow.</p></span></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/></svg></i><span><b>Training for your team</b><p>We show your staff how to update the website themselves.</p></span></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6"/></svg></i><span><b>Every payment documented</b><p>A proper invoice and receipt for every payment, for your records.</p></span></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></i><span><b>Your domain, in your name</b><p>We register and renew it so you never lose it.</p></span></div></div>
- <div class="fn"><span>{{ profile.short_name }} · Company Profile {{ period }}</span><b>11</b></div>
-</section>
-
-<!-- JALADA LA NYUMA -->
-<section class="pg" id="d12">
- <div class="ph"><div class="art a12">
-   <div class="lp"><div class="scr"><div class="bar"><i></i><i></i><i></i></div><div class="shot"><img src="{% static 'profile/jt-d.jpg' %}"></div></div><div class="base"></div></div>
-   <div class="fon"><div class="sc"><div class="wh"><img src="{% static 'profile/logo.png' %}"><span><b>JamiiTek</b>online</span></div>
-     <div class="msgs"><span class="in">Habari, nahitaji website ya biashara yangu.</span><span class="out">Karibu! Tutakutumia mpango, muda na bei ndani ya siku moja ✅</span><span class="in">Asante sana 🙏</span></div></div></div>
- </div></div><div class="bl"></div><div class="or"></div>
- <div class="lg"><span class="mk"><img src="{% static 'profile/logo.png' %}"></span><span><b>Jamii<em>Tek</em></b><small>Digital Agency</small></span></div>
- <div class="hd"><small>Let's work together</small><h2>Ready to start<br><span>your project?</span></h2></div>
- <div class="bd"><b>Talk to us today.</b><span>Within one business day we send you a plan, a timeline and a price — free.</span></div>
- <div class="ct">
-  <div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg></i><span><small>Call or WhatsApp</small><b>{{ phone_display }}</b><p>The fastest way to reach us.</p></span></div>
-  <div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></i><span><small>Email</small><b>{{ profile.email }}</b><p>For quotations and documents.</p></span></div>
-  <div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></i><span><small>Website</small><b>{{ profile.website }}</b><p>Our work, templates and prices.</p></span></div>
-  <div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg></i><span><small>Office</small><b>{{ profile.address }}</b><p>Serving clients across Tanzania.</p></span></div>
- </div>
- <div class="nx"><b>What happens next?</b>
-  <div><em>1</em><span><strong>You send us a message</strong>Tell us about your business and what you need — on WhatsApp, by phone or email.</span></div>
-  <div><em>2</em><span><strong>We reply within one day</strong>You receive a clear plan, a timeline and a fixed price. No cost, no obligation.</span></div>
-  <div><em>3</em><span><strong>We start when you are ready</strong>Once you approve and pay the deposit, work begins and you see progress every week.</span></div>
- </div>
- <div class="qr">
-  <div><img src="{{ qr_whatsapp }}"><span><b>Chat with us on WhatsApp</b>Open your phone camera and scan this code.</span></div>
-  <div class="o"><img src="{{ qr_website }}"><span><b>See more of our work</b>Scan to open {{ profile.website }}.</span></div>
- </div>
- <div class="end"><span>© {% now "Y" %} {{ profile.company_name }} · {{ profile.address }}</span><span>Websites · Systems · Mobile Apps · WhatsApp Automation</span></div>
-</section>
-
+{% include pages_template %}
 </main>
-<a class="fab" id="fab" href="{% url 'company_profile_pdf' %}" download>
+<a class="fab" id="fab" href="{% url 'company_profile_pdf' %}{% if lang == 'sw' %}?lang=sw{% endif %}" download>
   <span class="fab-i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10.5l5 5 5-5"/><path d="M5 20h14"/></svg></span>
-  <span class="fab-t"><b>Download PDF</b><small>Company Profile · 12 pages</small></span>
+  <span class="fab-t"><b>{{ ui.dl }}</b><small>{{ ui.doc }} · {{ ui.pages }}</small></span>
 </a>
 <script>
 /* Kurasa ni A4 (794px); kwenye skrini ndogo zinapunguzwa ili zitoshe. */
 (function(){function f(){var z=Math.min(1,(window.innerWidth-16)/794);document.documentElement.style.setProperty('--z',z);document.documentElement.style.setProperty('--pw',Math.min(window.innerWidth-20,560))}f();window.addEventListener('resize',f)})();
 /* Kitufe cha kupakua: kinaonyesha kinapakua, kisha kinarudi kawaida. */
-(function(){var b=document.getElementById('fab');if(!b)return;var t=b.querySelector('b');
-b.addEventListener('click',function(){if(b.classList.contains('busy'))return;b.classList.add('busy');t.textContent='Downloading…';
-setTimeout(function(){b.classList.remove('busy');b.classList.add('done');t.textContent='Downloaded ✓'},2200);
-setTimeout(function(){b.classList.remove('done');t.textContent='Download PDF'},5200)})})();
+(function(){var b=document.getElementById('fab');if(!b)return;var t=b.querySelector('b'),L={{ ui_js|safe }};
+b.addEventListener('click',function(){if(b.classList.contains('busy'))return;b.classList.add('busy');t.textContent=L.busy;
+setTimeout(function(){b.classList.remove('busy');b.classList.add('done');t.textContent=L.done},2200);
+setTimeout(function(){b.classList.remove('done');t.textContent=L.dl},5200)})})();
 </script>
 </body></html>

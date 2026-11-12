@@ -18,7 +18,7 @@ from django.contrib.staticfiles import finders
 from django.core.management.base import BaseCommand, CommandError
 from django.template.loader import render_to_string
 
-from apps.docs_views import BROCHURE_PDF
+from apps.docs_views import brochure_pdf_path
 from apps.models import CompanyProfile
 from apps.profile_brochure import brochure_context
 
@@ -28,6 +28,8 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--out', help='Where to write the PDF (default: apps/static/profile/...)')
+        parser.add_argument('--lang', choices=['en', 'sw', 'all'], default='all',
+                            help='Lugha ya PDF (default: zote mbili)')
         parser.add_argument('--chromium', help='Path to a Chromium binary (optional)')
 
     def handle(self, *args, **opts):
@@ -42,7 +44,15 @@ class Command(BaseCommand):
             profile = CompanyProfile(phone='255750910158', period='2025 — 2026')
             self.stdout.write('Hakuna profile hai; natumia data za msingi.')
 
-        html = render_to_string('docs/profile_brochure.html', brochure_context(profile))
+        langs = ['en', 'sw'] if opts['lang'] == 'all' else [opts['lang']]
+        if opts['out'] and len(langs) > 1:
+            raise CommandError('--out inahitaji --lang en au --lang sw')
+        for lang in langs:
+            self._build(profile, lang, opts)
+
+    def _build(self, profile, lang, opts):
+        from playwright.sync_api import sync_playwright
+        html = render_to_string('docs/profile_brochure.html', brochure_context(profile, lang))
 
         # Static URLs → njia za faili, ili Chromium izisome bila server.
         def to_file(m):
@@ -50,7 +60,7 @@ class Command(BaseCommand):
             return f'{m.group(1)}{Path(path).as_uri() if path else m.group(0)}'
         html = re.sub(r'((?:src=|url\()["\']?)/static/([^"\')]+)', to_file, html)
 
-        out = Path(opts['out'] or Path(finders.find('profile/logo.png')).parent / Path(BROCHURE_PDF).name)
+        out = Path(opts['out'] or Path(finders.find('profile/logo.png')).parent / Path(brochure_pdf_path(lang)).name)
         with tempfile.NamedTemporaryFile('w', suffix='.html', delete=False, encoding='utf-8') as fh:
             fh.write(html)
             tmp = Path(fh.name)
