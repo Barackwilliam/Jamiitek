@@ -1704,10 +1704,21 @@ class CompanyProfileBrochureTest(TestCase):
         self.assertIn('99,000', html)
         self.assertNotIn('Beatha Matembo', html)
 
-    def test_swahili_keeps_old_profile_page(self):
+    def test_swahili_uses_the_new_brochure(self):
         r = self.client.get('/company-profile/?lang=sw')
         self.assertEqual(r.status_code, 200)
-        self.assertTemplateUsed(r, 'docs/profile_view.html')
+        self.assertTemplateUsed(r, 'docs/brochure_pages_sw.html')
+        html = r.content.decode()
+        for text in ('Wasifu wa', 'Huduma zetu', 'Kutana na', 'Website kamili', 'Mbunifu',
+                     'Pakua PDF', '?lang=en', '/company-profile/pdf/?lang=sw', '350,000'):
+            self.assertIn(text, html, text)
+        self.assertNotIn('Service Offering', html)
+
+    def test_swahili_pdf_is_the_bundled_swahili_brochure(self):
+        r = self.client.get('/company-profile/pdf/?lang=sw')
+        self.assertEqual(r['Content-Type'], 'application/pdf')
+        self.assertIn('Kiswahili', r['Content-Disposition'])
+        self.assertTrue(b''.join(r.streaming_content).startswith(b'%PDF'))
 
     def test_pdf_download_is_the_bundled_brochure(self):
         r = self.client.get('/company-profile/pdf/')

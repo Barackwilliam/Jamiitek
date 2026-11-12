@@ -47,6 +47,41 @@ DEFAULT_PACKAGES = [
      'features': ['One app for both stores', 'Connected to your system', 'Push notifications']},
 ]
 
+# Toleo la Kiswahili la vifurushi (kwa mpangilio uleule wa DEFAULT_PACKAGES)
+DEFAULT_PACKAGES_SW = [
+    {'name': 'Website ya template', 'headline': 'Muundo tayari, hewani haraka',
+     'note': f'mara moja + hosting TZS {TEMPLATE_HOSTING_PER_MONTH:,}/mwezi',
+     'features': ['Muundo wa kitaalamu ulio tayari', 'Jina lako, picha na bei zako',
+                  'Unaweza kupanda kwenda custom wakati wowote']},
+    {'name': 'Website kamili', 'headline': 'Imebuniwa kwa ajili ya brand yako',
+     'note': 'malipo ya mara moja', 'badge': 'Inayochaguliwa zaidi',
+     'features': ['Muundo wa kipekee, unaofaa simu', 'Kiswahili & Kiingereza, tayari kwa SEO',
+                  'Dashboard ya kubadilisha maudhui']},
+    {'name': 'Mfumo maalum', 'headline': 'Unajengwa kufuata kazi yako',
+     'note': 'mara moja · wiki 2–6',
+     'features': ['Shule, mikopo, stoo au booking', 'Dashboards na ripoti',
+                  'Ankara & malipo ya simu']},
+    {'name': 'App ya simu', 'headline': 'Android & iOS',
+     'note': 'malipo ya mara moja',
+     'features': ['App moja kwa maduka yote mawili', 'Imeunganishwa na mfumo wako', 'Arifa (notifications)']},
+]
+
+TEAM_SW = {
+    'Founder, CEO & Lead Developer': 'Mwanzilishi, CEO & Mtengenezaji Mkuu',
+    'Designer': 'Mbunifu', 'Developer': 'Mtengenezaji wa mifumo', 'Customer Support': 'Huduma kwa wateja',
+    'Leadership': 'Uongozi', 'Design': 'Ubunifu', 'Development': 'Utengenezaji', 'Support': 'Msaada',
+}
+
+# Maandishi ya ukurasa (toolbar, kitufe, meta) kwa kila lugha
+UI = {
+    'en': {'doc': 'Company Profile', 'pages': '12 pages', 'dl': 'Download PDF', 'busy': 'Downloading…',
+           'done': 'Downloaded ✓', 'switch': 'Kiswahili', 'switch_url': '?lang=sw',
+           'desc': 'Websites, management systems, mobile apps and WhatsApp automation — designed and built in Dar es Salaam, Tanzania.'},
+    'sw': {'doc': 'Wasifu wa Kampuni', 'pages': 'kurasa 12', 'dl': 'Pakua PDF', 'busy': 'Inapakua…',
+           'done': 'Imepakuliwa ✓', 'switch': 'English', 'switch_url': '?lang=en',
+           'desc': 'Websites, mifumo ya usimamizi, apps za simu na huduma za WhatsApp — zimebuniwa na kutengenezwa Dar es Salaam, Tanzania.'},
+}
+
 # Mistari ya jedwali la domain: (maandishi, tld inayotoa bei)
 DOMAIN_ROWS = [
     ('.co.tz', '.co.tz'), ('.tz', '.tz'), ('.com', '.com'), ('.org · .net', '.org'),
@@ -98,17 +133,32 @@ def qr_data_uri(text):
     return 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode()
 
 
-def _team(profile):
+def _sw(d, key):
+    """Thamani ya Kiswahili (key_sw) ikiwepo, la sivyo ya Kiingereza."""
+    return d.get(f'{key}_sw') or d.get(key)
+
+
+def _team(profile, lang='en'):
     rows = [m for m in (profile.team or []) if isinstance(m, dict) and m.get('name')] or DEFAULT_TEAM
     out = []
     for i, m in enumerate(rows):
         bg, accent = TEAM_COLORS[i % len(TEAM_COLORS)]
-        out.append({**m, 'bg': bg, 'accent': accent, 'photo_url': _asset_url(m.get('photo'))})
+        m = {**m, 'bg': bg, 'accent': accent, 'photo_url': _asset_url(m.get('photo'))}
+        if lang == 'sw':
+            for k in ('role', 'skill'):
+                m[k] = m.get(f'{k}_sw') or TEAM_SW.get(m.get(k), m.get(k))
+        out.append(m)
     return out
 
 
-def _packages(profile):
-    rows = [p for p in (profile.packages or []) if isinstance(p, dict) and p.get('name')] or DEFAULT_PACKAGES
+def _packages(profile, lang='en'):
+    custom = [p for p in (profile.packages or []) if isinstance(p, dict) and p.get('name')]
+    rows = custom or DEFAULT_PACKAGES
+    if lang == 'sw':
+        if custom:
+            rows = [{**p, **{k: _sw(p, k) for k in ('name', 'headline', 'note', 'badge', 'features')}} for p in custom]
+        else:
+            rows = [{**p, **sw} for p, sw in zip(DEFAULT_PACKAGES, DEFAULT_PACKAGES_SW)]
     out = []
     for p in rows:
         try:
@@ -126,7 +176,9 @@ def _domains():
             for label, tld in DOMAIN_ROWS if tld in TLD_PRICES]
 
 
-def brochure_context(profile):
+def brochure_context(profile, lang='en'):
+    import json
+    lang = 'sw' if lang == 'sw' else 'en'
     period = (profile.period or '2025 — 2026').replace(' — ', '–').replace(' - ', '–')
     website = (profile.website or 'www.jamiitek.com').strip()
     site_url = website if website.startswith('http') else f'https://{website}'
@@ -136,8 +188,12 @@ def brochure_context(profile):
         'period': period,
         'period_long': period.replace('–', ' — '),
         'phone_display': phone_display(profile.phone) or profile.phone,
-        'team': _team(profile),
-        'packages': _packages(profile),
+        'lang': lang,
+        'ui': UI[lang],
+        'ui_js': json.dumps({k: UI[lang][k] for k in ('dl', 'busy', 'done')}),
+        'pages_template': f'docs/brochure_pages_{lang}.html',
+        'team': _team(profile, lang),
+        'packages': _packages(profile, lang),
         'domains': _domains(),
         'template_hosting': f'{TEMPLATE_HOSTING_PER_MONTH:,}',
         'qr_whatsapp': qr_data_uri(f'https://wa.me/{wa}') if wa else '',
