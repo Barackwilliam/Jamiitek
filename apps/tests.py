@@ -1727,6 +1727,14 @@ class CompanyProfileBrochureTest(TestCase):
         self.assertIn('attachment', r['Content-Disposition'])
         self.assertTrue(b''.join(r.streaming_content).startswith(b'%PDF'))
 
+    def test_sidebar_links_to_company_profile(self):
+        from django.core.cache import cache
+        cache.clear()
+        html = self.client.get('/').content.decode()
+        side = html[html.find('<aside class="side'):html.find('</aside>')]
+        self.assertIn('href="/company-profile/"', side)
+        self.assertIn('Company Profile', side)
+
     def test_pdf_url_override_redirects(self):
         self.profile.brochure_pdf_url = 'https://cdn.example.com/profile.pdf'
         self.profile.save()
