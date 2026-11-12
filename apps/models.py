@@ -1620,6 +1620,16 @@ class CompanyProfile(models.Model):
     address = models.CharField(max_length=200, default='Dar es Salaam, Tanzania')
 
     logo_url = models.URLField(blank=True)
+
+    # Brochure mpya (kurasa 12). Zikiwa tupu, apps/profile_brochure.py inatumia za msingi.
+    # team: [{"name","role","skill","photo","position"}] — photo ni URL au njia ya static
+    team = models.JSONField(default=list, blank=True)
+    # packages: [{"name","headline","price","note","features":[...],"badge","dark"}]
+    packages = models.JSONField(default=list, blank=True)
+    brochure_pdf_url = models.URLField(
+        blank=True, help_text='Optional: link to an uploaded PDF of the brochure. '
+                              'Empty = the PDF bundled with the site is used.')
+
     is_active = models.BooleanField(default=True,
                                     help_text='Only the active profile is shown publicly')
     created_at = models.DateTimeField(auto_now_add=True)

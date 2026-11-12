@@ -1677,3 +1677,47 @@ class PortalDesignSwitchTest(TestCase):
         r = self.client.post('/manage/portal-design/', {'design': 'bento'})
         self.assertNotEqual(r.status_code, 200)
         self.assertEqual(PortalSettings.current_design(), 'classic')
+
+
+class CompanyProfileBrochureTest(TestCase):
+    def setUp(self):
+        from apps.models import CompanyProfile
+        self.profile = CompanyProfile.objects.create(is_active=True, phone='0750910158')
+
+    def test_brochure_shows_team_prices_and_qr(self):
+        html = self.client.get('/company-profile/').content.decode()
+        for text in ('William Eliya Chipindi', 'Debora Osward', 'Beatha Matembo', 'Grace William',
+                     '180,000', '350,000', '500,000', '650,000', '+255 750 910 158',
+                     'data:image/png;base64,', '/static/profile/team1.'):
+            self.assertIn(text, html, text)
+        # Domain kutoka TLD_PRICES
+        self.assertIn('22,000', html)
+        self.assertIn('36,000', html)
+        self.assertNotIn('150,000', html)
+
+    def test_team_and_packages_editable_from_admin(self):
+        self.profile.team = [{'name': 'Asha Juma', 'role': 'Marketing', 'skill': 'Growth'}]
+        self.profile.packages = [{'name': 'Starter', 'price': 99000, 'features': ['One page']}]
+        self.profile.save()
+        html = self.client.get('/company-profile/').content.decode()
+        self.assertIn('Asha Juma', html)
+        self.assertIn('99,000', html)
+        self.assertNotIn('Beatha Matembo', html)
+
+    def test_swahili_keeps_old_profile_page(self):
+        r = self.client.get('/company-profile/?lang=sw')
+        self.assertEqual(r.status_code, 200)
+        self.assertTemplateUsed(r, 'docs/profile_view.html')
+
+    def test_pdf_download_is_the_bundled_brochure(self):
+        r = self.client.get('/company-profile/pdf/')
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r['Content-Type'], 'application/pdf')
+        self.assertIn('attachment', r['Content-Disposition'])
+        self.assertTrue(b''.join(r.streaming_content).startswith(b'%PDF'))
+
+    def test_pdf_url_override_redirects(self):
+        self.profile.brochure_pdf_url = 'https://cdn.example.com/profile.pdf'
+        self.profile.save()
+        r = self.client.get('/company-profile/pdf/')
+        self.assertRedirects(r, 'https://cdn.example.com/profile.pdf', fetch_redirect_response=False)

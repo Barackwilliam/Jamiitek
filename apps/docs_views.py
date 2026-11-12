@@ -70,13 +70,34 @@ def _render_pdf(request, template, ctx, filename):
 # COMPANY PROFILE
 # ============================================================
 
+BROCHURE_PDF = 'profile/JamiiTek-Company-Profile.pdf'
+
+
 def company_profile_view(request):
-    """Ukurasa wa umma wa company profile."""
+    """
+    Ukurasa wa umma wa company profile. Kiingereza = brochure mpya ya kurasa 12;
+    ?lang=sw = toleo la zamani la Kiswahili (brochure bado haina Kiswahili).
+    """
     profile = CompanyProfile.objects.filter(is_active=True).first()
     if profile is None:
         raise Http404('No active company profile')
-    return render(request, 'docs/profile_view.html',
-                  {'profile': profile, 'lang': _lang(request)})
+    if _lang(request) == 'sw':
+        return render(request, 'docs/profile_view.html', {'profile': profile, 'lang': 'sw'})
+    from .profile_brochure import brochure_context
+    return render(request, 'docs/profile_brochure.html', brochure_context(profile))
+
+
+def _bundled_brochure():
+    """PDF ya brochure iliyo kwenye static (STATIC_ROOT kwenye production, apps/static kwenye dev)."""
+    from django.contrib.staticfiles import finders
+    from django.contrib.staticfiles.storage import staticfiles_storage
+    try:
+        if staticfiles_storage.exists(BROCHURE_PDF):
+            return staticfiles_storage.open(BROCHURE_PDF)
+    except Exception:
+        pass
+    path = finders.find(BROCHURE_PDF)
+    return open(path, 'rb') if path else None
 
 
 def company_profile_pdf(request):
@@ -84,6 +105,15 @@ def company_profile_pdf(request):
     if profile is None:
         raise Http404('No active company profile')
     lang = _lang(request)
+    if lang == 'en':
+        if profile.brochure_pdf_url:
+            return redirect(profile.brochure_pdf_url)
+        fh = _bundled_brochure()
+        if fh is not None:
+            from django.http import FileResponse
+            name = f'{profile.short_name}-Company-Profile.pdf'.replace(' ', '_')
+            return FileResponse(fh, as_attachment=True, filename=name,
+                                content_type='application/pdf')
     fname = f'{profile.short_name}-company-profile-{lang}.pdf'.replace(' ', '_')
     return _render_pdf(request, 'docs/profile_pdf.html',
                        {'profile': profile, 'lang': lang}, fname)

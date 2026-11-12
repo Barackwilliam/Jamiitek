@@ -24,9 +24,9 @@ logger = logging.getLogger(__name__)
 # Pricing (TZS / year). Edit here — the homepage reads from this.
 # ──────────────────────────────────────────────────────────────
 TLD_PRICES = {
-    '.com':   30000,
+    '.com':   36000,
     '.co.tz': 25000,
-    '.tz':    15000,
+    '.tz':    22000,
     '.org':   30000,
     '.net':   30000,
     '.or.tz': 25000,

@@ -973,6 +973,16 @@ class CompanyProfileAdmin(admin.ModelAdmin):
         ('Content (Swahili)', {'fields': ('about_sw', 'mission_sw', 'vision_sw', 'pricing_note_sw'),
                                'classes': ('collapse',)}),
         ('Contact', {'fields': ('email', 'phone', 'website', 'address')}),
+        ('Brochure (company profile design)', {
+            'fields': ('team', 'packages', 'brochure_pdf_url'),
+            'description': 'Team and price packages shown in the company profile. '
+                           'Leave a list empty ( [] ) to use the defaults. '
+                           'Team: [{"name": "...", "role": "...", "skill": "...", '
+                           '"photo": "https://... or profile/team1.jpg", "position": "50% 20%"}]. '
+                           'Packages: [{"name": "...", "headline": "...", "price": 350000, '
+                           '"note": "one-time payment", "features": ["...", "..."], '
+                           '"badge": "Most chosen", "dark": false}].',
+        }),
     )
 
     def builder_link(self, obj):
