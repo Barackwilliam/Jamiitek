@@ -1,0 +1,744 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ profile.company_name }} — Company Profile {{ period }}</title>
+<meta name="description" content="{{ profile.company_name }}: websites, management systems, mobile apps and WhatsApp automation, built in Dar es Salaam, Tanzania.">
+<meta name="theme-color" content="#2E5BFF">
+<link rel="canonical" href="https://www.jamiitek.com/company-profile/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{ profile.company_name }} — Company Profile {{ period }}">
+<meta property="og:description" content="Websites, management systems, mobile apps and WhatsApp automation — designed and built in Dar es Salaam, Tanzania.">
+<meta property="og:image" content="https://www.jamiitek.com{% static 'profile/jt-d.jpg' %}">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+@font-face{font-family:'Space Grotesk';font-weight:300 700;font-display:swap;src:url({% static 'fonts/space-grotesk.woff2' %}) format('woff2')}
+@font-face{font-family:'DM Sans';font-weight:100 1000;font-display:swap;src:url({% static 'fonts/dm-sans.woff2' %}) format('woff2')}
+
+:root{--b:#2E5BFF;--bd:#1B3FD1;--or:#FF6B2C;--ink:#0B1530;--ink2:#14214A;--bg:#fff;--mut:#667085;--txt:#3A4257;--line:#E6E9F2;--soft:#F3F5FA}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#cfd3da;font-family:'DM Sans',sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+img{display:block}
+.pg{position:relative;width:794px;height:1123px;margin:0 auto 24px;overflow:hidden;background:#fff}
+.g{font-family:'Space Grotesk',sans-serif}
+p{font-size:12.5px;line-height:1.65;color:var(--txt)}
+.shot{overflow:hidden}.shot img{width:100%;height:100%;object-fit:cover;object-position:top}
+.fn{position:absolute;left:56px;right:56px;bottom:32px;display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--mut);letter-spacing:.06em;text-transform:uppercase}
+.fn b{font:700 13px 'Space Grotesk';color:var(--b)}
+.h{font:700 44px/1.02 'Space Grotesk';letter-spacing:-.035em}
+.h span{color:var(--or)}
+.h em{font-style:normal;color:var(--b)}
+.sub{font-size:13px;color:var(--mut);margin-top:10px;max-width:520px}
+
+/* ═ JALADA ═ */
+#d1 .photo{position:absolute;left:0;top:0;width:100%;height:100%;clip-path:polygon(0 18%,62% 100%,0 100%)}
+#d1 .photo{background:var(--ink)}
+#d1 .mosaic{position:absolute;left:-180px;top:120px;width:760px;display:grid;grid-template-columns:1fr 1fr;gap:16px;transform:rotate(-14deg)}
+#d1 .mosaic .t{height:210px;border-radius:12px;overflow:hidden;box-shadow:0 14px 30px rgba(0,0,0,.45)}
+#d1 .mosaic .t img{width:100%;height:100%;object-fit:cover;object-position:top}
+#d1 .mosaic .t:nth-child(odd){transform:translateY(60px)}
+#d1 .photo .shot img{object-position:20% center;filter:saturate(1.05)}
+#d1 .band{position:absolute;right:0;top:600px;width:520px;height:250px;background:var(--b);clip-path:polygon(16% 0,100% 0,100% 100%,0 100%)}
+#d1 .band2{position:absolute;right:0;top:580px;width:560px;height:14px;background:var(--or);clip-path:polygon(4% 0,100% 0,100% 100%,0 100%)}
+#d1 .title{position:absolute;right:56px;top:650px;color:#fff;text-align:left;width:380px}
+#d1 .title small{font:700 12px 'Space Grotesk';letter-spacing:.24em;text-transform:uppercase;color:#C9D4FF}
+#d1 .title h1{font:700 64px/.95 'Space Grotesk';letter-spacing:-.04em;margin-top:8px}
+#d1 .title h1 span{color:var(--or)}
+#d1 .logo{position:absolute;right:56px;top:96px;text-align:right}
+#d1 .logo .mk{display:inline-grid;place-items:center;width:96px;height:96px;border-radius:26px;background:#fff;box-shadow:0 18px 40px rgba(11,21,48,.15);border:1px solid var(--line)}
+#d1 .logo .mk img{width:76px}
+#d1 .logo b{display:block;margin-top:18px;font:700 44px 'Space Grotesk';letter-spacing:-.03em}
+#d1 .logo b span{color:var(--b)}
+#d1 .logo small{display:block;font:700 11px 'Space Grotesk';letter-spacing:.3em;text-transform:uppercase;color:var(--mut);margin-top:4px}
+#d1 .what{position:absolute;right:56px;top:330px;width:340px;text-align:right}
+#d1 .what p{font-size:13.5px}
+#d1 .what .chips{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;margin-top:14px}
+#d1 .what .chips span{padding:6px 11px;border-radius:100px;border:1.5px solid var(--b);font:700 10.5px 'Space Grotesk';color:var(--b)}
+#d1 .contact{position:absolute;right:56px;bottom:46px;text-align:right;font-size:11px;color:var(--txt);line-height:1.7}
+#d1 .contact b{color:var(--ink)}
+
+/* ═ WELCOME ═ */
+#d2 .arc{position:absolute;left:-80px;bottom:-240px;width:960px;height:620px;border-radius:50% 50% 0 0;background:var(--b)}
+#d2 .arc2{position:absolute;left:-60px;bottom:-250px;width:920px;height:600px;border-radius:50% 50% 0 0;border-top:14px solid var(--or)}
+.bar{height:22px;background:#EEF0F4;display:flex;gap:5px;align-items:center;padding:0 10px;flex:none}
+.bar i{width:7px;height:7px;border-radius:50%;background:#D4D8E0}.bar i:nth-child(1){background:#F87171}.bar i:nth-child(2){background:#FBBF24}.bar i:nth-child(3){background:#34D399}
+.bar em{margin-left:10px;font-style:normal;font-size:8px;color:#8a93a3}
+#d2 .lap{position:absolute;left:110px;bottom:118px;width:520px}
+#d2 .lap .scr{background:#0b0f1d;border-radius:14px 14px 4px 4px;padding:9px;box-shadow:0 30px 60px rgba(11,21,48,.35)}
+#d2 .lap .scr>.bar{border-radius:6px 6px 0 0}
+#d2 .lap .shot{height:290px;border-radius:0 0 4px 4px}
+#d2 .lap .base{height:14px;margin:0 -34px;border-radius:0 0 16px 16px;background:linear-gradient(#e2e6ee,#9aa3b5)}
+#d2 .mob{position:absolute;right:96px;bottom:104px;width:132px;height:270px;border-radius:24px;background:#0b0f1d;padding:6px;box-shadow:0 24px 50px rgba(11,21,48,.4)}
+#d2 .mob .shot{width:100%;height:100%;border-radius:18px}
+#d2 .circX{position:absolute;left:50%;bottom:120px;width:380px;height:380px;margin-left:-190px;border-radius:50%;overflow:hidden;border:10px solid #fff;box-shadow:0 20px 50px rgba(11,21,48,.3)}
+#d2 .circ .shot{width:100%;height:100%}
+#d2 .in{position:absolute;left:56px;right:56px;top:70px}
+#d2 .cols{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:22px}
+#d2 .drop::first-letter{float:left;font:700 54px/.85 'Space Grotesk';color:var(--b);margin:5px 8px 0 0}
+#d2 .stats{display:grid;grid-template-columns:repeat(4,1fr);margin-top:30px;border-top:2px solid var(--ink)}
+#d2 .stats div{padding:16px 10px 0 0}
+#d2 .stats b{display:block;font:700 34px 'Space Grotesk';letter-spacing:-.04em;color:var(--b)}
+#d2 .stats div:nth-child(even) b{color:var(--or)}
+#d2 .stats small{font-size:11px;color:var(--mut)}
+#d2 .sign{margin-top:14px;font:700 13px 'Space Grotesk'}
+#d2 .sign small{display:block;font:500 11px 'DM Sans';color:var(--mut)}
+
+/* ═ CONTENTS ═ */
+#d3 .glow{position:absolute;right:60px;top:60px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(255,210,150,.55),transparent 65%)}
+#d3 .am{position:absolute;right:0;top:0;width:470px;height:470px}
+#d3 .lp{position:absolute;left:24px;top:118px;width:390px;transform:perspective(1300px) rotateY(-16deg) rotateX(5deg) rotate(-1deg);transform-origin:left center}
+#d3 .lp .scr{background:#0b0f1d;border-radius:12px 12px 3px 3px;padding:7px;box-shadow:0 34px 60px rgba(11,21,48,.45)}
+#d3 .lp .shot{aspect-ratio:16/10;border-radius:0 0 3px 3px}
+#d3 .lp .scr>.bar{border-radius:5px 5px 0 0;height:18px}
+#d3 .lp .base{height:11px;margin:0 -26px;border-radius:0 0 14px 14px;background:linear-gradient(#eef1f6,#9aa3b5)}
+#d3 .fon{position:absolute;right:28px;top:196px;width:112px;height:228px;border-radius:22px;background:#0b0f1d;padding:5px;box-shadow:0 26px 50px rgba(11,21,48,.5);transform:rotate(5deg)}
+#d3 .fon .shot{width:100%;height:100%;border-radius:17px}
+#d3 .fc{position:absolute;left:0;top:356px;display:flex;gap:10px;align-items:center;width:250px;padding:8px;border-radius:14px;background:#fff;box-shadow:0 18px 40px rgba(11,21,48,.25)}
+#d3 .fc .shot{width:74px;height:56px;border-radius:9px;flex:none}
+#d3 .fc b{display:block;font:700 13px 'Space Grotesk';color:var(--ink)}
+#d3 .fc small{display:block;font-size:8.5px;line-height:1.35;color:var(--mut);margin-top:2px}
+#d3 .chip{position:absolute;left:70px;top:70px;display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:100px;background:#fff;font:700 10px 'Space Grotesk';color:var(--ink);box-shadow:0 10px 24px rgba(11,21,48,.2)}
+#d3 .chip i{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.25)}
+#d3 .blk{position:absolute;right:0;top:0;width:330px;height:430px;background:linear-gradient(160deg,#FF8A4C,#FF5A1F);border-bottom-left-radius:70px}
+#d3 .bcard{position:absolute;right:46px;top:110px;width:400px;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 24px 50px rgba(11,21,48,.28);transform:rotate(-3deg)}
+#d3 .bcard .shot{aspect-ratio:16/10}
+#d3 .topX{position:absolute;right:0;top:0;width:430px;height:430px;border-bottom-left-radius:100%;overflow:hidden}
+#d3 .top .shot{width:100%;height:100%}
+#d3 .ring{position:absolute;right:-30px;top:-30px;width:490px;height:490px;border-bottom-left-radius:100%;border-left:12px solid var(--or);border-bottom:12px solid var(--or)}
+#d3 .in{position:absolute;left:56px;top:110px;width:290px}
+#d3 .list{position:absolute;left:56px;right:56px;top:500px}
+#d3 .row{display:grid;grid-template-columns:56px 1fr 56px;align-items:center;gap:16px;padding:15px 0;border-bottom:1px solid var(--line)}
+#d3 .row .n{font:700 30px 'Space Grotesk';color:var(--line);-webkit-text-stroke:1.2px var(--b);color:transparent}
+#d3 .row b{font:700 17px 'Space Grotesk'}
+#d3 .row b small{display:block;font:400 11.5px 'DM Sans';color:var(--mut);margin-top:2px}
+#d3 .row .pn{justify-self:end;display:grid;place-items:center;width:44px;height:30px;border-radius:6px;background:var(--or);color:#fff;font:700 12px 'Space Grotesk'}
+
+/* ═ HUDUMA v2 ═ */
+/* S2 */
+#d4 .bn{position:absolute;left:0;top:0;width:100%;height:250px;background:linear-gradient(120deg,#2E5BFF,#1B3FD1);clip-path:polygon(0 0,100% 0,100% 70%,0 100%)}
+#d4 .or{position:absolute;right:0;top:160px;width:260px;height:12px;background:var(--or);clip-path:polygon(4% 0,100% 0,100% 100%,0 100%);transform:rotate(-8.5deg);transform-origin:right}
+#d4 .hd{position:absolute;left:56px;top:62px;color:#fff;width:520px}
+#d4 .hd small{color:#FFC4A6}
+#d4 h2{margin-top:8px;font:700 46px/1 'Space Grotesk';letter-spacing:-.04em}
+#d4 h2 span{color:var(--or)}
+#d4 .hd p{margin-top:10px;color:#DCE3FF;font-size:13px}
+#d4 .gr{position:absolute;left:56px;right:56px;top:268px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+#d4 .c{position:relative;border-radius:20px;padding:18px;background:#fff;border:1px solid var(--line);box-shadow:0 12px 28px rgba(11,21,48,.07);overflow:hidden;min-height:262px}
+#d4 .c::before{content:"";position:absolute;right:-30px;top:-30px;width:90px;height:90px;border-radius:50%;background:var(--soft)}
+#d4 .c i{position:relative;display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:var(--b);color:#fff;transform:rotate(-6deg)}
+#d4 .c:nth-child(even) i{background:var(--or);transform:rotate(6deg)}
+#d4 .c i svg{width:24px;height:24px}
+#d4 .c b{display:block;margin:14px 0 5px;font:700 16px 'Space Grotesk'}
+#d4 .c p{font-size:11.3px;line-height:1.5}
+#d4 ul,#d4 .wd ul{list-style:none;margin-top:8px}
+#d4 li{font-size:10.6px;padding:2px 0 2px 14px;position:relative;color:var(--ink);font-weight:500}
+#d4 li::before{content:"";position:absolute;left:1px;top:7px;width:6px;height:6px;border-radius:50%;background:var(--or)}
+#d4 .wd{position:absolute;left:56px;right:56px;top:838px;display:grid;grid-template-columns:56px 1.3fr 1fr;gap:18px;align-items:center;border-radius:20px;background:var(--ink);color:#fff;padding:20px 22px}
+#d4 .wd i{display:grid;place-items:center;width:56px;height:56px;border-radius:16px;background:var(--or);color:#fff}
+#d4 .wd i svg{width:27px;height:27px}
+#d4 .wd b{display:block;font:700 17px 'Space Grotesk';margin-bottom:4px}
+#d4 .wd p{font-size:11.5px;color:#C9D0E6}
+#d4 .wd li{color:#fff}
+
+#d4 small{font:700 12px 'Space Grotesk';letter-spacing:.22em;text-transform:uppercase;color:#FFC4A6}
+
+/* ═ KAZI ═ */
+#d5 .in{position:absolute;left:56px;right:56px;top:70px}
+#d5 .feat2{position:absolute;left:56px;right:56px;top:190px;height:420px}
+#d5 .feat2 .bgp{position:absolute;inset:30px 0 0 0;border-radius:28px;background:linear-gradient(135deg,#2E5BFF,#1B3FD1 60%,#14214A);overflow:hidden}
+#d5 .feat2 .bgp::after{content:"";position:absolute;width:260px;height:260px;border-radius:50%;background:var(--or);right:-70px;top:-90px;opacity:.95}
+#d5 .feat2 .lp{position:absolute;left:130px;top:0;width:470px}
+#d5 .feat2 .lp .scr{background:#0b0f1d;border-radius:12px 12px 3px 3px;padding:7px;box-shadow:0 30px 60px rgba(5,10,30,.5)}
+#d5 .feat2 .lp .scr>.bar{border-radius:5px 5px 0 0;height:18px}
+#d5 .feat2 .lp .shot{aspect-ratio:16/10;border-radius:0 0 3px 3px}
+#d5 .feat2 .lp .base{height:11px;margin:0 -28px;border-radius:0 0 14px 14px;background:linear-gradient(#eef1f6,#9aa3b5)}
+#d5 .feat2 .fon{position:absolute;right:30px;top:80px;width:136px;height:280px;border-radius:24px;background:#0b0f1d;padding:5px;box-shadow:0 26px 50px rgba(5,10,30,.55);transform:rotate(4deg)}
+#d5 .feat2 .fon .shot{width:100%;height:100%;border-radius:19px}
+#d5 .feat2 .chip{position:absolute;left:22px;top:52px;display:flex;align-items:center;gap:7px;padding:7px 12px;border-radius:100px;background:#fff;font:700 10px 'Space Grotesk';color:var(--ink);box-shadow:0 10px 24px rgba(11,21,48,.25)}
+#d5 .feat2 .chip i{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.25)}
+#d5 .feat2 .fc{position:absolute;left:22px;bottom:22px;width:250px;padding:14px 16px;border-radius:16px;background:#fff;box-shadow:0 18px 40px rgba(5,10,30,.35)}
+#d5 .feat2 .fc b{display:block;font:700 16px 'Space Grotesk'}
+#d5 .feat2 .fc span{display:block;font:700 9.5px 'Space Grotesk';letter-spacing:.1em;text-transform:uppercase;color:var(--or);margin:3px 0 5px}
+#d5 .feat2 .fc p{font-size:10.5px;line-height:1.45}
+#d5 .feat{position:absolute;left:56px;right:56px;top:210px;height:330px;border-radius:24px;overflow:hidden}
+#d5 .feat .shot{width:100%;height:100%}
+#d5 .grid{top:670px!important}
+#d5 .cont{position:absolute;left:56px;right:56px;bottom:74px;text-align:right;font:700 11px 'Space Grotesk';color:var(--b)}
+#d5 .feat .cap{position:absolute;left:0;bottom:0;background:var(--b);color:#fff;padding:16px 22px;border-top-right-radius:22px;max-width:62%}
+#d5 .feat .cap b{font:700 18px 'Space Grotesk'}
+#d5 .feat .cap p{color:#DCE3FF;font-size:11.5px;margin-top:3px}
+#d5 .grid{position:absolute;left:56px;right:56px;top:570px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+#d5 .grid .c{text-align:left}
+#d5 .bw{border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 14px 34px rgba(11,21,48,.16);border-bottom:4px solid var(--or)}
+#d5 .c:nth-child(2) .bw{border-bottom-color:var(--b)}
+#d5 .bw .shot{aspect-ratio:16/10}
+#d5 .grid .c span{margin-top:14px!important}
+.pt{list-style:none;margin-top:7px}
+.pt li{font-size:10.8px;line-height:1.45;color:var(--txt);padding:2px 0 2px 15px;position:relative}
+.pt li::before{content:"";position:absolute;left:2px;top:8px;width:6px;height:6px;border-radius:50%;background:var(--or)}
+#d5 .grid .c:nth-child(2) .pt li::before{background:var(--b)}
+#d5 .feat2 .fc{width:270px!important}
+#d5 .feat2 .fc .pt li{font-size:10px}
+#d5 .grid .c b{margin-top:2px!important}
+#d5 .grid .ph{position:relative;width:190px;height:190px;margin:0 auto}
+#d5 .grid .ph .shot{width:100%;height:100%;border-radius:50%;border:6px solid #fff;box-shadow:0 10px 30px rgba(11,21,48,.18)}
+#d5 .grid .ph::before{content:"";position:absolute;inset:-12px;border-radius:50%;border:5px solid transparent;border-top-color:var(--or);border-right-color:var(--or);transform:rotate(-20deg)}
+#d5 .grid b{display:block;margin-top:16px;font:700 16px 'Space Grotesk'}
+#d5 .grid span{display:block;font:700 9.5px 'Space Grotesk';letter-spacing:.12em;text-transform:uppercase;color:var(--b);margin:4px 0 6px}
+#d5 .grid p{font-size:11px;line-height:1.5}
+#d5 .also{position:absolute;left:56px;right:56px;bottom:80px;padding:14px 18px;border-radius:12px;background:var(--soft);font-size:11.5px;color:var(--txt)}
+
+/* ═ TIMU ═ */
+#d6 .in{position:absolute;left:56px;right:56px;top:70px}
+#d6 .team{position:absolute;left:56px;right:56px;top:240px;display:grid;grid-template-columns:1fr 1fr;gap:34px 30px}
+#d6 .m{text-align:center}
+#d6 .m .ph{position:relative;width:200px;height:200px;margin:0 auto}
+#d6 .m .ph div{width:100%;height:100%;border-radius:50%;background:var(--soft);border:2px dashed #C3CBE0;display:grid;place-items:center;color:#9AA3BD;font:700 11px 'Space Grotesk';letter-spacing:.1em;text-transform:uppercase}
+#d6 .m .ph::before{content:"";position:absolute;inset:-12px;border-radius:50%;border:6px solid transparent;border-top-color:var(--or);border-left-color:var(--or);transform:rotate(20deg)}
+#d6 .m:nth-child(even) .ph::before{border-top-color:var(--b);border-left-color:var(--b)}
+#d6 .m b{display:block;margin-top:18px;font:700 18px 'Space Grotesk'}
+#d6 .m span{display:block;font:700 10px 'Space Grotesk';letter-spacing:.12em;text-transform:uppercase;color:var(--b);margin:4px 0 6px}
+#d6 .m p{font-size:11px;max-width:270px;margin:0 auto}
+
+/* ═ MIRADI II ═ */
+#d7 .in7{position:absolute;left:56px;right:56px;top:64px}
+#d7 .row7{position:absolute;left:56px;right:56px;height:262px}
+#d7 .r1{top:184px}#d7 .r2{top:470px}
+#d7 .row7 .bg{position:absolute;top:22px;bottom:0;border-radius:24px}
+#d7 .r1 .bg{left:0;width:58%;background:linear-gradient(140deg,#FF8A4C,#FF5A1F)}
+#d7 .r2 .bg{right:0;width:58%;background:linear-gradient(140deg,#2E5BFF,#14214A)}
+#d7 .dv{position:absolute;top:0;width:58%;height:100%}
+#d7 .r1 .dv{left:0}#d7 .r2 .dv{right:0}
+#d7 .lp{position:absolute;left:30px;top:6px;width:300px}
+#d7 .lp .scr{background:#0b0f1d;border-radius:10px 10px 3px 3px;padding:6px;box-shadow:0 24px 46px rgba(5,10,30,.45)}
+#d7 .lp .scr>.bar{border-radius:4px 4px 0 0;height:15px}
+#d7 .lp .scr>.bar i{width:6px;height:6px}
+#d7 .lp .scr>.bar em{font-size:7px}
+#d7 .lp .shot{aspect-ratio:16/10;border-radius:0 0 3px 3px}
+#d7 .lp .base{height:9px;margin:0 -20px;border-radius:0 0 12px 12px;background:linear-gradient(#eef1f6,#9aa3b5)}
+#d7 .fon{position:absolute;right:20px;top:40px;width:96px;height:200px;border-radius:19px;background:#0b0f1d;padding:4px;box-shadow:0 22px 44px rgba(5,10,30,.5);transform:rotate(4deg)}
+#d7 .fon .shot{width:100%;height:100%;border-radius:15px}
+#d7 .tx{position:absolute;top:30px;width:40%}
+#d7 .r1 .tx{right:0}#d7 .r2 .tx{left:0}
+#d7 .tx span{display:block;font:700 9.5px 'Space Grotesk';letter-spacing:.12em;text-transform:uppercase;color:var(--or)}
+#d7 .r2 .tx span{color:var(--b)}
+#d7 .tx b{display:block;font:700 22px 'Space Grotesk';letter-spacing:-.025em;margin:4px 0 6px}
+#d7 .tx p{font-size:11.5px;line-height:1.5}
+#d7 .r2 .pt li::before{background:var(--b)}
+#d7 .also7{position:absolute;left:56px;right:56px;top:762px;border-radius:20px;background:var(--soft);padding:18px 22px 16px}
+#d7 .also7 .hh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+#d7 .also7 .hh b{font:700 15px 'Space Grotesk'}
+#d7 .also7 .hh small{font-size:10.5px;color:var(--mut)}
+#d7 .also7 .rows{display:grid;grid-template-columns:1fr 1fr;column-gap:26px}
+#d7 .also7 .rows div{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid #E1E5EF;font-size:10.8px}
+#d7 .also7 .rows b{font-weight:700}
+#d7 .also7 .rows span{color:var(--mut);font-size:10px;text-align:right}
+#d7 .more50{display:flex;align-items:center;gap:14px;margin-top:12px;padding:12px 16px;border-radius:14px;background:var(--ink);color:#fff}
+#d7 .more50 b{font:700 30px 'Space Grotesk';letter-spacing:-.03em;color:var(--or)}
+#d7 .more50 span{font-size:11.5px;line-height:1.45;color:#DCE3FF}
+
+/* ═ TIMU v2 ═ */
+#d6 .in6{position:absolute;left:56px;right:56px;top:64px}
+#d6 .tg6{position:absolute;left:56px;right:56px;top:196px;display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+#d6 .tm{position:relative;height:330px;border-radius:26px;overflow:hidden;background:var(--g);box-shadow:0 18px 40px rgba(11,21,48,.18)}
+#d6 .tm:nth-child(2),#d6 .tm:nth-child(4){transform:translateY(26px)}
+#d6 .tm .ph{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center}
+#d6 .tm .ph svg{width:78%;height:86%}
+#d6 .tm .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top}
+#d6 .tm .tag{position:absolute;right:16px;top:16px;padding:5px 10px;border-radius:100px;background:rgba(255,255,255,.2);border:1px dashed rgba(255,255,255,.6);font:700 9px 'Space Grotesk';letter-spacing:.12em;text-transform:uppercase;color:#fff}
+#d6 .tm .ov{position:absolute;left:12px;right:12px;bottom:12px;padding:14px 16px;border-radius:18px;background:rgba(255,255,255,.94);backdrop-filter:blur(8px)}
+#d6 .tm .ov b{display:block;font:700 18px 'Space Grotesk';letter-spacing:-.02em;color:var(--ink)}
+#d6 .tm .ov small{display:block;font-size:11px;color:var(--mut);margin-top:2px}
+#d6 .tm .sk{position:absolute;right:14px;top:-13px;padding:5px 11px;border-radius:100px;background:var(--a);color:#fff;font:700 9.5px 'Space Grotesk';letter-spacing:.08em;text-transform:uppercase;box-shadow:0 6px 14px rgba(0,0,0,.18)}
+#d6 .tm .corner{position:absolute;left:0;top:0;width:70px;height:70px;background:var(--a);border-bottom-right-radius:70px;opacity:.95}
+#d6 .band6{position:absolute;left:56px;right:56px;top:930px;display:grid;grid-template-columns:.8fr 1fr 1fr 2fr;gap:0;border-radius:18px;background:var(--ink);color:#fff;padding:16px 18px;align-items:center}
+#d6 .band6>div{padding:0 12px;border-left:1px solid rgba(255,255,255,.14)}
+#d6 .band6>div:first-child{border-left:0}
+#d6 .band6 b{display:block;font:700 22px 'Space Grotesk';letter-spacing:-.02em;color:var(--or)}
+#d6 .band6 small{font-size:10px;color:#AEB6D3}
+#d6 .band6 .q{font:500 12px/1.45 'DM Sans';font-style:italic;color:#DCE3FF}
+#d6 .tm.hp .ph::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(27,63,209,.0) 45%,rgba(27,63,209,.55) 100%)}
+#d6 .tm.hp .corner{z-index:1}
+#d6 .tm .ov{z-index:2}
+
+/* ═ KWA NINI v2 ═ */
+/* V1 */
+#d8 .ph{position:absolute;right:0;top:0;width:100%;height:520px;clip-path:polygon(56% 0,100% 0,100% 100%,36% 100%)}
+#d8 .ph img{position:absolute;right:0;top:0;width:66%;height:100%;object-fit:cover;object-position:68% 25%}
+#d8 .bl{position:absolute;left:0;top:400px;width:520px;height:130px;background:var(--b);clip-path:polygon(0 0,100% 0,88% 100%,0 100%)}
+#d8 .or{position:absolute;left:0;top:388px;width:540px;height:12px;background:var(--or);clip-path:polygon(0 0,100% 0,98% 100%,0 100%)}
+#d8 .hd{position:absolute;left:56px;top:90px;width:300px}
+#d8 h2{margin-top:10px;font:700 46px/1.02 'Space Grotesk';letter-spacing:-.035em}
+#d8 h2 span{color:var(--b)}
+#d8 .bd{position:absolute;left:56px;top:425px;display:flex;align-items:center;gap:14px;color:#fff}
+#d8 .bd b{font:700 54px 'Space Grotesk';letter-spacing:-.04em}
+#d8 .bd span{font:700 13px/1.25 'Space Grotesk';letter-spacing:.06em;text-transform:uppercase;color:#DCE3FF}
+#d8 .gr{position:absolute;left:56px;right:56px;top:562px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+#d8 .gr>div{position:relative;border-radius:20px;padding:18px 18px 16px;background:#fff;border:1px solid var(--line);box-shadow:0 12px 28px rgba(11,21,48,.07);overflow:hidden;min-height:224px}
+#d8 .gr>div::before{content:"";position:absolute;right:-30px;top:-30px;width:90px;height:90px;border-radius:50%;background:var(--soft)}
+#d8 .gr i{position:relative;display:grid;place-items:center;width:50px;height:50px;border-radius:16px;background:var(--b);color:#fff;transform:rotate(-6deg)}
+#d8 .gr>div:nth-child(even) i{background:var(--or);transform:rotate(6deg)}
+#d8 .gr i svg{width:25px;height:25px}
+#d8 .gr b{display:block;margin:14px 0 5px;font:700 17px 'Space Grotesk'}
+#d8 .gr p{font-size:11.6px;line-height:1.55}
+
+#d8 small{font:700 12px 'Space Grotesk';letter-spacing:.22em;text-transform:uppercase;color:var(--or)}
+
+/* ═ JINSI ═ */
+#d9 .shp9{position:absolute;left:0;bottom:0;width:100%;height:270px;background:var(--ink);clip-path:polygon(0 30%,100% 0,100% 100%,0 100%)}
+#d9 .in9{position:absolute;left:56px;top:64px;width:460px}
+#d9 .tl9{position:absolute;left:56px;right:56px;top:262px}
+#d9 .tl9::before{content:"";position:absolute;left:37px;top:30px;bottom:30px;width:2px;background:repeating-linear-gradient(var(--line) 0 6px,transparent 6px 12px)}
+#d9 .st{position:relative;display:grid;grid-template-columns:76px 1fr;gap:20px;padding:16px 0 26px}
+#d9 .st .n{display:grid;place-items:center;width:76px;height:76px;border-radius:22px;background:#fff;border:2px solid var(--line);font:700 30px 'Space Grotesk';color:transparent;-webkit-text-stroke:1.4px var(--b);box-shadow:0 10px 24px rgba(11,21,48,.08)}
+#d9 .st .hd{display:flex;align-items:center;gap:12px;margin:10px 0 6px}
+#d9 .st .hd b{font:700 21px 'Space Grotesk'}
+#d9 .st .hd em{font-style:normal;padding:4px 10px;border-radius:100px;background:var(--soft);font:700 10px 'Space Grotesk';letter-spacing:.08em;text-transform:uppercase;color:var(--b)}
+#d9 .st p{font-size:13.2px;max-width:540px}
+#d9 .sec9{position:absolute;left:56px;right:56px;bottom:84px;color:#fff}
+#d9 .sec9>b{display:block;font:700 12px 'Space Grotesk';letter-spacing:.14em;text-transform:uppercase;color:var(--or);margin-bottom:12px}
+#d9 .sec9 .row{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+#d9 .sec9 .row div{border-radius:14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);padding:12px 4px;text-align:center;font:700 11px 'Space Grotesk'}
+#d9 .sec9 svg{display:block;width:22px;height:22px;margin:0 auto 7px;color:#9DB2FF}
+#d9 .fn{color:#8E98B8}#d9 .fn b{color:var(--or)}
+
+/* ═ BEI ═ */
+#d10 .in10{position:absolute;left:56px;top:64px;width:480px}
+#d10 .pc10{position:absolute;left:56px;right:56px;top:232px;display:flex;flex-direction:column;gap:10px}
+#d10 .pc10>div{display:grid!important;grid-template-columns:1.15fr .95fr 1.3fr;align-items:center;column-gap:18px;padding:14px 22px!important}
+#d10 .pc10>div>small{grid-column:1;grid-row:1}
+#d10 .pc10>div>h4{grid-column:1;grid-row:2;margin:3px 0 0!important}
+#d10 .pc10>div>.f:nth-of-type(1){grid-column:2;grid-row:1;align-self:end}
+#d10 .pc10>div>strong{grid-column:2;grid-row:2}
+#d10 .pc10>div>.f:nth-of-type(2){grid-column:2;grid-row:3}
+#d10 .pc10>div>ul{grid-column:3;grid-row:1/4;margin:0!important;padding:0 0 0 18px!important;border-top:0!important;border-left:1px solid var(--line)}
+#d10 .pc10 .on>ul,#d10 .pc10 .dk>ul{border-left-color:rgba(255,255,255,.22)!important}
+#d10 .pc10 strong{font-size:27px!important}
+#d10 .pop{right:auto!important;left:22px;top:-10px!important}
+#d10 .pc10>div{position:relative;border-radius:22px;padding:18px 22px;background:#fff;border:1px solid var(--line);box-shadow:0 10px 26px rgba(11,21,48,.06)}
+#d10 .pc10 .dk{background:var(--ink);color:#fff;border:0}
+#d10 .pc10 .dk small,#d10 .pc10 .dk .f{color:#AEB6D3}#d10 .pc10 .dk li{color:#fff}#d10 .pc10 .dk ul{border-color:rgba(255,255,255,.18)}#d10 .pc10 .dk li::before{background:rgba(255,255,255,.15);color:#fff}
+#d10 .pc10 .on{background:linear-gradient(160deg,#2E5BFF,#1B3FD1);color:#fff;border:0;box-shadow:0 24px 44px rgba(46,91,255,.35)}
+#d10 .pop{position:absolute;right:16px;top:-11px;padding:5px 11px;border-radius:100px;background:var(--or);color:#fff;font:700 9.5px 'Space Grotesk';letter-spacing:.08em;text-transform:uppercase}
+#d10 .pc10 small{font:700 9.5px 'Space Grotesk';letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+#d10 .pc10 .on small{color:#C9D4FF}
+#d10 .pc10 h4{font:700 16px/1.2 'Space Grotesk';margin:6px 0 8px}
+#d10 .pc10 .f{display:block;font-size:10px;color:var(--mut)}
+#d10 .pc10 .on .f{color:#C9D4FF}
+#d10 .pc10 strong{display:block;font:700 30px/1.15 'Space Grotesk';letter-spacing:-.04em}
+#d10 .pc10 strong sup{font-size:11px;vertical-align:14px;margin-right:3px}
+#d10 .pc10 ul{list-style:none;margin-top:10px;padding-top:8px;border-top:1px solid var(--line)}
+#d10 .pc10 .on ul{border-color:rgba(255,255,255,.25)}
+#d10 .pc10 li{font-size:11.2px;padding:4px 0 4px 20px;position:relative;color:var(--txt)}
+#d10 .pc10 .on li{color:#fff}
+#d10 .pc10 li::before{content:"✓";position:absolute;left:0;top:5px;width:14px;height:14px;border-radius:50%;background:var(--soft);color:var(--b);font:700 8.5px/14px 'DM Sans';text-align:center}
+#d10 .pc10 .on li::before{background:rgba(255,255,255,.22);color:#fff}
+#d10 .dm10{position:absolute;left:56px;right:56px;top:676px;display:grid;grid-template-columns:1.15fr 1fr;gap:12px}
+#d10 .dom{border-radius:20px;background:var(--soft);padding:18px 20px}
+#d10 .dom>b,#d10 .host>b{display:block;font:700 15px 'Space Grotesk';margin-bottom:8px}
+#d10 .dom>b small{font:500 11px 'DM Sans';color:var(--mut);margin-left:6px}
+#d10 .dom .g{display:grid;grid-template-columns:1fr auto;row-gap:0}
+#d10 .dom .g span,#d10 .dom .g em{padding:6px 0;border-bottom:1px solid #E1E5EF;font-size:12px}
+#d10 .dom .g em{font-style:normal;font:700 12.5px 'Space Grotesk';text-align:right}
+#d10 .host{border-radius:20px;background:var(--ink);color:#fff;padding:18px 20px;position:relative;overflow:hidden}
+#d10 .host::after{content:"";position:absolute;width:140px;height:140px;border-radius:50%;background:var(--or);right:-50px;bottom:-60px;opacity:.9}
+#d10 .host p{color:#C9D0E6;font-size:12px;position:relative;z-index:1;max-width:240px}
+#d10 .tm10{position:absolute;left:56px;right:56px;top:918px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#d10 .tm10 div{border-radius:16px;border:1px solid var(--line);padding:14px 18px;border-left:4px solid var(--b)}
+#d10 .tm10 div+div{border-left-color:var(--or)}
+#d10 .tm10 b{display:block;font:700 13.5px 'Space Grotesk';margin-bottom:3px}
+#d10 .tm10 p{font-size:11.5px}
+
+
+/* ═ 11 v2 ═ */
+#d11 small,#d12 small.k{font:700 12px 'Space Grotesk';letter-spacing:.22em;text-transform:uppercase;color:var(--or)}
+#d11 .ph,#d12 .ph{position:absolute;right:0;top:0;width:100%;height:420px;clip-path:polygon(58% 0,100% 0,100% 100%,40% 100%)}
+#d11 .ph>img,#d12 .ph>img{position:absolute;right:0;top:0;width:62%;height:100%;object-fit:cover;object-position:50% 20%}
+#d11 .bl,#d12 .bl{position:absolute;left:0;top:320px;width:500px;height:120px;background:var(--b);clip-path:polygon(0 0,100% 0,90% 100%,0 100%)}
+#d11 .or,#d12 .or{position:absolute;left:0;top:308px;width:520px;height:12px;background:var(--or);clip-path:polygon(0 0,100% 0,98% 100%,0 100%)}
+#d11 .hd{position:absolute;left:56px;top:80px;width:340px}
+#d11 h2,#d12 h2{margin-top:10px;font:700 40px/1.05 'Space Grotesk';letter-spacing:-.035em}
+#d11 h2 span,#d12 h2 span{color:var(--b)}
+#d11 .bd,#d12 .bd{position:absolute;left:56px;top:342px;width:390px;color:#fff}
+#d11 .bd b,#d12 .bd b{display:block;font:700 19px/1.2 'Space Grotesk'}
+#d11 .bd span,#d12 .bd span{display:block;margin-top:5px;font-size:12px;color:#DCE3FF}
+#d11 .rn{position:absolute;left:56px;right:56px;top:474px}
+#d11 .rh{font:700 15px 'Space Grotesk';margin-bottom:12px}
+#d11 .st{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;position:relative}
+#d11 .st::before{content:"";position:absolute;left:40px;right:40px;top:26px;height:2px;background:repeating-linear-gradient(90deg,var(--b) 0 8px,transparent 8px 14px)}
+#d11 .st>div{position:relative;text-align:center;padding:0 4px}
+#d11 .st i{position:relative;display:grid;place-items:center;width:54px;height:54px;margin:0 auto;border-radius:50%;background:var(--b);color:#fff;box-shadow:0 0 0 6px #fff,0 10px 22px rgba(46,91,255,.3)}
+#d11 .st>div:nth-child(even) i{background:var(--or);box-shadow:0 0 0 6px #fff,0 10px 22px rgba(255,107,44,.3)}
+#d11 .st i svg{width:25px;height:25px}
+#d11 .st em{position:absolute;left:50%;top:-6px;margin-left:14px;display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--ink);color:#fff;font:700 10px 'Space Grotesk';font-style:normal}
+#d11 .st b{display:block;margin:12px 0 4px;font:700 13.5px 'Space Grotesk'}
+#d11 .st p{font-size:10.8px;line-height:1.45}
+#d11 .sp{position:absolute;left:56px;right:56px;top:720px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#d11 .sp>div{display:grid;grid-template-columns:44px 1fr;gap:12px;align-items:center;padding:14px 16px;border-radius:16px;background:#fff;border:1px solid var(--line);box-shadow:0 8px 20px rgba(11,21,48,.05)}
+#d11 .sp i{display:grid;place-items:center;width:44px;height:44px;border-radius:13px;background:var(--soft);color:var(--b);transform:rotate(-6deg)}
+#d11 .sp>div:nth-child(4n+2) i,#d11 .sp>div:nth-child(4n+3) i{background:#FFE9DE;color:var(--or);transform:rotate(6deg)}
+#d11 .sp i svg{width:22px;height:22px}
+#d11 .sp b{display:block;font:700 13.5px 'Space Grotesk'}
+#d11 .sp p{font-size:11px;line-height:1.4;margin-top:2px}
+/* ═ 12 v2 ═ */
+#d12{background:#fff;color:var(--ink)}
+#d12 .lg{position:absolute;left:56px;top:56px;display:flex;align-items:center;gap:12px}
+#d12 .lg .mk{display:grid;place-items:center;width:52px;height:52px;border-radius:15px;background:#fff;border:1px solid var(--line);box-shadow:0 8px 20px rgba(11,21,48,.1)}
+#d12 .lg .mk img{width:42px}
+#d12 .lg b{display:block;font:700 22px 'Space Grotesk'}#d12 .lg b em{font-style:normal;color:var(--b)}
+#d12 .lg small{font:700 9px 'Space Grotesk';letter-spacing:.24em;text-transform:uppercase;color:var(--mut)}
+#d12 .hd{position:absolute;left:56px;top:150px;width:340px}
+#d12 .hd small{font:700 12px 'Space Grotesk';letter-spacing:.22em;text-transform:uppercase;color:var(--or)}
+#d12 .ph>img{object-position:56% 22%}
+#d11 .ph{background:#E3E2F5}
+#d11 .ph>img{width:auto!important;height:100%!important;left:auto;right:-10px;-webkit-mask:linear-gradient(90deg,transparent,#000 22%);mask:linear-gradient(90deg,transparent,#000 22%)}
+#d12 .ct{position:absolute;left:56px;right:56px;top:470px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#d12 .ct>div{display:flex;gap:14px;align-items:center;padding:14px 18px;border-radius:16px;background:var(--soft)}
+#d12 .ct i{display:grid;place-items:center;width:46px;height:46px;border-radius:13px;background:var(--b);color:#fff;flex:none}
+#d12 .ct>div:nth-child(2) i,#d12 .ct>div:nth-child(3) i{background:var(--or)}
+#d12 .ct i svg{width:22px;height:22px}
+#d12 .ct small{display:block;font:700 9.5px 'Space Grotesk';letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+#d12 .ct b{display:block;margin-top:3px;font:700 16px 'Space Grotesk'}
+#d12 .qr{position:absolute;left:56px;right:56px;top:852px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#d12 .qr>div{display:flex;gap:16px;align-items:center;padding:12px 14px;border-radius:20px;background:var(--b);color:#fff}
+#d12 .qr>div.o{background:var(--ink)}
+#d12 .qr img{width:88px;height:88px;background:#fff;padding:8px;border-radius:12px;flex:none}
+#d12 .qr b{display:block;font:700 15px/1.25 'Space Grotesk';margin-bottom:6px}
+#d12 .qr span{font-size:11.5px;line-height:1.45;color:#DCE3FF}
+#d12 .end{position:absolute;left:0;right:0;bottom:0;height:110px;background:var(--ink);clip-path:polygon(0 35%,100% 0,100% 100%,0 100%);display:flex;justify-content:space-between;align-items:flex-end;padding:0 56px 30px;font-size:10px;color:#AEB6D3}
+
+
+/* sanaa badala ya picha za watu */
+#d11 .ph,#d12 .ph{background:linear-gradient(150deg,#EAF0FF,#D6E1FF)}
+#d11 .ph::before,#d12 .ph::before{content:"";position:absolute;right:-60px;top:-60px;width:260px;height:260px;border-radius:50%;background:rgba(46,91,255,.12)}
+.art{position:absolute;right:40px;top:0;width:330px;height:100%}
+.a11 .inv{position:absolute;right:20px;top:58px;width:250px;padding:16px;border-radius:16px;background:#fff;box-shadow:0 24px 50px rgba(11,21,48,.18);transform:rotate(3deg)}
+.a11 .ih{display:flex;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.a11 .ih img{width:24px}.a11 .ih b{font:700 13px 'Space Grotesk';letter-spacing:.1em}.a11 .ih span{margin-left:auto;font-size:9px;color:var(--mut)}
+.a11 .il,.a11 .it{display:flex;justify-content:space-between;padding:6px 0;font-size:10px;color:var(--txt)}
+.a11 .il em,.a11 .it em{font-style:normal;font-weight:700;color:var(--ink)}
+.a11 .it{border-top:1px solid var(--line);margin-top:4px;padding-top:8px;font:700 11px 'Space Grotesk'}
+.a11 .it em{color:var(--b)}
+.a11 .idue{margin-top:8px;padding:6px 8px;border-radius:8px;background:#FFF4ED;color:#C2410C;font-size:8.5px;font-weight:600}
+.a11 .rcp{position:absolute;left:0;top:230px;width:200px;padding:14px;border-radius:16px;background:var(--ink);color:#fff;box-shadow:0 24px 50px rgba(11,21,48,.3);transform:rotate(-4deg)}
+.a11 .rh{display:flex;align-items:center;gap:8px}
+.a11 .rh i{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#16A34A;font-style:normal;font-weight:800;font-size:12px}
+.a11 .rh b{font:700 13px 'Space Grotesk'}
+.a11 .rcp>span{display:block;margin-top:5px;font-size:10px;color:#AEB6D3}
+.a11 .stamp{position:absolute;right:12px;bottom:-14px;padding:4px 12px;border:3px solid #16A34A;border-radius:8px;color:#16A34A;background:#fff;font:800 14px 'Space Grotesk';letter-spacing:.12em;transform:rotate(-10deg)}
+.a11 .ntf{position:absolute;left:30px;top:20px;display:flex;gap:9px;align-items:center;padding:9px 12px;border-radius:14px;background:#fff;box-shadow:0 12px 28px rgba(11,21,48,.15);font-size:9px;color:var(--mut)}
+.a11 .ntf i{font-style:normal;font-size:16px}
+.a11 .ntf b{display:block;font:700 10.5px 'Space Grotesk';color:var(--ink)}
+.a12 .lp{position:absolute;right:30px;top:70px;width:270px}
+.a12 .lp .scr{background:#0b0f1d;border-radius:9px 9px 3px 3px;padding:5px;box-shadow:0 24px 46px rgba(5,10,30,.35)}
+.a12 .lp .bar{height:12px}.a12 .lp .bar i{width:5px;height:5px}
+.a12 .lp .shot{aspect-ratio:16/10}
+.a12 .lp .base{height:8px;margin:0 -16px;border-radius:0 0 10px 10px;background:linear-gradient(#eef1f6,#9aa3b5)}
+.a12 .fon{position:absolute;left:10px;top:120px;width:150px;height:290px;border-radius:26px;background:#0b0f1d;padding:6px;box-shadow:0 26px 50px rgba(5,10,30,.45);transform:rotate(-5deg)}
+.a12 .sc{width:100%;height:100%;border-radius:21px;overflow:hidden;background:#ECE5DD}
+.a12 .wh{display:flex;align-items:center;gap:7px;padding:22px 9px 8px;background:#075E54;color:#fff}
+.a12 .wh img{width:22px;height:22px;border-radius:50%;background:#fff;padding:2px}
+.a12 .wh b{display:block;font:700 10px 'Space Grotesk'}.a12 .wh span{font-size:8px;opacity:.85}
+.a12 .msgs{display:flex;flex-direction:column;gap:6px;padding:9px 7px}
+.a12 .msgs span{max-width:88%;padding:6px 8px;border-radius:9px;font-size:8.5px;line-height:1.35;color:#111;box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.a12 .msgs .in{align-self:flex-start;background:#fff}
+.a12 .msgs .out{align-self:flex-end;background:#DCF8C6}
+#d12 .ct p{font-size:10.5px;color:var(--mut);margin-top:2px}
+#d12 .nx{position:absolute;left:56px;right:56px;top:672px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+#d12 .nx>b{grid-column:1/-1;font:700 15px 'Space Grotesk';margin-bottom:2px}
+#d12 .nx>div{display:flex;gap:10px;align-items:flex-start;padding:14px;border-radius:16px;border:1px solid var(--line);border-top:3px solid var(--b)}
+#d12 .nx>div:nth-child(3){border-top-color:var(--or)}
+#d12 .nx em{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--b);color:#fff;font:700 12px 'Space Grotesk';font-style:normal;flex:none}
+#d12 .nx>div:nth-child(3) em{background:var(--or)}#d12 .nx>div:nth-child(4) em{background:var(--ink)}#d12 .nx>div:nth-child(4){border-top-color:var(--ink)}
+#d12 .nx strong{display:block;font:700 12.5px 'Space Grotesk';margin-bottom:3px}
+#d12 .nx span{font-size:10.5px;line-height:1.45;color:var(--txt)}
+
+/* ═ skrini: toolbar na kupunguza ukubwa ═ */
+.tb{position:sticky;top:0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:10px 16px;background:rgba(11,21,48,.92);backdrop-filter:blur(8px);font:700 14px 'Space Grotesk';margin-bottom:20px}
+.tb a{text-decoration:none}
+.tb-b{display:flex;align-items:center;gap:8px;color:#fff}
+.tb-b img{width:28px;height:28px;border-radius:8px;background:#fff;padding:2px}
+.tb-r{display:flex;gap:8px;align-items:center}
+.tb-l{color:#C9D4FF;font-size:12px;padding:8px 10px}
+.tb-d{background:var(--or);color:#fff;padding:9px 16px;border-radius:100px;font-size:13px}
+.book{padding-bottom:24px}
+.book .pg{zoom:var(--z,1);box-shadow:0 10px 30px rgba(11,21,48,.15)}
+@page{size:210mm 297mm;margin:0}
+@media print{body{background:none}.tb{display:none}.book{padding:0}.book .pg{zoom:1;margin:0;box-shadow:none;break-after:page}}
+
+/* Jalada (mtindo B: bluu kamili) */
+#d1{background:var(--b);color:#fff}
+#d1 .cv-o{position:absolute;right:-150px;top:-170px;width:560px;height:560px;border-radius:50%;background:var(--or)}
+#d1 .cv-g{position:absolute;right:110px;top:250px;width:380px;height:380px;border-radius:50%;background:#2F4A55;opacity:.95}
+#d1 .cv-n{position:absolute;left:-90px;bottom:120px;width:300px;height:330px;border-radius:40px;background:var(--ink);transform:rotate(20deg)}
+#d1 .cv-top{position:absolute;left:64px;right:64px;top:56px;display:flex;align-items:center;justify-content:space-between;z-index:5}
+#d1 .cv-lg{display:flex;align-items:center;gap:12px;font:700 22px/1.1 'Space Grotesk'}
+#d1 .cv-lg i{width:46px;height:46px;border-radius:12px;background:#fff;display:grid;place-items:center}
+#d1 .cv-lg img{width:34px;height:auto}
+#d1 .cv-lg small{display:block;font:600 8.5px 'Space Grotesk';letter-spacing:.24em;text-transform:uppercase;opacity:.8;margin-top:3px}
+#d1 .cv-pill{background:#fff;color:var(--ink);border-radius:30px;padding:9px 18px;font:700 12px 'Space Grotesk';letter-spacing:.06em;display:flex;align-items:center;gap:8px}
+#d1 .cv-pill:before{content:"";width:9px;height:9px;border-radius:50%;background:var(--or)}
+#d1 .cv-t{position:absolute;left:64px;top:250px;z-index:3}
+#d1 .cv-k{font:700 12px 'Space Grotesk';letter-spacing:.3em;text-transform:uppercase;opacity:.85;margin-bottom:18px}
+#d1 .cv-t h1{font:700 104px/.92 'Space Grotesk';letter-spacing:-.04em;color:#fff;margin:0}
+#d1 .cv-t h1 span{color:var(--or)}
+#d1 .cv-box{display:inline-block;background:#fff;border-radius:22px;padding:6px 26px 14px;margin-top:10px}
+#d1 .cv-box h1{color:var(--b)}
+#d1 .cv-t p{font-size:17px;line-height:1.6;opacity:.92;max-width:430px;margin-top:26px;color:#fff}
+#d1 .cv-lap{position:absolute;right:130px;bottom:150px;width:470px;transform:rotate(-3deg);z-index:2}
+#d1 .cv-lap .s{background:#0b0f1d;border-radius:14px 14px 4px 4px;padding:9px;box-shadow:0 30px 60px rgba(5,10,30,.45)}
+#d1 .cv-lap .s>div{height:270px;overflow:hidden;border-radius:3px}
+#d1 .cv-lap img,#d1 .cv-mob img{width:100%;display:block}
+#d1 .cv-lap .b{height:13px;margin:0 -30px;border-radius:0 0 16px 16px;background:linear-gradient(#e2e6ee,#9aa3b5)}
+#d1 .cv-mob{position:absolute;right:52px;bottom:110px;width:150px;height:300px;border-radius:26px;background:#0b0f1d;padding:7px;box-shadow:0 30px 60px rgba(5,10,30,.5);transform:rotate(-3deg);z-index:3}
+#d1 .cv-mob>div{height:100%;overflow:hidden;border-radius:20px}
+#d1 .cv-ft{position:absolute;left:64px;right:64px;bottom:44px;display:flex;gap:28px;font-size:13.5px;z-index:5}
+</style></head><body>
+<div class="tb"><a class="tb-b" href="/"><img src="{% static 'profile/logo.png' %}" alt="">{{ profile.short_name }}</a>
+  <span class="tb-r"><a class="tb-l" href="?lang=sw">Kiswahili</a><a class="tb-d" href="{% url 'company_profile_pdf' %}">Download PDF</a></span></div>
+<main class="book">
+
+<!-- JALADA -->
+<section class="pg" id="d1">
+  <div class="cv-o"></div><div class="cv-g"></div><div class="cv-n"></div>
+  <div class="cv-top"><div class="cv-lg"><i><img src="{% static 'profile/logo.png' %}" alt="JamiiTek"></i><div>Jamii<span>Tek</span><small>Digital Agency</small></div></div><div class="cv-pill">{{ period_long }}</div></div>
+  <div class="cv-t">
+    <div class="cv-k">{{ profile.short_name }} · Dar es Salaam</div>
+    <h1>Company</h1>
+    <div class="cv-box"><h1>Profile<span>.</span></h1></div>
+    <p>Websites, management systems, mobile apps and WhatsApp automation — made in Tanzania for organisations that want to grow.</p>
+  </div>
+  <div class="cv-lap"><div class="s"><div><img src="{% static 'profile/kw-desk2x.jpg' %}" alt="Kili Wild Adventure website"></div></div><div class="b"></div></div>
+  <div class="cv-mob"><div><img src="{% static 'profile/amish-phone2.jpg' %}" alt="AMISH Company website"></div></div>
+  <div class="cv-ft"><span>{{ profile.website }}</span><span>{{ phone_display }}</span><span>{{ profile.email }}</span></div>
+</section>
+
+<!-- WELCOME -->
+<section class="pg" id="d2">
+  <div class="in">
+    <div class="h">Welcome to<br><em>JamiiTek</em><span>.</span></div>
+    <div class="cols">
+      <p class="drop">JamiiTek is a Tanzanian digital agency. We design and build websites, management systems, mobile apps and WhatsApp automation for schools, NGOs, tour operators, lenders and growing businesses — in English and Kiswahili, built for mobile phones and mobile money.</p>
+      <div><p>We take on a small number of clients at a time, so each one gets a finished, working product and a team that stays on after launch for hosting, updates and support.</p>
+        <p style="margin-top:10px"><b style="color:var(--b)">Mission —</b> to give every Tanzanian organisation digital tools that win customers, save time and earn trust.</p>
+        <p style="margin-top:6px"><b style="color:var(--or)">Vision —</b> to be East Africa's most trusted digital partner.</p>
+        <div class="sign">The JamiiTek Team<small>Dar es Salaam</small></div></div>
+    </div>
+    <div class="stats"><div><b>60+</b><small>Projects delivered</small></div><div><b>7</b><small>Digital services</small></div><div><b>2–6</b><small>Weeks per project</small></div><div><b>EN/SW</b><small>Working languages</small></div></div>
+  </div>
+  <div class="arc2"></div><div class="arc"></div>
+  <div class="lap"><div class="scr"><div class="bar"><i></i><i></i><i></i><em>www.jamiitek.com</em></div><div class="shot"><img src="{% static 'profile/jt-d.jpg' %}"></div></div><div class="base"></div></div>
+  <div class="mob"><div class="shot"><img src="{% static 'profile/jt-m.jpg' %}"></div></div>
+  <div class="fn" style="color:#DCE3FF;z-index:2"><span>{{ profile.short_name }} · Company Profile {{ period }}</span><b style="color:#fff">02</b></div>
+</section>
+
+<!-- CONTENTS -->
+<section class="pg" id="d3">
+  <div class="blk"></div><div class="glow"></div>
+  <div class="am">
+    <div class="lp"><div class="scr"><div class="bar"><i></i><i></i><i></i><em>www.amish.co.tz</em></div><div class="shot"><img src="{% static 'profile/amish-desk2x.jpg' %}"></div></div><div class="base"></div></div>
+    <div class="fon"><div class="shot"><img src="{% static 'profile/sun-phone.jpg' %}"></div></div>
+    <div class="fc"><div class="shot"><img src="{% static 'profile/s-amish.jpg' %}"></div><div><b>5 divisions</b><small>Hardware · Clothing · Cosmetics · Transport · Real estate</small></div></div>
+    <div class="chip"><i></i>Live projects · built by JamiiTek</div>
+  </div>
+  <div class="in"><div class="h">Table of<br><span style="color:var(--b)">Contents</span></div><p class="sub">Everything you need to know about JamiiTek — who we are, what we build and how we work with you.</p></div>
+  <div class="list">
+    <div class="row"><span class="n">01</span><b>About JamiiTek<small>Who we are, mission and vision</small></b><span class="pn">02</span></div>
+    <div class="row"><span class="n">02</span><b>Why JamiiTek<small>What makes working with us different</small></b><span class="pn">04</span></div>
+    <div class="row"><span class="n">03</span><b>Our Services<small>Websites, systems, apps, WhatsApp, USSD, SEO</small></b><span class="pn">05</span></div>
+    <div class="row"><span class="n">04</span><b>How We Work<small>Four steps, no surprises</small></b><span class="pn">06</span></div>
+    <div class="row"><span class="n">05</span><b>Our Projects<small>Real work, live today</small></b><span class="pn">07</span></div>
+    <div class="row"><span class="n">06</span><b>Our Team<small>The people behind the work</small></b><span class="pn">09</span></div>
+    <div class="row"><span class="n">07</span><b>Investment, Support &amp; Contact<small>Prices, terms, after-launch care and how to reach us</small></b><span class="pn">10</span></div>
+  </div>
+  <div class="fn"><span>{{ profile.short_name }} · Company Profile {{ period }}</span><b>03</b></div>
+</section>
+
+<!-- KWA NINI -->
+<section class="pg" id="d8">
+ <div class="ph"><img src="{% static 'profile/team2.jpg' %}"></div><div class="bl"></div><div class="or"></div>
+ <div class="hd"><small>Why JamiiTek</small><h2>Why choose<br><span>JamiiTek?</span></h2></div>
+ <div class="bd"><b>60+</b><span>projects<br>delivered</span></div>
+ <div class="gr"><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h8M8 3v2M5.5 5c1 3.5 3.5 6 7 7.5M10.5 5c-1 3.5-3.5 6-7 7.5"/><path d="M13 21l4-9 4 9M14.5 18h5"/></svg></i><b>Bilingual</b><p>Every website and system is built in English and Kiswahili, so customers read about your services in the language they are most comfortable with.</p></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1.5-4A8 8 0 1 1 9 19.5z"/><path d="M9 11h6M9 14h4"/></svg></i><b>Built for Tanzania</b><p>WhatsApp buttons, click-to-call and mobile-money payments are built in from day one — the way your customers already ask and buy.</p></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12l-8 8-9-9V3h8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></i><b>One fixed price</b><p>You receive one clear price and one delivery date before any work starts. No hidden extras appearing along the way.</p></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M8 14l2.5 2.5L16 12"/></svg></i><b>Weekly progress</b><p>Every week you see the real product taking shape and give feedback, so the final result is exactly what you asked for.</p></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></i><b>You own it</b><p>Your domain is registered in your name, the content is yours, and a simple dashboard lets your team update pages anytime.</p></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg></i><b>We stay</b><p>After launch we look after hosting, send renewal reminders and invoices, issue receipts and stay on WhatsApp for support.</p></div></div>
+ <div class="fn"><span>{{ profile.short_name }} · Company Profile {{ period }}</span><b>04</b></div>
+</section>
+
+<!-- HUDUMA -->
+<section class="pg" id="d4">
+ <div class="bn"></div><div class="or"></div>
+ <div class="hd"><small>What we do</small><h2>Service Offering<span>.</span></h2><p>Everything your organisation needs to be found, trusted and chosen online.</p></div>
+ <div class="gr"><div class="c"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="14" rx="2"/><path d="M2.5 8h19M8 21h8"/></svg></i><b>Websites &amp; Web Apps</b><p>Company websites to complete web platforms — fast, secure and built to be found on Google.</p><ul><li>Mobile-first design</li><li>English &amp; Kiswahili</li><li>Dashboard to update pages</li></ul></div><div class="c"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="7" rx="1.5"/><rect x="3" y="14" width="18" height="7" rx="1.5"/><path d="M7 6.5h.01M7 17.5h.01"/></svg></i><b>Management Systems</b><p>School, loan, stock and booking systems built around how your organisation already works.</p><ul><li>Secure logins &amp; roles</li><li>Reports &amp; dashboards</li><li>Invoices &amp; mobile money</li></ul></div><div class="c"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1.5-4A8 8 0 1 1 9 19.5z"/><path d="M9 11h6M9 14h4"/></svg></i><b>WhatsApp Bots &amp; AI</b><p>JamiiBot answers your customers 24 hours a day, in Swahili and English.</p><ul><li>Prices &amp; FAQs</li><li>Orders &amp; bookings</li><li>Hands over to you</li></ul></div><div class="c"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg></i><b>Mobile Apps</b><p>Android and iOS apps connected to your website or system.</p><ul><li>One app, two stores</li><li>Push notifications</li><li>Linked to your system</li></ul></div><div class="c"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="1.5"/><path d="M10 6h4M10 10h1M13 10h1M10 13h1M13 13h1M10 16h1M13 16h1"/></svg></i><b>USSD Services</b><p>Menus that work on any phone, with no smartphone or internet needed.</p><ul><li>Every network</li><li>Registration &amp; payments</li><li>Linked to reports</li></ul></div><div class="c"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14l-1.2 12H6.2z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg></i><b>E-Commerce</b><p>Online shops that sell while you sleep, with payments customers already use.</p><ul><li>Catalogue &amp; prices</li><li>Orders to WhatsApp</li><li>Mobile money</li></ul></div></div>
+ <div class="wd"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8 11h6M11 8v6"/></svg></i><div><b>Digital Marketing &amp; SEO</b><p>Being online is the start — being found is what brings customers.</p></div><ul><li>Google Business Profile</li><li>Google Ads</li><li>Search optimisation</li></ul></div>
+ <div class="fn"><span>{{ profile.short_name }} · Company Profile {{ period }}</span><b>05</b></div>
+</section>
+
+<!-- JINSI -->
+<section class="pg" id="d9">
+  <div class="shp9"></div>
+  <div class="in9"><div class="h">How we<br><em>work</em><span>.</span></div><p class="sub">Four clear steps from the first conversation to a live product — and beyond.</p></div>
+  <div class="tl9">
+    <div class="st"><span class="n">01</span><div><div class="hd"><b>We listen</b><em>Day 1</em></div><p>We sit with you to understand your customers, your daily work and your goals. This first conversation costs nothing.</p></div></div>
+    <div class="st"><span class="n" style="color:var(--or);-webkit-text-stroke-color:var(--or)">02</span><div><div class="hd"><b>One price, one date</b><em>Day 2</em></div><p>Within one business day you receive a clear plan, a fixed price and a delivery date — agreed before any work begins.</p></div></div>
+    <div class="st"><span class="n">03</span><div><div class="hd"><b>We build — you watch it grow</b><em>Weeks 1–6</em></div><p>You see real progress every week and give feedback as we go, so the final product is exactly what you need.</p></div></div>
+    <div class="st"><span class="n" style="color:var(--or);-webkit-text-stroke-color:var(--or)">04</span><div><div class="hd"><b>Launch &amp; stay</b><em>Ongoing</em></div><p>We go live, hand over the keys and stay on for hosting, updates and support.</p></div></div>
+  </div>
+  <div class="sec9"><b>Sectors we serve</b>
+    <div class="row">
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg>NGOs</div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 20l6-11 4 6 3-4 5 9z"/></svg>Tourism</div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/></svg>Education</div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/></svg>Finance</div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 7h14l-1.2 12H6.2z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>Retail</div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21V10M12 10c0-4 3-6 7-6 0 4-3 6-7 6zM12 13c0-3-2.5-5-6-5 0 3 2.5 5 6 5z"/></svg>Agriculture</div>
+      <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21V7l8-4 8 4v14"/><path d="M9 21v-5h6v5"/></svg>Industry</div>
+    </div></div>
+  <div class="fn"><span>{{ profile.short_name }} · Company Profile {{ period }}</span><b>06</b></div>
+</section>
+
+<!-- KAZI -->
+<section class="pg" id="d5">
+  <div class="in"><div class="h">Our <em>Projects</em><span>.</span></div><p class="sub">Real websites and systems, built by JamiiTek and running today.</p></div>
+  <div class="feat2"><div class="bgp"></div>
+    <div class="lp"><div class="scr"><div class="bar"><i></i><i></i><i></i><em>kiliwild.onrender.com</em></div><div class="shot"><img src="{% static 'profile/kw-desk2x.jpg' %}"></div></div><div class="base"></div></div>
+    <div class="fon"><div class="shot"><img src="{% static 'profile/kw-phone.jpg' %}"></div></div>
+    <div class="chip"><i></i>Featured project · live today</div>
+    <div class="fc"><b>Kili Wild Adventure</b><span>Tourism · Moshi &amp; Arusha</span><p>A local tour operator selling Kilimanjaro climbs and Big Five safaris.</p><ul class="pt"><li>Route and safari pages with prices</li><li>Destinations, gallery and FAQs</li><li>WhatsApp booking on every page</li></ul></div>
+  </div>
+  <div class="grid">
+    <div class="c"><div class="bw"><div class="bar"><i></i><i></i><i></i></div><div class="shot"><img src="{% static 'profile/charles-full.jpg' %}"></div></div><span>Education</span><b>Charles Academy</b><p>A school website and learning portal in one place.</p><ul class="pt"><li>Student and parent logins</li><li>Timetable, grades and resources</li><li>Courses, events and FAQs</li></ul></div>
+    <div class="c"><div class="bw"><div class="bar"><i></i><i></i><i></i></div><div class="shot"><img src="{% static 'profile/c-wemasa.jpg' %}"></div></div><span>NGO</span><b>WEMASA Tanzania</b><p>Weka Mazingira Safi — a registered environmental NGO.</p><ul class="pt"><li>Projects, team, partners and SDG pages</li><li>Donate, volunteer and partner actions</li><li>Dashboard to update every page</li></ul></div>
+    <div class="c"><div class="bw"><div class="bar"><i></i><i></i><i></i></div><div class="shot"><img src="{% static 'profile/rina.jpg' %}"></div></div><span>Tourism</span><b>Rina Tours Tanzania</b><p>Safaris, trekking, beach and cultural tours.</p><ul class="pt"><li>60+ tours in seven categories</li><li>Prices and duration on every tour</li><li>Route map and trip-planning form</li></ul></div>
+  </div>
+  <div class="cont">Continued on the next page — AMISH Company, Tryvis Investments and more →</div>
+  <div class="fn"><span>{{ profile.short_name }} · Company Profile {{ period }}</span><b>07</b></div>
+</section>
+
+<!-- MIRADI II -->
+<section class="pg" id="d7">
+  <div class="in7"><div class="h">More of our <em>work</em><span>.</span></div><p class="sub">From trading groups to industrial suppliers — websites that bring in real enquiries.</p></div>
+
+  <div class="row7 r1"><div class="bg"></div>
+    <div class="dv"><div class="lp"><div class="scr"><div class="bar"><i></i><i></i><i></i><em>www.amish.co.tz</em></div><div class="shot"><img src="{% static 'profile/amish-desk2x.jpg' %}"></div></div><div class="base"></div></div>
+      <div class="fon"><div class="shot"><img src="{% static 'profile/amish-phone2.jpg' %}"></div></div></div>
+    <div class="tx"><span>Trading group · Kigamboni</span><b>AMISH Company</b><p>One website for a growing family business — two divisions trading today and three in preparation.</p>
+      <ul class="pt"><li>Hardware, clothing, cosmetics, transport and real estate</li><li>Product catalogues with photos and prices</li><li>“Ask for a price” straight to WhatsApp</li><li>Gallery, location and opening hours</li></ul></div>
+  </div>
+
+  <div class="row7 r2"><div class="bg"></div>
+    <div class="tx"><span>Industrial supply · Dar es Salaam</span><b>Tryvis Investments</b><p>Industrial supplies and engineering, presented clearly for factories and plants.</p>
+      <ul class="pt"><li>Bearings, pneumatics, seals, tools and hardware</li><li>Engineering workshop and factory audits</li><li>Workshop gallery and partner logos</li><li>Online quote requests and WhatsApp</li></ul></div>
+    <div class="dv"><div class="lp"><div class="scr"><div class="bar"><i></i><i></i><i></i><em>www.tryvis.co.tz</em></div><div class="shot"><img src="{% static 'profile/tv-desk2x.jpg' %}"></div></div><div class="base"></div></div>
+      <div class="fon"><div class="shot"><img src="{% static 'profile/tv-phone2.jpg' %}"></div></div></div>
+  </div>
+
+  <div class="also7"><div class="hh"><b>Also delivered</b><small>A selection of other projects</small></div>
+    <div class="rows">
+      <div><b>MMexy Tanzania Adventures</b><span>Multilingual safari website</span></div>
+      <div><b>SokoSmart</b><span>Marketplace platform</span></div>
+      <div><b>Summit Scape Adventures</b><span>Safari website + Google Ads</span></div>
+      <div><b>Sokoni App</b><span>Business directory app</span></div>
+      <div><b>Kiliprecious Tours</b><span>Safari &amp; tour website</span></div>
+      <div><b>Mudandaza</b><span>Multi-business SaaS</span></div>
+      <div><b>Sunrise and Sunset Safaris</b><span>Safari company website</span></div>
+      <div><b>Shamba Mfukoni</b><span>Agricultural USSD service</span></div>
+      <div><b>EM Adventure Tanzania</b><span>Adventure tourism website</span></div>
+      <div><b>SoftLoan</b><span>Student loan system</span></div>
+      <div><b>Kili2Pori Expedition</b><span>Kilimanjaro expedition site</span></div>
+      <div><b>Pendo Essence</b><span>E-commerce store</span></div>
+    </div>
+    <div class="more50"><b>+50</b><span>…and more than 50 other websites and systems delivered for businesses and organisations across Tanzania.</span></div>
+  </div>
+  <div class="fn"><span>{{ profile.short_name }} · Company Profile {{ period }}</span><b>08</b></div>
+</section>
+
+<!-- TIMU -->
+<section class="pg" id="d6">
+  <div class="in6"><div class="h">Meet the <em>Team</em><span>.</span></div>
+    <p class="sub">Tanzanian developers, designers and marketers — the people who answer your calls and build your project.</p></div>
+  <div class="tg6">
+    {% for m in team %}<div class="tm{% if m.photo %} hp{% endif %}" style="--g:{{ m.bg }};--a:{{ m.accent }}"><div class="ph">{% if m.photo %}<img src="{{ m.photo_url }}" style="object-position:{{ m.position|default:'50% 20%' }}" alt="{{ m.name }}">{% endif %}</div>
+      <div class="ov"><span class="sk">{{ m.skill }}</span><b>{{ m.name }}</b><small>{{ m.role }}</small></div><i class="corner"></i></div>
+    {% endfor %}
+  </div>
+  <div class="band6">
+    <div><b>{{ team|length }}</b><small>Core team members</small></div>
+    <div><b>EN/SW</b><small>We speak your language</small></div>
+    <div><b>1 day</b><small>Reply with a plan &amp; price</small></div>
+    <div class="q">“The same team that builds your project is the team that supports it.”</div>
+  </div>
+  <div class="fn"><span>{{ profile.short_name }} · Company Profile {{ period }}</span><b>09</b></div>
+</section>
+
+<!-- BEI -->
+<section class="pg" id="d10">
+  <div class="in10"><div class="h">Investment<br>&amp; <em>terms</em><span>.</span></div><p class="sub">Clear starting prices for every service. Each project gets a free, fixed quotation before work begins.</p></div>
+  <div class="pc10">
+    {% for p in packages %}<div class="{{ p.style }}">{% if p.badge %}<div class="pop">{{ p.badge }}</div>{% endif %}<small>{{ p.name }}</small><h4>{{ p.headline }}</h4><span class="f">from</span><strong><sup>TZS</sup>{{ p.price_display }}</strong><span class="f">{{ p.note }}</span>
+      <ul>{% for f in p.features %}<li>{{ f }}</li>{% endfor %}</ul></div>
+    {% endfor %}
+  </div>
+  <div class="dm10">
+    <div class="dom"><b>Domain names <small>per year</small></b>
+      <div class="g">{% for d in domains %}<span>{{ d.label }}</span><em>TZS {{ d.price_display }}</em>{% endfor %}</div></div>
+    <div class="host"><b>Hosting</b><p>Fast, secure hosting with SSL and backups. Template websites: <b style="display:inline;font:inherit;color:#fff">TZS {{ template_hosting }}/month</b>. Other projects are quoted with the build, with renewal reminders sent well before expiry.</p></div>
+  </div>
+  <div class="tm10">
+    <div><b>Payment</b><p>A deposit to begin, the balance on delivery. Flexible plans available.</p></div>
+    <div><b>Quotations</b><p>Free, fixed and with a delivery date — before any work starts.</p></div>
+  </div>
+  <div class="fn"><span>{{ profile.short_name }} · Company Profile {{ period }}</span><b>10</b></div>
+</section>
+
+<!-- BAADA YA KUKABIDHI -->
+<section class="pg" id="d11">
+ <div class="ph"><div class="art a11">
+   <div class="inv"><div class="ih"><img src="{% static 'profile/logo.png' %}"><b>INVOICE</b><span>#JT-2026-014</span></div>
+     <div class="il"><span>Hosting renewal · 12 months</span><em>TZS 180,000</em></div>
+     <div class="il"><span>Domain renewal · .co.tz</span><em>TZS 25,000</em></div>
+     <div class="it"><span>Total due</span><em>TZS 205,000</em></div>
+     <div class="idue">Due before expiry · reminder sent by email &amp; SMS</div></div>
+   <div class="rcp"><div class="rh"><i>✓</i><b>Payment received</b></div><span>Official receipt sent</span><div class="stamp">PAID</div></div>
+   <div class="ntf"><i>🔔</i><span><b>Renewal reminder</b>Your hosting expires in 14 days</span></div>
+ </div></div><div class="bl"></div><div class="or"></div>
+ <div class="hd"><small>After launch</small><h2>Support after your<br><span>website goes live.</span></h2></div>
+ <div class="bd"><b>We don't hand over<br>and disappear.</b><span>Here is what we keep doing for you.</span></div>
+ <div class="rn"><div class="rh">How your yearly renewal works</div>
+  <div class="st"><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21h4"/></svg></i><em>1</em><b>We remind you</b><p>Before your hosting or domain expires, you get a reminder by email and SMS.</p></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></i><em>2</em><b>You get an invoice</b><p>A clear invoice shows exactly what to pay and by which date.</p></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></i><em>3</em><b>You pay and upload proof</b><p>Pay, then upload a screenshot or receipt of your payment online.</p></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></i><em>4</em><b>You receive your receipt</b><p>We confirm the payment and send you an official, signed receipt.</p></div></div></div>
+ <div class="sp"><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/><path d="M7 7.5h.01M7 16.5h.01"/></svg></i><span><b>Your website stays online</b><p>Secure hosting with SSL and regular backups.</p></span></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20l1.5-4A8 8 0 1 1 9 19.5z"/><path d="M9 11h6M9 14h4"/></svg></i><span><b>Help on WhatsApp</b><p>Questions and fixes handled by the team that built your project.</p></span></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></i><span><b>Changes when you need them</b><p>New pages, prices, photos or features as you grow.</p></span></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c3 2 9 2 12 0v-5"/></svg></i><span><b>Training for your team</b><p>We show your staff how to update the website themselves.</p></span></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6"/></svg></i><span><b>Every payment documented</b><p>A proper invoice and receipt for every payment, for your records.</p></span></div><div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></i><span><b>Your domain, in your name</b><p>We register and renew it so you never lose it.</p></span></div></div>
+ <div class="fn"><span>{{ profile.short_name }} · Company Profile {{ period }}</span><b>11</b></div>
+</section>
+
+<!-- JALADA LA NYUMA -->
+<section class="pg" id="d12">
+ <div class="ph"><div class="art a12">
+   <div class="lp"><div class="scr"><div class="bar"><i></i><i></i><i></i></div><div class="shot"><img src="{% static 'profile/jt-d.jpg' %}"></div></div><div class="base"></div></div>
+   <div class="fon"><div class="sc"><div class="wh"><img src="{% static 'profile/logo.png' %}"><span><b>JamiiTek</b>online</span></div>
+     <div class="msgs"><span class="in">Habari, nahitaji website ya biashara yangu.</span><span class="out">Karibu! Tutakutumia mpango, muda na bei ndani ya siku moja ✅</span><span class="in">Asante sana 🙏</span></div></div></div>
+ </div></div><div class="bl"></div><div class="or"></div>
+ <div class="lg"><span class="mk"><img src="{% static 'profile/logo.png' %}"></span><span><b>Jamii<em>Tek</em></b><small>Digital Agency</small></span></div>
+ <div class="hd"><small>Let's work together</small><h2>Ready to start<br><span>your project?</span></h2></div>
+ <div class="bd"><b>Talk to us today.</b><span>Within one business day we send you a plan, a timeline and a price — free.</span></div>
+ <div class="ct">
+  <div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg></i><span><small>Call or WhatsApp</small><b>{{ phone_display }}</b><p>The fastest way to reach us.</p></span></div>
+  <div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></i><span><small>Email</small><b>{{ profile.email }}</b><p>For quotations and documents.</p></span></div>
+  <div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></i><span><small>Website</small><b>{{ profile.website }}</b><p>Our work, templates and prices.</p></span></div>
+  <div><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg></i><span><small>Office</small><b>{{ profile.address }}</b><p>Serving clients across Tanzania.</p></span></div>
+ </div>
+ <div class="nx"><b>What happens next?</b>
+  <div><em>1</em><span><strong>You send us a message</strong>Tell us about your business and what you need — on WhatsApp, by phone or email.</span></div>
+  <div><em>2</em><span><strong>We reply within one day</strong>You receive a clear plan, a timeline and a fixed price. No cost, no obligation.</span></div>
+  <div><em>3</em><span><strong>We start when you are ready</strong>Once you approve and pay the deposit, work begins and you see progress every week.</span></div>
+ </div>
+ <div class="qr">
+  <div><img src="{{ qr_whatsapp }}"><span><b>Chat with us on WhatsApp</b>Open your phone camera and scan this code.</span></div>
+  <div class="o"><img src="{{ qr_website }}"><span><b>See more of our work</b>Scan to open {{ profile.website }}.</span></div>
+ </div>
+ <div class="end"><span>© {% now "Y" %} {{ profile.company_name }} · {{ profile.address }}</span><span>Websites · Systems · Mobile Apps · WhatsApp Automation</span></div>
+</section>
+
+</main>
+<script>
+/* Kurasa ni A4 (794px); kwenye skrini ndogo zinapunguzwa ili zitoshe. */
+(function(){function f(){var z=Math.min(1,(window.innerWidth-16)/794);document.documentElement.style.setProperty('--z',z)}f();window.addEventListener('resize',f)})();
+</script>
+</body></html>
