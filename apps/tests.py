@@ -1688,7 +1688,7 @@ class CompanyProfileBrochureTest(TestCase):
         html = self.client.get('/company-profile/').content.decode()
         for text in ('William Eliya Chipindi', 'Debora Osward', 'Beatha Matembo', 'Grace William',
                      '180,000', '350,000', '500,000', '650,000', '+255 750 910 158',
-                     'data:image/png;base64,', '/static/profile/team1.'):
+                     'data:image/png;base64,', '/static/profile/team1.', 'class="fab"', '/company-profile/pdf/'):
             self.assertIn(text, html, text)
         # Domain kutoka TLD_PRICES
         self.assertIn('22,000', html)
