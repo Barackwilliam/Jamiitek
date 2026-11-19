@@ -15,6 +15,16 @@ ADDRESS = "Dar es Salaam, Tanzania"
 FOUNDING_YEAR = "2020"
 
 
+YOUTUBE_CHANNEL_ID_URL = "https://www.youtube.com/channel/UCc3sqibSgctHd2gshbb_vOg"
+
+
+def _social_profiles():
+    from django.conf import settings
+    links = [u for u in getattr(settings, 'SOCIAL_LINKS', {}).values() if u]
+    # Anwani ya kudumu ya channel (haibadiliki hata handle ikibadilika)
+    return links + [YOUTUBE_CHANNEL_ID_URL]
+
+
 def organization_schema():
     """Main Organization schema — appears in Google Knowledge Panel."""
     return {
@@ -45,8 +55,10 @@ def organization_schema():
                 "availableLanguage": ["English", "Swahili"]
             }
         ],
+        # Wasifu rasmi wa kampuni kwenye mitandao (YouTube, n.k.) — Google inaviunganisha na website
         "sameAs": [
             f"https://wa.me/{_contact()['wa']}",
+            *_social_profiles(),
         ],
         "areaServed": {
             "@type": "GeoCircle",
