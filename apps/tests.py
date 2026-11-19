@@ -1740,3 +1740,13 @@ class CompanyProfileBrochureTest(TestCase):
         self.profile.save()
         r = self.client.get('/company-profile/pdf/')
         self.assertRedirects(r, 'https://cdn.example.com/profile.pdf', fetch_redirect_response=False)
+
+
+class YouTubeChannelLinkTest(TestCase):
+    def test_footer_and_schema_link_to_youtube(self):
+        from django.core.cache import cache
+        cache.clear()
+        html = self.client.get('/').content.decode()
+        self.assertIn('href="https://www.youtube.com/@jamiitek"', html)
+        from apps.seo.schema import organization_schema
+        self.assertIn('https://www.youtube.com/@jamiitek', organization_schema()['sameAs'])

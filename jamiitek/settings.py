@@ -454,7 +454,7 @@ SOCIAL_LINKS = {
     'instagram': os.getenv('SOCIAL_INSTAGRAM', ''),
     'github':    os.getenv('SOCIAL_GITHUB', 'https://github.com/Barackwilliam'),
     'twitter':   os.getenv('SOCIAL_TWITTER', ''),
-    'youtube':   os.getenv('SOCIAL_YOUTUBE', ''),
+    'youtube':   os.getenv('SOCIAL_YOUTUBE', 'https://www.youtube.com/@jamiitek'),
 }
 
 # ── Cloudflare Turnstile (Bot Protection) ──────────────

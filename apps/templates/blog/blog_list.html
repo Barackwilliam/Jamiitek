@@ -259,7 +259,7 @@
       "name": "JamiiTek", "url": "https://www.jamiitek.com/",
       "logo": {"@type": "ImageObject", "url": "https://www.jamiitek.com/static/images/apple-touch-icon.png", "width": 180, "height": 180},
       "publishingPrinciples": "https://www.jamiitek.com/blog/editorial-policy/",
-      "sameAs": ["https://twitter.com/JamiiTek"]
+      "sameAs": ["https://twitter.com/JamiiTek"{% if SOCIAL.youtube %}, "{{ SOCIAL.youtube|escapejs }}"{% endif %}]
     },
     {
       "@type": "WebSite", "@id": "https://www.jamiitek.com/#website",
