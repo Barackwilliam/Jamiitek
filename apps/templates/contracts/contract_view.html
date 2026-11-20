@@ -1,4 +1,4 @@
-{% load static custom_filters %}<!DOCTYPE html>
+{% load static custom_filters jt_contact %}<!DOCTYPE html>
 <html lang="{{ lang }}">
 <head>
 <meta charset="UTF-8">
@@ -231,7 +231,7 @@
       <table class="info">
         <tr>
           <td class="k">{% if lang == 'sw' %}Mtoa Huduma{% else %}Provider{% endif %}</td>
-          <td class="v">{{ contract.provider_name }}{% if contract.provider_rep %}<br>{{ contract.provider_rep }}{% endif %}</td>
+          <td class="v">{{ contract.provider_name }}<br><small style="color:#667085">{% if lang == 'sw' %}{% contact "legal_short_sw" %}{% else %}{% contact "legal_short" %}{% endif %}</small>{% if contract.provider_rep %}<br>{{ contract.provider_rep }}{% endif %}</td>
           <td class="k">{% if lang == 'sw' %}Mteja{% else %}Client{% endif %}</td>
           <td class="v">{{ contract.display_client }}{% if contract.display_company %}<br>{{ contract.display_company }}{% endif %}</td>
         </tr>
@@ -334,7 +334,7 @@
     {% endif %}
 
     <div class="doc-foot">
-      {{ contract.provider_name|upper }} &nbsp;·&nbsp; <a href="https://jamiitek.com">www.jamiitek.com</a> &nbsp;·&nbsp; info@jamiitek.com
+      {{ contract.provider_name|upper }} &nbsp;·&nbsp; <a href="https://jamiitek.com">www.jamiitek.com</a> &nbsp;·&nbsp; info@jamiitek.com<br>{% if lang == 'sw' %}{% contact "legal_short_sw" %}{% else %}{% contact "legal_short" %}{% endif %}
       <div class="tagline">{% if lang == 'sw' %}Mshirika Wako wa Kidijitali Tanzania{% else %}Your Trusted Digital Partner in Tanzania{% endif %}</div>
     </div>
   </div>

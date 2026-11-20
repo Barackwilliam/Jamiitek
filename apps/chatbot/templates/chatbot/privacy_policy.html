@@ -353,14 +353,14 @@
       <span class="grad">Our Responsibility.</span>
     </h1>
     <p class="hero-sub">
-      This Privacy Policy explains how JamiiTek Ltd. collects, uses, stores, and protects
+      This Privacy Policy explains how JamiiTek collects, uses, stores, and protects
       your personal information across all our services — including web development, hosting,
       the client portal, and the JamiiBot AI WhatsApp Platform.
     </p>
     <div class="hero-pills">
       <span class="pill"><i class="fas fa-calendar"></i> Effective: April 1, 2026</span>
       <span class="pill"><i class="fas fa-rotate"></i> Updated: April 3, 2026</span>
-      <span class="pill"><i class="fas fa-building"></i> JamiiTek Ltd., Tanzania</span>
+      <span class="pill"><i class="fas fa-building"></i> JamiiTek · BRELA Reg. No. {% contact "reg_no" %}</span>
       <span class="pill"><i class="fas fa-globe"></i> jamiitek.com</span>
     </div>
   </div>
@@ -422,15 +422,16 @@
       <h2 class="section-title">Who We Are</h2>
     </div>
     <p>
-      <strong style="color:var(--text)">JamiiTek Ltd.</strong> is a technology company incorporated
-      and operating in Tanzania, headquartered in Dar es Salaam. We provide digital services to
+      <strong style="color:var(--text)">JamiiTek</strong> is the trading name of <strong style="color:var(--text)">{% contact "legal_name" %}</strong>,
+      a business registered in Tanzania under the Business Names Act (Cap 213), BRELA registration
+      number {% contact "reg_no" %}, and based in Dar es Salaam. We provide digital services to
       businesses, organisations, and individuals across Tanzania and East Africa.
     </p>
     <p>Our services include website design and development, mobile application development,
     web hosting and domain registration, email hosting, UI/UX design, custom software development,
     system integration, and the <strong style="color:var(--text)">JamiiBot</strong> AI WhatsApp chatbot platform.</p>
     <p>
-      For the purposes of data protection law, JamiiTek Ltd. is the <strong style="color:var(--text)">data controller</strong>
+      For the purposes of data protection law, {% contact "legal_name" %} (trading as JamiiTek) is the <strong style="color:var(--text)">data controller</strong>
       for personal information collected through our website and services. Where JamiiBot is used
       by business clients to communicate with their own customers, those clients act as
       independent data controllers for their customer conversations.
@@ -438,7 +439,7 @@
     <div class="callout purple">
       <i class="fas fa-map-marker-alt"></i>
       <div>
-        <strong>Data Controller:</strong> JamiiTek Ltd. · Dar es Salaam, Tanzania ·
+        <strong>Data Controller:</strong> {% contact "legal_name" %} (JamiiTek) · BRELA Reg. No. {% contact "reg_no" %} · Dar es Salaam, Tanzania ·
         <a href="mailto:info@jamiitek.com">info@jamiitek.com</a> ·
         <a href="https://www.jamiitek.com">www.jamiitek.com</a>
       </div>
@@ -817,8 +818,8 @@
       </a>
     </div>
     <div style="margin-top:22px;font-family:var(--mono);font-size:10px;color:var(--text-3);line-height:1.8">
-      JamiiTek Ltd. · Dar es Salaam, Tanzania 🇹🇿<br>
-      © 2026 JamiiTek Ltd. All rights reserved.
+      {% contact "legal_line" %} · Dar es Salaam, Tanzania 🇹🇿<br>
+      © {% now "Y" %} {% contact "legal_name" %}. All rights reserved.
     </div>
   </div>
 
@@ -827,7 +828,7 @@
 <!-- FOOTER -->
 <footer>
   <div>
-    <span style="color:var(--green)">Jamii</span>Tek Ltd.
+    <span style="color:var(--green)">Jamii</span>Tek <span class="footer-dot">·</span> {% contact "legal_name" %}
     <span class="footer-dot">·</span>
     Privacy Policy
     <span class="footer-dot">·</span>

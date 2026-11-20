@@ -1750,3 +1750,31 @@ class YouTubeChannelLinkTest(TestCase):
         self.assertIn('href="https://www.youtube.com/@jamiitek"', html)
         from apps.seo.schema import organization_schema
         self.assertIn('https://www.youtube.com/@jamiitek', organization_schema()['sameAs'])
+
+
+class CompanyRegistrationTest(TestCase):
+    def test_footer_shows_legal_name_and_brela_number(self):
+        from django.core.cache import cache
+        cache.clear()
+        html = self.client.get('/').content.decode()
+        self.assertIn('JamiiTek — a brand of Jamii Digital Solutions · BRELA Reg. No. 723586', html)
+        self.assertNotIn('JamiiTek Ltd', html)
+
+    def test_schema_has_legal_name(self):
+        from apps.seo.schema import organization_schema
+        org = organization_schema()
+        self.assertEqual(org['legalName'], 'Jamii Digital Solutions')
+        self.assertEqual(org['identifier']['value'], '723586')
+
+    def test_brochure_shows_registration_in_both_languages(self):
+        from apps.models import CompanyProfile
+        CompanyProfile.objects.create(is_active=True)
+        self.assertContains(self.client.get('/company-profile/'), 'BRELA Reg. No. 723586')
+        self.assertContains(self.client.get('/company-profile/?lang=sw'), 'Usajili BRELA Na. 723586')
+
+    def test_tin_appears_once_set(self):
+        import os
+        from unittest import mock
+        from apps.contact import contact
+        with mock.patch.dict(os.environ, {'JAMIITEK_TIN': '123-456-789'}):
+            self.assertTrue(contact()['legal_line'].endswith('· TIN 123-456-789'))

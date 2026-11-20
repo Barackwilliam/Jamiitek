@@ -1,4 +1,4 @@
-{% load static %}
+{% load static jt_contact %}
 
 <!-- JALADA -->
 <section class="pg" id="d1">
@@ -13,6 +13,7 @@
   <div class="cv-dv"><div class="cv-lap"><div class="s"><div><img src="{% static 'profile/kw-desk2x.jpg' %}" alt="Website ya Kili Wild Adventure"></div></div><div class="b"></div></div>
   <div class="cv-mob"><div><img src="{% static 'profile/amish-phone2.jpg' %}" alt="Website ya AMISH Company"></div></div></div>
   <div class="cv-ft"><span>{{ profile.website }}</span><span>{{ phone_display }}</span><span>{{ profile.email }}</span></div>
+  <div class="cv-reg">{% contact "legal_line_sw" %}</div>
 </section>
 
 <!-- WELCOME -->
@@ -235,6 +236,6 @@
   <div><img src="{{ qr_whatsapp }}"><span><b>Ongea nasi WhatsApp</b>Fungua kamera ya simu yako na uscan code hii.</span></div>
   <div class="o"><img src="{{ qr_website }}"><span><b>Ona kazi zetu zaidi</b>Scan ufungue {{ profile.website }}.</span></div>
  </div>
- <div class="end"><span>© {% now "Y" %} {{ profile.company_name }} · {{ profile.address }}</span><span>Websites · Mifumo · Apps za simu · WhatsApp</span></div>
+ <div class="end"><span>© {% now "Y" %} {% contact "legal_line_sw" %}<br>{{ profile.address }}</span><span>Websites · Mifumo · Apps za simu · WhatsApp</span></div>
 </section>
 

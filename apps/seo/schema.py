@@ -32,6 +32,10 @@ def organization_schema():
         "@type": "Organization",
         "@id": f"{SITE_URL}/#organization",
         "name": SITE_NAME,
+        # Jina la kisheria na usajili wa BRELA (apps/contact.py)
+        "legalName": _contact()["legal_name"],
+        "identifier": {"@type": "PropertyValue", "propertyID": "BRELA Business Name Registration",
+                       "value": _contact()["reg_no"]},
         "url": SITE_URL,
         "logo": SITE_LOGO,
         "foundingDate": FOUNDING_YEAR,
