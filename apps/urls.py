@@ -10,6 +10,7 @@ from builder import domain_views as site_domain_views
 from . import contract_views
 from . import proposal_views
 from . import docs_views
+from . import company_docs_views
 from .views import select_website_type, dynamic_form, proposal_preview, generate_pdf
 from .views import templates_marketplace, template_preview, template_preview_raw, template_detail, templates_promo_json
 from . import management_views
@@ -82,6 +83,9 @@ urlpatterns = [
     path('invoice/<str:token>/paid/', docs_views.invoice_proof, name='invoice_proof'),
 
 
+    path('manage/company-documents/', company_docs_views.company_docs, name='company_docs'),
+    path('manage/company-documents/<int:pk>/', company_docs_views.company_doc_file, name='company_doc_file'),
+    path('manage/company-documents/<int:pk>/delete/', company_docs_views.company_doc_delete, name='company_doc_delete'),
     path('manage/receipts/', receipt_views.receipt_list, name='receipt_list'),
     path('manage/receipts/new/', receipt_views.receipt_new, name='receipt_new'),
     path('manage/receipts/new/<int:website_pk>/', receipt_views.receipt_new, name='receipt_new_for_website'),

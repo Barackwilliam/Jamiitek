@@ -1778,3 +1778,56 @@ class CompanyRegistrationTest(TestCase):
         from apps.contact import contact
         with mock.patch.dict(os.environ, {'JAMIITEK_TIN': '123-456-789'}):
             self.assertTrue(contact()['legal_line'].endswith('· TIN 123-456-789'))
+
+
+NO_2FA_MW = [m for m in __import__('django.conf', fromlist=['settings']).settings.MIDDLEWARE
+             if 'TwoFactor' not in m]
+
+
+@override_settings(MIDDLEWARE=NO_2FA_MW)
+class CompanyDocumentsTest(TestCase):
+    PDF = b'%PDF-1.4\n% cheti\n%%EOF'
+
+    def setUp(self):
+        from django.contrib.auth.models import User
+        self.staff = User.objects.create_user('mkuu', password='x', is_staff=True)
+
+    def _upload(self, data, name='cheti.pdf'):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        return self.client.post('/manage/company-documents/', {
+            'title': 'Cheti cha Usajili BRELA', 'category': 'registration', 'number': '723586',
+            'issued_on': '2026-11-20', 'file': SimpleUploadedFile(name, data)})
+
+    def test_staff_can_store_and_open_certificate(self):
+        from apps.models import CompanyDocument
+        self.client.force_login(self.staff)
+        self.assertEqual(self._upload(self.PDF).status_code, 302)
+        doc = CompanyDocument.objects.get()
+        self.assertEqual((doc.number, doc.content_type, doc.category), ('723586', 'application/pdf', 'registration'))
+        page = self.client.get('/manage/company-documents/')
+        self.assertContains(page, 'Cheti cha Usajili BRELA')
+        self.assertContains(page, '723586')
+        r = self.client.get(f'/manage/company-documents/{doc.pk}/')
+        self.assertEqual(r['Content-Type'], 'application/pdf')
+        self.assertEqual(r.content, self.PDF)
+        self.assertIn('no-store', r['Cache-Control'])
+        r = self.client.get(f'/manage/company-documents/{doc.pk}/?download=1')
+        self.assertTrue(r['Content-Disposition'].startswith('attachment'))
+
+    def test_rejects_files_that_are_not_pdf_or_images(self):
+        from apps.models import CompanyDocument
+        self.client.force_login(self.staff)
+        self._upload(b'<html><script>alert(1)</script>', name='cheti.pdf')
+        self.assertFalse(CompanyDocument.objects.exists())
+
+    def test_outsiders_cannot_open_documents(self):
+        from django.contrib.auth.models import User
+        from apps.models import CompanyDocument
+        doc = CompanyDocument.objects.create(title='Cheti', file_name='c.pdf', content_type='application/pdf',
+                                             size=len(self.PDF), data=self.PDF)
+        r = self.client.get(f'/manage/company-documents/{doc.pk}/')
+        self.assertEqual(r.status_code, 302)
+        self.assertNotEqual(r.content, self.PDF)
+        self.client.force_login(User.objects.create_user('mteja', password='x'))
+        r = self.client.get(f'/manage/company-documents/{doc.pk}/')
+        self.assertNotEqual(r.content, self.PDF)

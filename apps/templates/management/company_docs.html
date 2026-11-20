@@ -1,0 +1,103 @@
+{% extends 'management/base.html' %}
+{% block title %}Company Documents{% endblock %}
+{% block content %}
+<style>
+.cd-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.cd-title{font-family:var(--head);font-size:24px;font-weight:800;color:var(--text)}
+.cd-sub{font-size:12.5px;color:var(--text-3);margin-top:4px;max-width:560px;line-height:1.5}
+.cd-lock{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:99px;font-family:var(--mono);font-size:10.5px;
+  background:rgba(74,222,128,.1);color:#4ade80;border:1px solid rgba(74,222,128,.25)}
+.cd-grid{display:grid;grid-template-columns:1fr 360px;gap:18px;align-items:start}
+@media (max-width:980px){.cd-grid{grid-template-columns:1fr}}
+.cd-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px}
+.cd-card h3{font-family:var(--head);font-size:15px;color:var(--text);margin-bottom:14px;display:flex;gap:8px;align-items:center}
+.cd-card h3 i{color:var(--cyan);font-size:13px}
+.cd-f{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.cd-f label{font-family:var(--mono);font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--text-3)}
+.cd-f input,.cd-f select,.cd-f textarea{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;
+  padding:10px 12px;color:var(--text);font-size:13px;min-height:42px;width:100%}
+.cd-f input:focus,.cd-f select:focus,.cd-f textarea:focus{outline:none;border-color:var(--cyan)}
+.cd-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cd-drop{display:block;width:100%;box-sizing:border-box;border:1.5px dashed var(--border);border-radius:12px;padding:16px;text-align:center;color:var(--text-3);font-size:12.5px;cursor:pointer}
+.cd-drop input{display:none}.cd-drop b{color:var(--text);display:block;margin-bottom:4px;font-size:13px}.cd-drop span{display:block}
+.cd-drop.has{border-color:var(--cyan);color:var(--cyan)}
+.doc{display:grid;grid-template-columns:52px 1fr auto;gap:14px;align-items:center;padding:14px;border:1px solid var(--border);
+  border-radius:14px;margin-bottom:10px;background:rgba(255,255,255,.015);transition:border-color .2s}
+.doc:hover{border-color:rgba(0,212,255,.3)}
+.doc .ic{width:52px;height:52px;border-radius:13px;display:grid;place-items:center;font-size:20px;
+  background:rgba(0,212,255,.1);color:var(--cyan)}
+.doc .ic.pdf{background:rgba(248,113,113,.1);color:#f87171}
+.doc .t{font-family:var(--head);font-weight:700;color:var(--text);font-size:14.5px}
+.doc .m{font-size:12px;color:var(--text-3);margin-top:3px;display:flex;flex-wrap:wrap;gap:4px 12px}
+.doc .m b{color:var(--text-2,var(--text));font-weight:600}
+.doc .n{font-size:12px;color:var(--text-3);margin-top:6px;line-height:1.45}
+.doc .acts{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.cat{font-family:var(--mono);font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--text-3);margin:16px 0 8px}
+.cat:first-child{margin-top:0}
+.exp{color:#f87171!important}
+@media (max-width:640px){.doc{grid-template-columns:44px 1fr}.doc .ic{width:44px;height:44px}.doc .acts{grid-column:1/-1;justify-content:flex-start}}
+.empty{border:1px dashed var(--border);border-radius:14px;padding:38px 20px;text-align:center;color:var(--text-3);font-size:13px}
+.empty h4{font-family:var(--head);color:var(--text);font-size:16px;margin-bottom:6px}
+</style>
+
+<div class="cd-head">
+  <div>
+    <div class="cd-title">Company Documents</div>
+    <div class="cd-sub">Vyeti na nyaraka rasmi za JamiiTek (Jamii Digital Solutions). Vinahifadhiwa ndani ya database na vinafunguliwa na staff walioingia hapa tu, havipo kwenye storage ya umma.</div>
+  </div>
+  <span class="cd-lock"><i class="fas fa-lock"></i> Staff only</span>
+</div>
+
+<div class="cd-grid">
+  <div class="cd-card">
+    <h3><i class="fas fa-folder-open"></i> Nyaraka ({{ docs|length }})</h3>
+    {% regroup docs by get_category_display as groups %}
+    {% for g in groups %}
+      <div class="cat">{{ g.grouper }}</div>
+      {% for d in g.list %}
+      <div class="doc">
+        <div class="ic{% if d.is_pdf %} pdf{% endif %}"><i class="fas {% if d.is_pdf %}fa-file-lines{% else %}fa-image{% endif %}"></i></div>
+        <div style="min-width:0">
+          <div class="t">{{ d.title }}</div>
+          <div class="m">
+            {% if d.number %}<span>Na. <b>{{ d.number }}</b></span>{% endif %}
+            {% if d.issued_on %}<span>Imetolewa {{ d.issued_on|date:"j M Y" }}</span>{% endif %}
+            {% if d.expires_on %}<span{% if d.expires_on < today %} class="exp"{% endif %}>{% if d.expires_on < today %}Imeisha{% else %}Inaisha{% endif %} {{ d.expires_on|date:"j M Y" }}</span>{% endif %}
+            <span>{{ d.size|filesizeformat }}</span>
+          </div>
+          {% if d.notes %}<div class="n">{{ d.notes|linebreaksbr }}</div>{% endif %}
+        </div>
+        <div class="acts">
+          <a class="jt-btn btn-ghost" style="font-size:12px" href="{% url 'company_doc_file' d.pk %}" target="_blank" rel="noopener"><i class="fas fa-eye"></i> Fungua</a>
+          <a class="jt-btn btn-ghost" style="font-size:12px" href="{% url 'company_doc_file' d.pk %}?download=1"><i class="fas fa-download"></i> Pakua</a>
+          <form method="post" action="{% url 'company_doc_delete' d.pk %}" onsubmit="return confirm('Futa {{ d.title|escapejs }}? Haitarudi.')" style="display:inline">{% csrf_token %}
+            <button class="jt-btn btn-ghost" style="font-size:12px;color:#f87171" type="submit"><i class="fas fa-trash"></i></button></form>
+        </div>
+      </div>
+      {% endfor %}
+    {% empty %}
+      <div class="empty"><h4>Bado hakuna nyaraka</h4>Pakia cheti cha BRELA kwa fomu iliyo pembeni.</div>
+    {% endfor %}
+  </div>
+
+  <form class="cd-card" method="post" enctype="multipart/form-data">{% csrf_token %}
+    <h3><i class="fas fa-upload"></i> Pakia hati mpya</h3>
+    <div class="cd-f"><label>Jina la hati</label><input name="title" required maxlength="160" placeholder="Cheti cha Usajili BRELA"></div>
+    <div class="cd-2">
+      <div class="cd-f"><label>Aina</label><select name="category">{% for k, v in categories %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+      <div class="cd-f"><label>Namba</label><input name="number" maxlength="80" placeholder="723586"></div>
+    </div>
+    <div class="cd-2">
+      <div class="cd-f"><label>Imetolewa</label><input type="date" name="issued_on"></div>
+      <div class="cd-f"><label>Inaisha (kama ipo)</label><input type="date" name="expires_on"></div>
+    </div>
+    <div class="cd-f"><label>Maelezo</label><textarea name="notes" rows="2" placeholder="Jamii Digital Solutions — Business Names Act (Cap 213)"></textarea></div>
+    <label class="cd-drop" id="cdDrop"><input type="file" name="file" accept=".pdf,.jpg,.jpeg,.png" required onchange="cdPick(this)">
+      <b><i class="fas fa-file-arrow-up"></i> Chagua file</b><span id="cdName">PDF, JPG au PNG · hadi 10MB</span></label>
+    <button class="jt-btn btn-cyan" type="submit" style="width:100%;margin-top:14px;justify-content:center"><i class="fas fa-lock"></i> Hifadhi kwa usalama</button>
+  </form>
+</div>
+<script>
+function cdPick(i){var f=i.files[0];if(!f)return;document.getElementById('cdName').textContent=f.name+' · '+Math.round(f.size/1024)+' KB';document.getElementById('cdDrop').classList.add('has')}
+</script>
+{% endblock %}
