@@ -1,4 +1,4 @@
-{% load static %}
+{% load static jt_contact %}
 
 <!-- JALADA -->
 <section class="pg" id="d1">
@@ -13,6 +13,7 @@
   <div class="cv-dv"><div class="cv-lap"><div class="s"><div><img src="{% static 'profile/kw-desk2x.jpg' %}" alt="Kili Wild Adventure website"></div></div><div class="b"></div></div>
   <div class="cv-mob"><div><img src="{% static 'profile/amish-phone2.jpg' %}" alt="AMISH Company website"></div></div></div>
   <div class="cv-ft"><span>{{ profile.website }}</span><span>{{ phone_display }}</span><span>{{ profile.email }}</span></div>
+  <div class="cv-reg">{% contact "legal_line" %}</div>
 </section>
 
 <!-- WELCOME -->
@@ -235,6 +236,6 @@
   <div><img src="{{ qr_whatsapp }}"><span><b>Chat with us on WhatsApp</b>Open your phone camera and scan this code.</span></div>
   <div class="o"><img src="{{ qr_website }}"><span><b>See more of our work</b>Scan to open {{ profile.website }}.</span></div>
  </div>
- <div class="end"><span>© {% now "Y" %} {{ profile.company_name }} · {{ profile.address }}</span><span>Websites · Systems · Mobile Apps · WhatsApp Automation</span></div>
+ <div class="end"><span>© {% now "Y" %} {% contact "legal_line" %}<br>{{ profile.address }}</span><span>Websites · Systems · Mobile Apps · WhatsApp Automation</span></div>
 </section>
 

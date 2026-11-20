@@ -17,12 +17,23 @@ Kuzibadilisha: weka env var kwenye Render. Hakuna faili la kuhariri.
 
 Kwenye templates:   {% load jt_contact %} … {% contact "wa" %}
 Kwenye Python:      from apps.contact import contact; contact()['phone']
+
+USAJILI WA KAMPUNI
+
+JamiiTek ni brand; jina la kisheria ni lile lililosajiliwa BRELA (Business
+Names Act, Cap 213). Nyaraka rasmi (invoice, risiti, mkataba, footer, company
+profile) zinaonyesha yote mawili kupitia {% contact "legal_line" %}.
+TIN ikipatikana: weka env var JAMIITEK_TIN kwenye Render.
 """
 import os
 import re
 
 DEFAULT_TEAM = '+255750910158'
 DEFAULT_BOT_DEMO = '+255768146230'
+
+BRAND = 'JamiiTek'
+LEGAL_NAME = 'Jamii Digital Solutions'
+BRELA_REG_NO = '723586'          # Cheti cha usajili, 20 Nov 2026
 
 
 def _e164(raw, fallback):
@@ -52,4 +63,25 @@ def contact():
         # JamiiBot ya majaribio
         'bot_wa': bot,
         'bot_display': _pretty(bot),
+        # Usajili
+        'brand': BRAND,
+        'legal_name': os.getenv('JAMIITEK_LEGAL_NAME', LEGAL_NAME),
+        'reg_no': os.getenv('JAMIITEK_REG_NO', BRELA_REG_NO),
+        'tin': os.getenv('JAMIITEK_TIN', '').strip(),
+        **_legal_lines(),
+    }
+
+
+def _legal_lines():
+    name = os.getenv('JAMIITEK_LEGAL_NAME', LEGAL_NAME)
+    reg = os.getenv('JAMIITEK_REG_NO', BRELA_REG_NO)
+    tin = os.getenv('JAMIITEK_TIN', '').strip()
+    tin_en = f' · TIN {tin}' if tin else ''
+    return {
+        # "JamiiTek — a brand of Jamii Digital Solutions · BRELA Reg. No. 723586"
+        'legal_line': f'{BRAND} — a brand of {name} · BRELA Reg. No. {reg}{tin_en}',
+        'legal_line_sw': f'{BRAND} — chapa ya {name} · Usajili BRELA Na. {reg}{tin_en}',
+        # Fupi, kwa footers zenye nafasi ndogo
+        'legal_short': f'{name} · BRELA Reg. No. {reg}{tin_en}',
+        'legal_short_sw': f'{name} · Usajili BRELA Na. {reg}{tin_en}',
     }

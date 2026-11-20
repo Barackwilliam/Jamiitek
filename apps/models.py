@@ -2238,3 +2238,6 @@ class OwnerNoticeDay(models.Model):
 
 # ── Ankara za renewal + uthibitisho wa malipo (apps/renewals.py) ──
 from .renewal_models import RenewalNotice, PaymentProof  # noqa: E402,F401
+
+# ── Nyaraka rasmi za kampuni (apps/company_docs_views.py) ──
+from .company_docs_models import CompanyDocument  # noqa: E402,F401

@@ -1,4 +1,4 @@
-{% load static %}<!DOCTYPE html>
+{% load static jt_contact %}<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <style>
   @page{margin:1.6cm 1.8cm}
@@ -105,5 +105,5 @@
   <div class="accepted"><b>✓ {% if lang == 'sw' %}PENDEKEZO LIMEKUBALIWA{% else %}PROPOSAL ACCEPTED{% endif %}</b> — {% if lang == 'sw' %}Amekubali{% else %}Accepted by{% endif %}: <b>{{ proposal.accepted_name }}</b> · {{ proposal.accepted_at|date:'M j, Y · H:i' }} (EAT){% if proposal.accepted_ip %} · IP: {{ proposal.accepted_ip }}{% endif %}</div>
   {% endif %}
 
-  <div class="foot">{{ proposal.provider_name }} · {% if lang == 'sw' %}Imewezeshwa na{% else %}Powered by{% endif %} JamiiTek · {{ proposal.provider_rep }}</div>
+  <div class="foot">{{ proposal.provider_name }} · {% if lang == 'sw' %}Imewezeshwa na{% else %}Powered by{% endif %} JamiiTek · {{ proposal.provider_rep }}<br>{% if lang == 'sw' %}{% contact "legal_short_sw" %}{% else %}{% contact "legal_short" %}{% endif %}</div>
 </body></html>
