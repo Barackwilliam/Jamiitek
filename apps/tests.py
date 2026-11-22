@@ -1831,3 +1831,15 @@ class CompanyDocumentsTest(TestCase):
         self.client.force_login(User.objects.create_user('mteja', password='x'))
         r = self.client.get(f'/manage/company-documents/{doc.pk}/')
         self.assertNotEqual(r.content, self.PDF)
+
+
+class HomeHeroTest(TestCase):
+    def test_hero_has_silk_background_bot_chat_and_current_domain_prices(self):
+        from django.core.cache import cache
+        cache.clear()
+        html = self.client.get('/').content.decode()
+        self.assertIn('class="hero__bg"', html)
+        self.assertIn('Habari, website ya biashara ni bei gani?', html)
+        self.assertIn('images/hero-laptop', html)
+        self.assertIn('<b>.com</b><small>Tsh 36,000</small>', html)
+        self.assertIn('<b>.tz</b><small>Tsh 22,000</small>', html)

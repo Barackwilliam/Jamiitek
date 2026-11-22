@@ -122,8 +122,15 @@ def home(request):
             "Tanzania. Built in Dar es Salaam — fast, secure and mobile-first."
         ),
         'canonical': 'https://www.jamiitek.com/',
+        # Bei za domain kwenye homepage zinasomwa kutoka domain_checker (sehemu moja tu)
+        'tld_prices': _tld_prices_display(),
     }
     return render(request, 'index.html', context)
+
+
+def _tld_prices_display():
+    from .domain_checker import TLD_PRICES
+    return {tld.strip('.').replace('.', '_'): f'{price:,}' for tld, price in TLD_PRICES.items()}
 
 # Elimu ya Ufahamu
 def service(request):
