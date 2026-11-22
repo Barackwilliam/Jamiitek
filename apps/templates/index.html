@@ -8,13 +8,10 @@
 
 /* ── Hero: mwanga, ramani ya Tanzania inajichora ── */
 .hero{position:relative;overflow:hidden;padding:118px 0 150px;isolation:isolate;
-  background:linear-gradient(165deg,#F6F9FF 0%,#E3ECFF 45%,#C9DAFF 100%)}
-/* Mawimbi ya hariri (design 1) — SVG ya ndani, hakuna picha ya kupakua */
-.hero__bg{position:absolute;inset:0;z-index:-1;pointer-events:none}
-.hero__bg svg{position:absolute;left:0;right:0;top:300px;width:100%;height:640px;
-  -webkit-mask-image:linear-gradient(transparent,#000 22%,#000 80%,transparent);mask-image:linear-gradient(transparent,#000 22%,#000 80%,transparent)}
-.hero__bg::after{content:"";position:absolute;inset:0;background:radial-gradient(600px 380px at 80% 18%,rgba(255,255,255,.9),transparent 70%)}
-@media (max-width:1059px){.hero__bg svg{top:auto;bottom:0;height:60%;-webkit-mask-image:linear-gradient(transparent,#000 25%);mask-image:linear-gradient(transparent,#000 25%)}}
+  background:radial-gradient(900px 560px at 80% 40%,rgba(34,184,224,.18),transparent 62%),radial-gradient(760px 520px at 0% 0%,rgba(245,166,35,.22),transparent 60%),var(--bg)}
+.hero::before{content:"";position:absolute;inset:0;z-index:-1;
+  background-image:linear-gradient(rgba(11,23,48,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(11,23,48,.08) 1px,transparent 1px);background-size:64px 64px;
+  -webkit-mask-image:radial-gradient(ellipse 80% 70% at 62% 42%,#000 30%,transparent 75%);mask-image:radial-gradient(ellipse 80% 70% at 62% 42%,#000 30%,transparent 75%)}
 .hero__in{display:grid;gap:40px;align-items:center}
 @media (min-width:1060px){.hero{padding:140px 0 190px}.hero__in{grid-template-columns:1.02fr 1fr;gap:28px}}
 .pill{display:inline-flex;align-items:center;gap:10px;padding:6px 14px 6px 6px;border-radius:999px;background:#fff;box-shadow:0 0 0 1px var(--line),var(--sh-1);font:500 13px/1.2 'Inter',sans-serif;color:var(--ink-2)}
@@ -34,9 +31,9 @@
 .ticker a:hover span{color:var(--ink)}
 
 /* ── Vifaa vya JamiiTek (picha ya hero) ── */
-.devs{position:relative;width:100%;max-width:640px;margin-inline:auto;aspect-ratio:600/520;perspective:1400px}
+.devs{position:relative;width:100%;max-width:720px;margin-inline:auto;aspect-ratio:1266/849;perspective:1400px}
 /* desktop: inapanuka kuelekea kulia kadri nafasi inavyoruhusu — haikatiki kwenye laptop */
-@media (min-width:1060px){.devs{width:100%;max-width:600px;margin:0 0 0 auto}}
+@media (min-width:1060px){.devs{--bleed:clamp(0px,(100vw - 1200px)/2,110px);width:calc(100% + 30px + var(--bleed));max-width:none;margin:0 calc(-1 * var(--bleed)) 0 -30px}}
 .devs__glow{position:absolute;inset:4% 2% 10%;z-index:-1;border-radius:50%;filter:blur(46px);opacity:0;
   background:radial-gradient(closest-side at 62% 42%,rgba(34,184,224,.55),transparent),radial-gradient(closest-side at 30% 70%,rgba(245,166,35,.55),transparent);
   animation:fadeIn 1.4s ease .5s forwards,glow 7s ease-in-out 2s infinite}
@@ -48,33 +45,22 @@
   transition:rotate .5s var(--ease);transform-style:preserve-3d;rotate:x var(--rx,0deg) y var(--ry,0deg) 0deg}
 @supports not (rotate:x 1deg){.devs__img{rotate:none}}
 @keyframes devIn{to{opacity:1;transform:none}}
-.devs__img{container-type:inline-size}
-.hv{position:absolute;inset:0}
-.hv-lap{position:absolute;left:3.333cqw;top:18.333cqw;width:71.667cqw}
-.hv-lap .s{background:#0b0f1d;border-radius:2.333cqw 2.333cqw 0.667cqw 0.667cqw;padding:1.500cqw;box-shadow:0 6.000cqw 11.667cqw rgba(20,40,110,.33),0 0 0 1px rgba(255,255,255,.4)}
-.hv-bar{height:3.333cqw;background:#EEF0F4;border-radius:0.833cqw 0.833cqw 0 0;display:flex;gap:0.833cqw;align-items:center;padding:0 1.500cqw}
-.hv-bar i{width:1.167cqw;height:1.167cqw;border-radius:50%;background:#F87171}.hv-bar i:nth-child(2){background:#FBBF24}.hv-bar i:nth-child(3){background:#34D399}
-.hv-bar em{margin-left:1.500cqw;font:500 1.417cqw 'Inter',sans-serif;font-style:normal;color:#8a93a3}
-.hv-lap img{display:block;width:100%;height:auto;aspect-ratio:16/10;object-fit:cover;object-position:top}
-.hv-lap .b{height:2.333cqw;margin:0 -5.333cqw;border-radius:0 0 2.667cqw 2.667cqw;background:linear-gradient(#eef1f6,#9aa3b5)}
-.hv-ph{position:absolute;right:1.667cqw;top:1.667cqw;width:37.333cqw;height:76.667cqw;border-radius:6.000cqw;background:#0b0f1d;padding:1.333cqw;
-  box-shadow:0 7.333cqw 13.333cqw rgba(20,40,110,.42),0 0 0 1px rgba(255,255,255,.3)}
-.hv-scr{height:100%;border-radius:4.833cqw;overflow:hidden;background:#ECE5DD;display:flex;flex-direction:column}
-.hv-wh{display:flex;align-items:center;gap:1.333cqw;padding:4.333cqw 1.833cqw 1.500cqw;background:#075E54;color:#fff}
-.hv-av{width:4.833cqw;height:4.833cqw;border-radius:50%;background:#fff;display:grid;place-items:center;flex:none}.hv-av img{width:3.500cqw}
-.hv-wh b{display:block;font:700 2.167cqw 'Inter',sans-serif}.hv-wh small{font-size:1.667cqw;opacity:.85}.hv-wh .tm{margin-left:auto;font-size:1.583cqw;opacity:.8}
-.hv-ch{flex:1;padding:1.833cqw 1.333cqw;display:flex;flex-direction:column;gap:1.167cqw}
-.hv-m{max-width:88%;padding:1.000cqw 1.333cqw 2.167cqw;border-radius:1.500cqw;font:500 1.750cqw/1.35 'Inter',sans-serif;color:#111;position:relative;box-shadow:0 1px 1px rgba(0,0,0,.1)}
-.hv-m s{position:absolute;right:1.000cqw;bottom:0.333cqw;text-decoration:none;font-size:1.333cqw;color:#667}
-.hv-m.in{align-self:flex-start;background:#fff}.hv-m.out{align-self:flex-end;background:#DCF8C6}
-.hv-inp{margin:1.167cqw;padding:1.333cqw 1.833cqw;border-radius:3.000cqw;background:#fff;font:500 1.667cqw 'Inter',sans-serif;color:#999}
-.hv-chip{position:absolute;z-index:3;display:flex;align-items:center;gap:1.333cqw;padding:1.667cqw 2.333cqw;border-radius:2.333cqw;background:rgba(255,255,255,.85);
-  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.9);box-shadow:0 2.333cqw 5.333cqw rgba(20,40,110,.18);
-  font:600 2.167cqw/1.2 'Inter',sans-serif;color:var(--ink);white-space:nowrap}
-.hv-chip b{color:var(--green)}.hv-chip .d{width:1.500cqw;height:1.500cqw;border-radius:50%;background:#22C55E;box-shadow:0 0 0 0.833cqw rgba(34,197,94,.2);flex:none}
-.hv-c1{left:0;top:6.667cqw}.hv-c2{left:10.000cqw;bottom:6.667cqw}
-@media (prefers-reduced-motion:reduce){.devs__img,.devs__glow,.devs__floor{animation:none;opacity:1;transform:none}}
-@media (max-width:620px){.devs{margin-top:8px}}
+.devs__img img{display:block;width:100%;height:auto;filter:drop-shadow(0 30px 40px rgba(11,23,48,.22))}
+/* mwanga unaopita juu ya skrini — picha yenyewe ni mask, kwa hiyo mwanga uko kwenye vifaa tu */
+.devs__shine{position:absolute;inset:0;pointer-events:none;mix-blend-mode:soft-light;
+  background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.95) 48%,transparent 60%) no-repeat;background-size:250% 100%;background-position:150% 0;
+  -webkit-mask:var(--m) center/100% 100% no-repeat;mask:var(--m) center/100% 100% no-repeat;animation:shine 6s ease-in-out 2.4s infinite}
+/* Mask ni umbo tu: 844w inatosha, na ndiyo <img> inayopakuliwa na simu nyingi — si 1266w ya ziada */
+@keyframes shine{0%{background-position:150% 0}35%,100%{background-position:-60% 0}}
+@media (prefers-reduced-motion:reduce){.devs__img,.devs__glow,.devs__floor{animation:none;opacity:1;transform:none}.devs__shine{display:none}}
+.devs .f-bot{left:-5%;top:-9%;width:min(240px,40%);padding:12px;animation-delay:2.9s,3.8s}
+.f-bot .who{display:flex;align-items:center;gap:9px;margin-bottom:10px;font:600 12.5px/1.2 'Sora',sans-serif}
+.f-bot .who i{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--wa);color:#fff}
+.f-bot .who i svg{width:16px;height:16px}
+.f-bot .who small{display:block;font:500 10.5px var(--mono);color:var(--green);letter-spacing:.02em}
+.f-bot .msg{padding:9px 12px;border-radius:12px 12px 12px 4px;background:var(--paper);font-size:12.5px;line-height:1.45;color:var(--ink-2)}
+/* simu: picha nzima ionekane — kadi ya JamiiBot inafunika vifaa */
+@media (max-width:620px){.devs{margin-top:8px}.devs .f-bot{display:none}}
 
 /* ── Domain (navy ya chapa) ── */
 .dom{position:relative;z-index:3;margin-top:-100px}
@@ -262,22 +248,6 @@
 {% block content %}
 {% with h=hero_slides.0 %}
 <section class="hero" id="hero" data-live>
-  <div class="hero__bg" aria-hidden="true">
-    <svg viewBox="0 0 1440 800" preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="hw1" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".45" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#9FB8FF" stop-opacity=".6"/></linearGradient>
-        <linearGradient id="hw2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4B74FF" stop-opacity=".8"/><stop offset="1" stop-color="#2E5BFF" stop-opacity=".15"/></linearGradient>
-        <linearGradient id="hw3" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFB27A" stop-opacity="0"/><stop offset=".6" stop-color="#FF8A4C" stop-opacity=".35"/><stop offset="1" stop-color="#FF6B2C" stop-opacity="0"/></linearGradient>
-        <filter id="hwb"><feGaussianBlur stdDeviation="6"/></filter>
-      </defs>
-      <path d="M-50 560 C 300 430 520 700 860 520 S 1300 330 1500 380 L1500 820 L-50 820Z" fill="url(#hw2)"/>
-      <path d="M-50 470 C 260 380 600 600 940 420 S 1320 240 1500 300" stroke="#fff" stroke-width="110" fill="none" opacity=".55" filter="url(#hwb)"/>
-      <path d="M-50 600 C 320 470 560 700 900 560 S 1320 380 1500 420" stroke="url(#hw1)" stroke-width="70" fill="none" filter="url(#hwb)"/>
-      <path d="M-50 690 C 360 600 640 780 960 650 S 1340 520 1500 560" stroke="url(#hw1)" stroke-width="34" fill="none" opacity=".9"/>
-      <path d="M300 760 C 600 640 900 760 1500 610" stroke="url(#hw3)" stroke-width="26" fill="none" filter="url(#hwb)"/>
-      <path d="M-50 740 C 420 680 760 820 1500 700 L1500 820 L-50 820Z" fill="#fff" opacity=".85"/>
-    </svg>
-  </div>
   <div class="wrap hero__in">
     <div>
       <span class="pill up" style="--d:.05s"><b>LIVE</b>{% if h.eyebrow %}{{ h.eyebrow }}{% else %}Built in Dar es Salaam, Tanzania{% endif %}</span>
@@ -302,23 +272,15 @@
       <span class="devs__glow" aria-hidden="true"></span>
       <span class="devs__floor" aria-hidden="true"></span>
       <div class="devs__img">
-        <div class="hv">
-          <div class="hv-lap"><div class="s"><div class="hv-bar"><i></i><i></i><i></i><em>kiliwild.onrender.com</em></div>
-            <img src="{% static 'images/hero-laptop.webp' %}" srcset="{% static 'images/hero-laptop-480.webp' %} 480w, {% static 'images/hero-laptop.webp' %} 800w"
-                 sizes="(min-width:1060px) 420px, 70vw" width="800" height="500" fetchpriority="high" decoding="async" alt="Website ya Kili Wild Adventure iliyojengwa na JamiiTek"></div><div class="b"></div></div>
-          <div class="hv-ph"><div class="hv-scr">
-            <div class="hv-wh"><span class="hv-av"><img src="{% static 'profile/logo.png' %}" alt="" width="21" height="21"></span><span><b>JamiiBot</b><small>online</small></span><span class="tm">2:14 AM</span></div>
-            <div class="hv-ch" aria-label="Mfano wa mazungumzo ya JamiiBot">
-              <div class="hv-m in">Habari, website ya biashara ni bei gani?<s>2:14</s></div>
-              <div class="hv-m out">Karibu! 👋 Website kamili inaanzia <b>TSh 350,000</b>, inakamilika ndani ya wiki 2–4.<s>2:14 ✓✓</s></div>
-              <div class="hv-m in">Na mnaweza kuweka WhatsApp kwenye site?<s>2:15</s></div>
-              <div class="hv-m out">Ndio ✅ Kitufe cha WhatsApp na malipo ya M-Pesa vinakuwemo. Nikupangie mazungumzo na timu kesho asubuhi?<s>2:15 ✓✓</s></div>
-            </div>
-            <div class="hv-inp">Andika ujumbe…</div>
-          </div></div>
-          <div class="hv-chip hv-c1"><span class="d"></span>Imejibu ndani ya <b>sekunde 2</b></div>
-          <div class="hv-chip hv-c2">🌙 Saa 2:14 usiku · bot iko kazini</div>
-        </div>
+        <img src="{% static 'images/hero-devices.webp' %}"
+             srcset="{% static 'images/hero-devices-640.webp' %} 640w, {% static 'images/hero-devices-800.webp' %} 844w, {% static 'images/hero-devices.webp' %} 1266w"
+             sizes="(min-width:1060px) 760px, 94vw" width="1266" height="849" fetchpriority="high" decoding="async"
+             alt="JamiiTek websites on a desktop, laptop, tablet and phone">
+        <span class="devs__shine" aria-hidden="true" style="--m:url('{% static 'images/hero-devices-800.webp' %}')"></span>
+      </div>
+      <div class="float f-bot" style="animation-delay:2.9s,3.8s">
+        <div class="who"><i><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2z"/></svg></i><span>JamiiBot<small>● online · replies in 2s</small></span></div>
+        <p class="msg">Karibu! 👋 Naweza kukusaidia kupata website, domain au bot ya WhatsApp leo.</p>
       </div>
     </div>
 
